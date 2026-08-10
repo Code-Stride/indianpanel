@@ -292,9 +292,208 @@
         transition-duration: .01ms !important;
       }
     }
+
+    [hidden] { display: none !important; }
+
+    .login-page {
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+      padding: max(24px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+    }
+
+    .login-card {
+      width: min(100%, 420px);
+      padding: clamp(22px, 6vw, 32px);
+      background: rgba(11, 19, 28, .96);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+    }
+
+    .login-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .login-brand img {
+      width: 48px;
+      height: 48px;
+      border-radius: 13px;
+    }
+
+    .login-brand strong,
+    .login-brand span {
+      display: block;
+    }
+
+    .login-brand strong {
+      font-size: 1rem;
+    }
+
+    .login-brand span {
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: .76rem;
+    }
+
+    .login-card h1 {
+      margin: 0;
+      font-size: clamp(1.55rem, 7vw, 2.15rem);
+      letter-spacing: -.035em;
+    }
+
+    .login-subtitle {
+      margin: 9px 0 22px;
+      color: var(--muted);
+      font-size: .85rem;
+    }
+
+    .demo-warning {
+      margin-bottom: 20px;
+      padding: 11px 12px;
+      color: #f7e8ac;
+      background: var(--warning-soft);
+      border: 1px solid rgba(251, 191, 36, .28);
+      border-radius: 11px;
+      font-size: .74rem;
+      line-height: 1.45;
+    }
+
+    .field {
+      margin-top: 15px;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 7px;
+      color: #b9c9d6;
+      font-size: .78rem;
+      font-weight: 700;
+    }
+
+    .field input {
+      width: 100%;
+      min-height: 48px;
+      padding: 11px 13px;
+      color: var(--text);
+      background: #071019;
+      border: 1px solid #294055;
+      border-radius: 11px;
+      font: inherit;
+      font-size: 16px;
+    }
+
+    .field input::placeholder { color: #526779; }
+    .field input:focus { border-color: var(--cyan); }
+
+    .password-wrap { position: relative; }
+    .password-wrap input { padding-right: 50px; }
+
+    .password-toggle {
+      position: absolute;
+      top: 50%;
+      right: 5px;
+      display: grid;
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      place-items: center;
+      color: #8ba1b3;
+      background: transparent;
+      border: 0;
+      border-radius: 8px;
+      transform: translateY(-50%);
+      cursor: pointer;
+    }
+
+    .login-submit {
+      width: 100%;
+      min-height: 48px;
+      margin-top: 20px;
+      color: #031014;
+      background: #67e8f9;
+      border: 1px solid #67e8f9;
+      border-radius: 11px;
+      font: inherit;
+      font-size: .86rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .login-submit:hover { background: #a5f3fc; }
+
+    .login-note {
+      margin: 15px 0 0;
+      color: #62788a;
+      font-size: .69rem;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    .preview-exit {
+      min-height: 36px;
+      padding: 6px 11px;
+      color: #b6c8d5;
+      background: #101b26;
+      border: 1px solid #2a4052;
+      border-radius: 10px;
+      font: inherit;
+      font-size: .72rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    @media (max-width: 520px) {
+      .login-card { border-radius: 18px; }
+      .topbar { flex-wrap: wrap; padding-block: 10px; }
+      .status-pill { margin-left: auto; }
+      .preview-exit { width: 100%; }
+    }
   </style>
 </head>
 <body>
+  <section id="admin-login" class="login-page" aria-labelledby="login-title">
+    <div class="login-card">
+      <div class="login-brand">
+        <img src="../pronxt-logo.svg" alt="">
+        <div>
+          <strong>ProNXT Admin</strong>
+          <span>Visual login preview</span>
+        </div>
+      </div>
+
+      <h1 id="login-title">Welcome back</h1>
+      <p class="login-subtitle">Enter demo values to preview the administration interface.</p>
+
+      <div class="demo-warning" id="demo-warning" role="note">
+        Demo only — this form does not provide authentication. Do not enter a real email address or password.
+      </div>
+
+      <form id="admin-demo-form" novalidate aria-describedby="demo-warning login-note">
+        <div class="field">
+          <label for="demo-email">Demo email</label>
+          <input id="demo-email" name="demo-email" type="text" inputmode="email" placeholder="demo@example.com" value="demo@example.com" autocomplete="off" required>
+        </div>
+
+        <div class="field">
+          <label for="demo-password">Demo password</label>
+          <div class="password-wrap">
+            <input id="demo-password" name="demo-password" type="password" placeholder="Enter any demo value" value="preview-only" autocomplete="off" required>
+            <button id="password-toggle" class="password-toggle" type="button" aria-label="Show demo password" title="Show password">
+              <svg aria-hidden="true" viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <button class="login-submit" type="submit">Continue to preview</button>
+        <p class="login-note" id="login-note">Values stay in this browser tab and are not submitted or stored.</p>
+      </form>
+    </div>
+  </section>
+
+  <div id="admin-preview" hidden>
   <a class="skip-link" href="#main">Skip to main content</a>
 
   <header>
@@ -307,6 +506,7 @@
         </span>
       </a>
       <span class="status-pill"><span class="status-dot" aria-hidden="true"></span>Setup required</span>
+      <button id="preview-exit" class="preview-exit" type="button">Exit preview</button>
     </div>
   </header>
 
@@ -369,5 +569,50 @@
   <footer>
     <div class="shell">ProNXT Admin · Static setup route</div>
   </footer>
+
+  </div>
+  <script>
+    (() => {
+      "use strict";
+      const login = document.getElementById("admin-login");
+      const preview = document.getElementById("admin-preview");
+      const form = document.getElementById("admin-demo-form");
+      const password = document.getElementById("demo-password");
+      const passwordToggle = document.getElementById("password-toggle");
+      const exitButton = document.getElementById("preview-exit");
+
+      function showPreview() {
+        login.hidden = true;
+        preview.hidden = false;
+        window.scrollTo({ top: 0, behavior: "instant" });
+        document.querySelector(".brand")?.focus();
+      }
+
+      function showLogin() {
+        preview.hidden = true;
+        login.hidden = false;
+        password.type = "password";
+        passwordToggle.setAttribute("aria-label", "Show demo password");
+        window.scrollTo({ top: 0, behavior: "instant" });
+        document.getElementById("demo-email").focus();
+      }
+
+      form.addEventListener("submit", event => {
+        event.preventDefault();
+        if (!form.reportValidity()) return;
+        showPreview();
+      });
+
+      passwordToggle.addEventListener("click", () => {
+        const showing = password.type === "text";
+        password.type = showing ? "password" : "text";
+        passwordToggle.setAttribute("aria-label", showing ? "Show demo password" : "Hide demo password");
+        passwordToggle.setAttribute("title", showing ? "Show password" : "Hide password");
+        password.focus();
+      });
+
+      exitButton.addEventListener("click", showLogin);
+    })();
+  </script>
 </body>
 </html>
