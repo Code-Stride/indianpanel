@@ -477,26 +477,7 @@
       .status-pill { margin-left: auto; }
       .preview-exit { width: 100%; }
     }
-
-    /* CYRUS PANEL Hybrid Redesign */
-    :root{--bg:#050a0f;--surface:#0a131c;--surface-2:#0e1a25;--border:#1d3445;--text:#edf8fc;--muted:#8297a7;--cyan:#3ce2ee;--cyan-soft:rgba(60,226,238,.11);--warning:#f1b84b;--warning-soft:rgba(241,184,75,.1);--radius:15px}
-    body{position:relative;background-color:var(--bg)!important;letter-spacing:-.005em}
-    body::before{content:"";position:fixed;z-index:-1;inset:0;pointer-events:none;background-image:linear-gradient(rgba(54,146,174,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(54,146,174,.045) 1px,transparent 1px)!important;background-size:34px 34px!important;-webkit-mask-image:linear-gradient(to bottom,#000,transparent 78%);mask-image:linear-gradient(to bottom,#000,transparent 78%)}
-    header{min-height:70px;background:rgba(3,8,13,.9)!important;border-color:var(--border)!important;backdrop-filter:blur(18px)!important}
-    .topbar{min-height:70px}.brand img,.login-brand img{background:var(--surface-2);border:1px solid #2b5268}.brand strong,.login-brand strong{color:var(--text);letter-spacing:.02em}.brand small,.login-brand span{color:var(--muted)}
-    .login-page{background:transparent}.login-card{background:rgba(10,19,28,.95)!important;border:1px solid var(--border)!important;border-radius:22px!important;box-shadow:0 30px 90px rgba(0,0,0,.38)!important;backdrop-filter:blur(20px)!important}
-    .login-card h1{color:var(--text);font-style:normal;letter-spacing:-.05em}.login-subtitle{color:var(--muted)}.demo-warning{color:#f6d98f;background:var(--warning-soft)!important;border-color:rgba(241,184,75,.28)}
-    .field label{color:#b9cbd6}.field input{color:var(--text);background:var(--surface)!important;border-color:var(--border)!important;border-radius:11px}.field input:focus{border-color:var(--cyan)!important;outline:3px solid var(--cyan-soft)!important;outline-offset:1px}
-    .login-submit{color:#031014;background:var(--cyan)!important;border-color:var(--cyan)!important;border-radius:11px}.login-submit:hover{background:#8ef4fa!important}.password-toggle{color:var(--muted)}
-    main{padding-top:clamp(2.5rem,7vw,4.5rem)}.eyebrow{color:var(--cyan);letter-spacing:.13em}.shell h1{color:var(--text);letter-spacing:-.055em}.intro{color:var(--muted)}
-    .notice{color:#f6d98f;background:var(--warning-soft)!important;border-color:rgba(241,184,75,.28)}.notice span{color:#b7a46d}.section-heading h2{color:var(--text);letter-spacing:-.02em}.section-heading p{color:var(--muted)}
-    .grid{gap:14px}.card{position:relative;background:var(--surface)!important;border-color:var(--border)!important;border-radius:var(--radius)!important;box-shadow:0 14px 40px rgba(0,0,0,.18)!important;transition:transform .2s ease,border-color .2s ease!important}
-    .card::before{content:"";position:absolute;top:0;left:20px;width:48px;height:2px;background:var(--cyan)!important;border-radius:0 0 5px 5px}.card-icon{color:var(--cyan);background:var(--cyan-soft)!important;border-color:rgba(60,226,238,.22)!important;border-radius:11px}.card h3{color:var(--text)}.card p{color:var(--muted)}.tag{color:#8fa4b3;background:#071019!important;border-color:var(--border)!important}
-    @media(hover:hover){.card:hover{transform:translateY(-3px);border-color:#2b5268!important}}
-    .status-pill{color:#f6d98f;background:var(--warning-soft)!important;border-color:rgba(241,184,75,.3)!important}.preview-exit,.button-secondary{color:#a9bdca;background:var(--surface-2)!important;border-color:var(--border)!important}.button-primary{color:#031014;background:var(--cyan)!important;border-color:var(--cyan)!important}
-    footer{color:#617888;background:#03070b!important;border-color:var(--border)!important}*{scrollbar-width:thin;scrollbar-color:#2b5268 #03070b}*::-webkit-scrollbar{width:8px;height:8px}*::-webkit-scrollbar-track{background:#03070b}*::-webkit-scrollbar-thumb{background:#2b5268;border-radius:10px}
-    @media(max-width:760px){body::before{background-size:26px 26px!important}.login-card{border-radius:18px!important;box-shadow:none!important}.card{box-shadow:none!important}.topbar{padding-block:12px}}
-</style>
+  </style>
 </head>
 <body>
   <section id="admin-login" class="login-page" aria-labelledby="login-title">
