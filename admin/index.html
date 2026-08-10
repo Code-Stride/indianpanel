@@ -496,19 +496,6 @@
     .status-pill{color:#f6d98f;background:var(--warning-soft)!important;border-color:rgba(241,184,75,.3)!important}.preview-exit,.button-secondary{color:#a9bdca;background:var(--surface-2)!important;border-color:var(--border)!important}.button-primary{color:#031014;background:var(--cyan)!important;border-color:var(--cyan)!important}
     footer{color:#617888;background:#03070b!important;border-color:var(--border)!important}*{scrollbar-width:thin;scrollbar-color:#2b5268 #03070b}*::-webkit-scrollbar{width:8px;height:8px}*::-webkit-scrollbar-track{background:#03070b}*::-webkit-scrollbar-thumb{background:#2b5268;border-radius:10px}
     @media(max-width:760px){body::before{background-size:26px 26px!important}.login-card{border-radius:18px!important;box-shadow:none!important}.card{box-shadow:none!important}.topbar{padding-block:12px}}
-
-    /* Final mobile overlap protection */
-    .topbar > *, .grid > *, .card > *, .login-card > * {min-width:0;max-width:100%}
-    .card p,.card h3,.intro,.notice span{overflow-wrap:anywhere;word-break:break-word}
-    @media(max-width:760px){
-      .topbar{display:grid!important;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:9px!important}
-      .topbar .brand{min-width:0;overflow:hidden}.topbar .brand-copy{min-width:0;overflow:hidden}.topbar .brand strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-      .topbar .status-pill{min-width:0;max-width:100%;margin:0!important;font-size:.68rem;overflow:hidden;text-overflow:ellipsis}
-      .topbar .preview-exit{grid-column:1/-1;width:100%}
-      .login-card{width:min(100%,420px);overflow:hidden}.login-card h1{font-size:clamp(1.6rem,9vw,2.1rem);line-height:1.08}
-      .grid{grid-template-columns:minmax(0,1fr)!important}.card{width:100%;overflow:hidden}
-      .actions{display:grid;grid-template-columns:1fr;width:100%}.actions .button{width:100%}
-    }
 </style>
 </head>
 <body>
