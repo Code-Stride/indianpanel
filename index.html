@@ -6012,195 +6012,6 @@
                 width: 100%;
             }
         }
-
-        /* Device-card overlap fix: scoped layout, independent of global flex rules */
-        #root .cyrus-device-card {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            min-width: 0;
-            max-width: 100%;
-            height: 100%;
-            overflow: hidden;
-        }
-
-        #root .cyrus-device-card__head {
-            display: grid !important;
-            grid-template-columns: 40px minmax(0, 1fr) auto;
-            align-items: start !important;
-            width: 100%;
-            min-width: 0;
-            gap: .75rem !important;
-        }
-
-        #root .cyrus-device-card__identity {
-            width: 100%;
-            min-width: 0 !important;
-            overflow: hidden;
-        }
-
-        #root .cyrus-device-card__identity h3,
-        #root .cyrus-device-card__identity p {
-            display: block;
-            width: 100%;
-            max-width: 100%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            word-break: normal;
-        }
-
-        #root .cyrus-device-card__actions {
-            display: flex !important;
-            align-items: center !important;
-            flex-wrap: nowrap !important;
-            width: auto !important;
-            min-width: max-content !important;
-            gap: .2rem !important;
-        }
-
-        #root .cyrus-device-card__actions button {
-            display: inline-grid;
-            flex: 0 0 32px;
-            width: 32px;
-            min-width: 32px;
-            height: 32px;
-            min-height: 32px;
-            padding: 0 !important;
-            place-items: center;
-        }
-
-        #root .cyrus-device-card__metrics {
-            display: grid !important;
-            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-            width: 100%;
-            min-width: 0;
-            gap: .75rem !important;
-        }
-
-        #root .cyrus-device-card__metrics > div {
-            width: 100%;
-            min-width: 0;
-            overflow: hidden;
-        }
-
-        #root .cyrus-device-card__metrics p {
-            max-width: 100%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            word-break: normal;
-        }
-
-        #root .cyrus-device-card__bank {
-            width: 100%;
-            min-width: 0;
-            overflow: hidden;
-        }
-
-        #root .cyrus-device-card__bank-row {
-            display: grid !important;
-            grid-template-columns: minmax(0, 1fr) auto;
-            align-items: center !important;
-            width: 100%;
-            min-width: 0;
-            gap: .65rem !important;
-        }
-
-        #root .cyrus-device-card__bank-row > div {
-            display: flex !important;
-            min-width: 0;
-            max-width: 100%;
-            flex-wrap: wrap !important;
-            gap: .3rem !important;
-        }
-
-        #root .cyrus-device-card__bank-row > span {
-            min-width: max-content;
-            text-align: right;
-            white-space: nowrap;
-        }
-
-        #root .cyrus-device-card__card-row {
-            display: flex !important;
-            width: 100%;
-            min-width: 0;
-            max-width: 100%;
-            flex-wrap: wrap !important;
-            gap: .35rem .5rem !important;
-        }
-
-        #root .cyrus-device-card__card-row > span {
-            min-width: 0;
-            max-width: 100%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        #root .cyrus-device-card__card-row > span.ml-auto {
-            margin-left: auto;
-            flex: 0 0 auto;
-        }
-
-        #root .cyrus-device-card__status {
-            display: flex !important;
-            align-items: center !important;
-            width: 100%;
-            min-width: 0;
-            max-width: 100%;
-            margin-top: auto;
-            flex-wrap: wrap !important;
-            gap: .4rem .5rem !important;
-        }
-
-        #root .cyrus-device-card__status > div {
-            min-width: 0;
-            max-width: 100%;
-            flex-wrap: wrap !important;
-        }
-
-        #root .cyrus-device-card__status .ml-auto {
-            margin-left: auto;
-            flex: 0 0 auto;
-        }
-
-        @media (max-width: 420px) {
-            #root .cyrus-device-card {
-                padding: .85rem !important;
-            }
-
-            #root .cyrus-device-card__head {
-                grid-template-columns: 38px minmax(0, 1fr) auto;
-                gap: .55rem !important;
-            }
-
-            #root .cyrus-device-card__actions button {
-                width: 30px;
-                min-width: 30px;
-                height: 30px;
-                min-height: 30px;
-            }
-
-            #root .cyrus-device-card__metrics {
-                gap: .55rem !important;
-            }
-        }
-
-        @media (max-width: 340px) {
-            #root .cyrus-device-card__head {
-                grid-template-columns: 36px minmax(0, 1fr);
-            }
-
-            #root .cyrus-device-card__actions {
-                grid-column: 1 / -1;
-                justify-self: end;
-            }
-
-            #root .cyrus-device-card__metrics {
-                grid-template-columns: minmax(0, 1fr) !important;
-            }
-        }
     </style>
 </head>
 <body>
@@ -20832,16 +20643,16 @@ function f1({
         o = A.provider && A.provider !== "—" ? A.provider : d ?.networks[0] || null;
     return r.jsxs("div", {
         onClick: tt,
-        className: "cyrus-device-card group relative bg-[#111111] border border-[#1f1f1f] rounded-2xl p-4 cursor-pointer transition-all duration-200 hover:border-[#2a2a2a] hover:bg-[#161616] hover:shadow-xl hover:shadow-black/40 hover:-translate-y-0.5 active:translate-y-0",
+        className: "group relative bg-[#111111] border border-[#1f1f1f] rounded-2xl p-4 cursor-pointer transition-all duration-200 hover:border-[#2a2a2a] hover:bg-[#161616] hover:shadow-xl hover:shadow-black/40 hover:-translate-y-0.5 active:translate-y-0",
         children: [r.jsxs("div", {
-            className: "cyrus-device-card__head flex items-start gap-3 mb-3",
+            className: "flex items-start gap-3 mb-3",
             children: [r.jsx("div", {
                 className: `w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${b?"bg-emerald-500/15 border border-emerald-500/25":"bg-[#1a1a1a] border border-[#262626]"}`,
                 children: r.jsx(bs, {
                     className: `w-5 h-5 ${b?"text-emerald-400":"text-[#444]"}`
                 })
             }), r.jsxs("div", {
-                className: "cyrus-device-card__identity flex-1 min-w-0",
+                className: "flex-1 min-w-0",
                 children: [r.jsx("h3", {
                     className: "text-sm font-bold text-white truncate leading-tight",
                     children: A.name
@@ -20850,7 +20661,7 @@ function f1({
                     children: A.id
                 })]
             }), r.jsxs("div", {
-                className: "cyrus-device-card__actions flex items-center gap-1 flex-shrink-0",
+                className: "flex items-center gap-1 flex-shrink-0",
                 children: [A.upipin && r.jsx(hh, {
                     className: "w-3.5 h-3.5 text-amber-400"
                 }), S && r.jsx($l, {
@@ -20868,7 +20679,7 @@ function f1({
                 })]
             })]
         }), r.jsxs("div", {
-            className: "cyrus-device-card__metrics grid grid-cols-2 gap-3 mb-3",
+            className: "grid grid-cols-2 gap-3 mb-3",
             children: [r.jsxs("div", {
                 children: [r.jsx("p", {
                     className: "text-[9px] font-semibold uppercase tracking-widest text-[#444] mb-1",
@@ -20886,7 +20697,7 @@ function f1({
                 })]
             })]
         }), r.jsxs("div", {
-            className: "cyrus-device-card__metrics grid grid-cols-2 gap-3 mb-3",
+            className: "grid grid-cols-2 gap-3 mb-3",
             children: [r.jsxs("div", {
                 children: [r.jsx("p", {
                     className: "text-[9px] font-semibold uppercase tracking-widest text-[#444] mb-1",
@@ -20905,9 +20716,9 @@ function f1({
                 })]
             })]
         }), p && r.jsxs("div", {
-            className: "cyrus-device-card__bank mb-3 px-3 py-2 rounded-xl bg-emerald-950/20 border border-emerald-900/20",
+            className: "mb-3 px-3 py-2 rounded-xl bg-emerald-950/20 border border-emerald-900/20",
             children: [r.jsxs("div", {
-                className: "cyrus-device-card__bank-row flex items-center justify-between",
+                className: "flex items-center justify-between",
                 children: [r.jsxs("div", {
                     className: "flex items-center gap-1.5",
                     children: [r.jsx($l, {
@@ -20935,7 +20746,7 @@ function f1({
                 })]
             })]
         }), f && r.jsxs("div", {
-            className: "cyrus-device-card__card-row mb-3 px-3 py-1.5 rounded-xl bg-purple-950/20 border border-purple-900/20 flex items-center gap-2",
+            className: "mb-3 px-3 py-1.5 rounded-xl bg-purple-950/20 border border-purple-900/20 flex items-center gap-2",
             children: [r.jsx(Wl, {
                 className: "w-3.5 h-3.5 text-purple-400"
             }), r.jsxs("span", {
@@ -20949,7 +20760,7 @@ function f1({
                 children: "Available"
             })]
         }), r.jsxs("div", {
-            className: "cyrus-device-card__status flex items-center gap-2 flex-wrap",
+            className: "flex items-center gap-2 flex-wrap",
             children: [r.jsx("span", {
                 className: `w-2 h-2 rounded-full flex-shrink-0 ${b?"bg-emerald-500":"bg-[#333]"}`,
                 style: b ? {
