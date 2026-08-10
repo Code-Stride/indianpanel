@@ -5185,6 +5185,170 @@
             }
             .cyrus-footer-separator { display: none; }
         }
+
+        /* Join Telegram invitation modal */
+        #cyrus-telegram-popup[hidden] {
+            display: none !important;
+        }
+
+        #cyrus-telegram-popup {
+            position: fixed;
+            z-index: 11000;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+            background: rgba(1, 5, 10, .78) !important;
+        }
+
+        .cyrus-telegram-dialog {
+            position: relative;
+            width: min(100%, 430px);
+            max-height: calc(100dvh - 32px);
+            padding: clamp(22px, 6vw, 30px);
+            overflow-y: auto;
+            color: #eaf8ff;
+            background: #09131d !important;
+            border: 1px solid #244156;
+            border-radius: 22px;
+        }
+
+        .cyrus-telegram-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: grid;
+            width: 44px;
+            height: 44px;
+            padding: 0;
+            place-items: center;
+            color: #8ea5b7;
+            background: #101d29 !important;
+            border: 1px solid #294155;
+            border-radius: 11px;
+            cursor: pointer;
+        }
+
+        .cyrus-telegram-icon {
+            display: grid;
+            width: 64px;
+            height: 64px;
+            margin-bottom: 21px;
+            place-items: center;
+            color: #fff;
+            background: #229ed9 !important;
+            border-radius: 18px;
+        }
+
+        .cyrus-telegram-dialog h2 {
+            max-width: calc(100% - 42px);
+            margin: 0;
+            color: #f1fbff;
+            font-size: clamp(1.45rem, 6vw, 2rem);
+            line-height: 1.15;
+            letter-spacing: -.03em;
+            text-wrap: balance;
+        }
+
+        .cyrus-telegram-dialog p {
+            margin: 12px 0 0;
+            color: #8fa6b7;
+            font-size: .86rem;
+            line-height: 1.6;
+        }
+
+        .cyrus-telegram-benefits {
+            display: grid;
+            gap: 8px;
+            margin: 20px 0 0;
+            padding: 0;
+            list-style: none;
+            color: #bfd0dc;
+            font-size: .78rem;
+        }
+
+        .cyrus-telegram-benefits li {
+            display: flex;
+            align-items: flex-start;
+            gap: 9px;
+        }
+
+        .cyrus-telegram-benefits li::before {
+            content: "✓";
+            color: #67e8f9;
+            font-weight: 900;
+        }
+
+        .cyrus-telegram-actions {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 9px;
+            margin-top: 24px;
+        }
+
+        .cyrus-telegram-join,
+        .cyrus-telegram-later {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 46px;
+            padding: 10px 15px;
+            border-radius: 11px;
+            font: inherit;
+            font-size: .82rem;
+            font-weight: 800;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .cyrus-telegram-join {
+            gap: 8px;
+            color: #fff;
+            background: #229ed9 !important;
+            border: 1px solid #3db4e9;
+        }
+
+        .cyrus-telegram-join:hover {
+            background: #168dcc !important;
+        }
+
+        .cyrus-telegram-later {
+            color: #9db1c0;
+            background: #101b26 !important;
+            border: 1px solid #2b4052;
+        }
+
+        .cyrus-telegram-note {
+            margin-top: 14px !important;
+            color: #607587 !important;
+            font-size: .68rem !important;
+            text-align: center;
+        }
+
+        body[data-pronxt-effective-theme="light"] .cyrus-telegram-dialog {
+            color: #17202b;
+            background: #fff !important;
+            border-color: #cbd7e3;
+        }
+
+        body[data-pronxt-effective-theme="light"] .cyrus-telegram-dialog h2 { color: #17202b; }
+        body[data-pronxt-effective-theme="light"] .cyrus-telegram-dialog p { color: #64748b; }
+        body[data-pronxt-effective-theme="light"] .cyrus-telegram-benefits { color: #334155; }
+
+        @media (max-width: 420px) {
+            .cyrus-telegram-dialog {
+                padding: 22px 18px 18px;
+                border-radius: 18px;
+            }
+
+            .cyrus-telegram-actions {
+                grid-template-columns: 1fr;
+            }
+
+            .cyrus-telegram-later {
+                order: 2;
+            }
+        }
     </style>
 </head>
 <body>
@@ -5192,6 +5356,32 @@
     <div id="pronxt-offline-banner" role="status" aria-live="assertive" data-visible="false">● Offline — live information may be unavailable</div>
     <div id="pronxt-toast-region" aria-live="polite" aria-atomic="false"></div>
     <div id="root"></div>
+    <div id="cyrus-telegram-popup" hidden>
+        <section class="cyrus-telegram-dialog" role="dialog" aria-modal="true" aria-labelledby="cyrus-telegram-title" aria-describedby="cyrus-telegram-description" tabindex="-1">
+            <button id="cyrus-telegram-close" class="cyrus-telegram-close" type="button" aria-label="Close Telegram invitation" title="Close">
+                <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>
+            </button>
+            <div class="cyrus-telegram-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M21.7 3.3a1.45 1.45 0 0 0-1.5-.24L2.9 9.73c-1.17.45-1.15 1.12-.21 1.4l4.44 1.39 1.7 5.2c.22.61.11.86.75.86.5 0 .72-.23 1-.5l2.16-2.1 4.5 3.33c.83.46 1.43.22 1.64-.77l2.97-14c.3-1.2-.46-1.75-.15-1.24ZM8.2 12.2l9.96-6.28c.5-.3.96-.14.58.2l-8.22 7.42-.32 3.46-2-4.8Z"/></svg>
+            </div>
+            <h2 id="cyrus-telegram-title">Join CYRUS PANEL on Telegram</h2>
+            <p id="cyrus-telegram-description">Follow our official Telegram channel for product announcements, interface updates, and support information.</p>
+            <ul class="cyrus-telegram-benefits">
+                <li>Latest CYRUS PANEL announcements</li>
+                <li>New interface and feature updates</li>
+                <li>Official support and community information</li>
+            </ul>
+            <div class="cyrus-telegram-actions">
+                <a id="cyrus-telegram-join" class="cyrus-telegram-join" href="https://t.me/cyrus_c_panel" target="_blank" rel="noopener noreferrer">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" width="19" height="19" fill="currentColor"><path d="M21.7 3.3a1.45 1.45 0 0 0-1.5-.24L2.9 9.73c-1.17.45-1.15 1.12-.21 1.4l4.44 1.39 1.7 5.2c.22.61.11.86.75.86.5 0 .72-.23 1-.5l2.16-2.1 4.5 3.33c.83.46 1.43.22 1.64-.77l2.97-14c.3-1.2-.46-1.75-.15-1.24ZM8.2 12.2l9.96-6.28c.5-.3.96-.14.58.2l-8.22 7.42-.32 3.46-2-4.8Z"/></svg>
+                    Join Telegram
+                </a>
+                <button id="cyrus-telegram-later" class="cyrus-telegram-later" type="button">Maybe later</button>
+            </div>
+            <p class="cyrus-telegram-note">This invitation appears once per browser tab session.</p>
+        </section>
+    </div>
+
     <footer id="cyrus-legal-footer" aria-label="Site copyright">
         <span>© 2026 CYRUS PANEL. All rights reserved.</span>
         <span class="cyrus-footer-separator" aria-hidden="true">•</span>
@@ -21166,6 +21356,73 @@ Y0.createRoot(document.getElementById("root")).render(r.jsx(y1, {}));
         }
 
         applyPreferences();
+    })();
+    </script>
+    <script>
+    (() => {
+        "use strict";
+        const SESSION_KEY = "cyrus_telegram_invite_dismissed_v1";
+        const popup = document.getElementById("cyrus-telegram-popup");
+        const dialog = popup?.querySelector("[role='dialog']");
+        const closeButton = document.getElementById("cyrus-telegram-close");
+        const laterButton = document.getElementById("cyrus-telegram-later");
+        const joinLink = document.getElementById("cyrus-telegram-join");
+        let previousFocus = null;
+        let previousOverflow = "";
+        let dismissed = false;
+
+        try { dismissed = sessionStorage.getItem(SESSION_KEY) === "1"; } catch {}
+
+        function rememberDismissal() {
+            try { sessionStorage.setItem(SESSION_KEY, "1"); } catch {}
+        }
+
+        function openPopup() {
+            if (!popup || dismissed || !popup.hidden) return;
+            previousFocus = document.activeElement;
+            previousOverflow = document.body.style.overflow;
+            popup.hidden = false;
+            document.body.style.overflow = "hidden";
+            window.requestAnimationFrame(() => closeButton?.focus({ preventScroll: true }));
+        }
+
+        function closePopup() {
+            if (!popup || popup.hidden) return;
+            dismissed = true;
+            rememberDismissal();
+            popup.hidden = true;
+            document.body.style.overflow = previousOverflow;
+            if (previousFocus && typeof previousFocus.focus === "function") previousFocus.focus({ preventScroll: true });
+        }
+
+        function trapFocus(event) {
+            if (event.key !== "Tab" || popup.hidden) return;
+            const focusable = [...dialog.querySelectorAll('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])')]
+                .filter(element => element.offsetParent !== null);
+            if (!focusable.length) return;
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        }
+
+        closeButton?.addEventListener("click", closePopup);
+        laterButton?.addEventListener("click", closePopup);
+        joinLink?.addEventListener("click", closePopup);
+        popup?.addEventListener("click", event => {
+            if (event.target === popup) closePopup();
+        });
+        dialog?.addEventListener("keydown", trapFocus);
+        document.addEventListener("keydown", event => {
+            if (event.key === "Escape" && popup && !popup.hidden) closePopup();
+        });
+
+        if (!dismissed) window.setTimeout(openPopup, 900);
     })();
     </script>
 </body>
