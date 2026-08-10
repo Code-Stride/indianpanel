@@ -4190,9 +4190,272 @@
                 font-size: 0.7rem !important;
             }
         }
+
+        /* ProNXT UI/UX accessibility and interaction layer */
+        :root {
+            --pn-surface: #0d1118;
+            --pn-surface-raised: #121923;
+            --pn-border: #243244;
+            --pn-cyan: #22d3ee;
+            --pn-cyan-soft: rgba(34, 211, 238, 0.14);
+            --pn-danger: #fb7185;
+            --pn-warning: #fbbf24;
+            --pn-success: #34d399;
+            --pn-focus: #67e8f9;
+        }
+
+        body {
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        button, input, select, textarea, [role="button"] {
+            font: inherit;
+        }
+
+        button, a, input, select, textarea, [role="button"] {
+            transition: color .18s ease, background-color .18s ease, border-color .18s ease,
+                        opacity .18s ease, transform .18s ease !important;
+        }
+
+        button:not(:disabled), a[href], select, [role="button"] {
+            cursor: pointer;
+        }
+
+        button:disabled, input:disabled, select:disabled, textarea:disabled {
+            cursor: not-allowed;
+            opacity: .55;
+        }
+
+        :focus-visible {
+            outline: 3px solid var(--pn-focus) !important;
+            outline-offset: 3px !important;
+            border-radius: .5rem;
+        }
+
+        ::selection {
+            color: #031014;
+            background: #67e8f9;
+        }
+
+        /* Consistent interactive surfaces */
+        button, select, input, textarea {
+            border-radius: .75rem;
+        }
+
+        header {
+            isolation: isolate;
+        }
+
+        header > div,
+        main,
+        [role="dialog"] {
+            width: 100%;
+        }
+
+        main .grid > *, .glass-card, [role="dialog"] {
+            border-color: var(--pn-border) !important;
+        }
+
+        code, pre, .font-mono {
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        [data-pronxt-state="error"] {
+            border: 1px solid rgba(251, 113, 133, .38) !important;
+            background: rgba(127, 29, 29, .18) !important;
+            color: #fda4af !important;
+            border-radius: .85rem;
+            padding: .8rem 1rem;
+        }
+
+        [data-pronxt-state="warning"] {
+            border: 1px solid rgba(251, 191, 36, .35) !important;
+            background: rgba(120, 53, 15, .18) !important;
+            color: #fde68a !important;
+            border-radius: .85rem;
+            padding: .8rem 1rem;
+        }
+
+        [data-pronxt-state="empty"] {
+            min-height: min(55dvh, 32rem);
+            padding-inline: 1rem;
+        }
+
+        /* More polished skeleton cards */
+        .animate-pulse {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .animate-pulse::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            transform: translateX(-100%);
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,.055), transparent) !important;
+            animation: pronxt-shimmer 1.4s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes pronxt-shimmer {
+            100% { transform: translateX(100%); }
+        }
+
+        /* Offline status and accessible toast stack */
+        #pronxt-offline-banner {
+            position: fixed;
+            z-index: 10000;
+            top: max(.75rem, env(safe-area-inset-top));
+            left: 50%;
+            display: flex;
+            align-items: center;
+            gap: .55rem;
+            max-width: calc(100vw - 1.5rem);
+            min-height: 44px;
+            padding: .65rem 1rem;
+            color: #fff7d6;
+            background: #422006;
+            border: 1px solid rgba(251, 191, 36, .45);
+            border-radius: .85rem;
+            transform: translate(-50%, calc(-100% - 2rem));
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #pronxt-offline-banner[data-visible="true"] {
+            transform: translate(-50%, 0);
+            opacity: 1;
+        }
+
+        #pronxt-toast-region {
+            position: fixed;
+            z-index: 10001;
+            right: max(1rem, env(safe-area-inset-right));
+            bottom: max(1rem, env(safe-area-inset-bottom));
+            display: flex;
+            flex-direction: column;
+            gap: .65rem;
+            width: min(24rem, calc(100vw - 2rem));
+            pointer-events: none;
+        }
+
+        .pronxt-toast {
+            display: flex;
+            align-items: flex-start;
+            gap: .65rem;
+            padding: .85rem 1rem;
+            color: #e6edf6;
+            background: rgba(13, 17, 24, .97) !important;
+            border: 1px solid var(--pn-border);
+            border-left: 4px solid var(--pn-cyan);
+            border-radius: .85rem;
+            animation: pronxt-toast-in .22s ease-out both;
+        }
+
+        .pronxt-toast[data-kind="success"] { border-left-color: var(--pn-success); }
+        .pronxt-toast[data-kind="error"] { border-left-color: var(--pn-danger); }
+        .pronxt-toast[data-kind="warning"] { border-left-color: var(--pn-warning); }
+        .pronxt-toast[data-leaving="true"] { animation: pronxt-toast-out .2s ease-in both; }
+
+        @keyframes pronxt-toast-in {
+            from { opacity: 0; transform: translateY(10px); }
+        }
+        @keyframes pronxt-toast-out {
+            to { opacity: 0; transform: translateY(8px); }
+        }
+
+        .pronxt-skip-link {
+            position: fixed;
+            z-index: 10002;
+            top: .75rem;
+            left: .75rem;
+            padding: .7rem 1rem;
+            color: #031014;
+            background: #67e8f9 !important;
+            border-radius: .7rem;
+            transform: translateY(calc(-100% - 2rem));
+        }
+
+        .pronxt-skip-link:focus {
+            transform: translateY(0);
+        }
+
+        /* Screen-reader-only utility */
+        .pronxt-sr-only {
+            position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            padding: 0 !important;
+            margin: -1px !important;
+            overflow: hidden !important;
+            clip: rect(0, 0, 0, 0) !important;
+            white-space: nowrap !important;
+            border: 0 !important;
+        }
+
+        @media (pointer: coarse), (max-width: 767px) {
+            button, select, input:not([type="checkbox"]):not([type="radio"]),
+            textarea, a[role="button"], [role="button"] {
+                min-height: 44px;
+            }
+
+            button {
+                min-width: 44px;
+            }
+        }
+
+        @media (max-width: 767px) {
+            header {
+                position: sticky;
+                top: 0;
+            }
+
+            header > div.max-w-screen-2xl {
+                padding-top: .65rem !important;
+                padding-bottom: .65rem !important;
+            }
+
+            main .grid {
+                grid-template-columns: minmax(0, 1fr) !important;
+            }
+
+            [role="dialog"] {
+                width: calc(100vw - 1rem) !important;
+                margin: .5rem;
+                border-radius: 1rem !important;
+            }
+
+            #pronxt-toast-region {
+                right: 50%;
+                transform: translateX(50%);
+                bottom: max(.75rem, env(safe-area-inset-bottom));
+            }
+        }
+
+        @media (min-width: 768px) and (max-width: 1100px) {
+            main .grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                scroll-behavior: auto !important;
+                animation-duration: .01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: .01ms !important;
+            }
+        }
     </style>
 </head>
 <body>
+    <a href="#root" class="pronxt-skip-link">Skip to main content</a>
+    <div id="pronxt-offline-banner" role="status" aria-live="assertive" data-visible="false">● Offline — live information may be unavailable</div>
+    <div id="pronxt-toast-region" aria-live="polite" aria-atomic="false"></div>
     <div id="root"></div>
     <script>
 (function() {
@@ -17942,10 +18205,14 @@ function Zu({
     text: A
 }) {
     const [tt, b] = jt.useState(!1), d = () => {
-        navigator.clipboard.writeText(A), b(!0), setTimeout(() => b(!1), 2e3)
+        navigator.clipboard.writeText(A).then(() => {
+            b(!0), window.ProNXTToast ?.(`Copied to clipboard.`, "success"), setTimeout(() => b(!1), 2e3)
+        }).catch(() => window.ProNXTToast ?.(`Could not copy to clipboard.`, "error"))
     };
     return r.jsx("button", {
         onClick: d,
+        "aria-label": tt ? "Copied" : "Copy to clipboard",
+        title: tt ? "Copied" : "Copy to clipboard",
         className: "p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-[#555] hover:text-white transition-all flex-shrink-0",
         children: tt ? r.jsx(uh, {
             className: "w-3 h-3 text-emerald-400"
@@ -19635,6 +19902,8 @@ function p1({
                             })]
                         }), r.jsx("button", {
                             onClick: I,
+                            "aria-label": "Refresh dashboard",
+                            title: "Refresh dashboard",
                             className: "p-2 rounded-lg bg-[#111] border border-[#222] text-[#555] hover:text-[#888] hover:border-[#333] transition-all",
                             children: r.jsx(ys, {
                                 className: "w-3.5 h-3.5"
@@ -19748,6 +20017,143 @@ function y1() {
     })
 }
 Y0.createRoot(document.getElementById("root")).render(r.jsx(y1, {}));
+    </script>
+    <script>
+    (() => {
+        "use strict";
+
+        const offlineBanner = document.getElementById("pronxt-offline-banner");
+        const toastRegion = document.getElementById("pronxt-toast-region");
+        const root = document.getElementById("root");
+        let wasOffline = !navigator.onLine;
+        let dialogCount = 0;
+
+        function toast(message, kind = "info", timeout = 3200) {
+            if (!toastRegion || !message) return;
+            const item = document.createElement("div");
+            item.className = "pronxt-toast";
+            item.dataset.kind = kind;
+            item.setAttribute("role", kind === "error" ? "alert" : "status");
+            item.textContent = message;
+            toastRegion.appendChild(item);
+            const remove = () => {
+                item.dataset.leaving = "true";
+                window.setTimeout(() => item.remove(), 220);
+            };
+            window.setTimeout(remove, timeout);
+        }
+
+        window.ProNXTToast = toast;
+
+        function updateNetworkState(announce = false) {
+            const online = navigator.onLine;
+            document.body.dataset.network = online ? "online" : "offline";
+            if (offlineBanner) offlineBanner.dataset.visible = String(!online);
+            if (announce) {
+                toast(online ? "Connection restored." : "You are offline. Live information may be unavailable.", online ? "success" : "warning", 4200);
+            }
+            wasOffline = !online;
+        }
+
+        window.addEventListener("online", () => updateNetworkState(true));
+        window.addEventListener("offline", () => updateNetworkState(true));
+        updateNetworkState(false);
+
+        function labelInput(input) {
+            if (input.hasAttribute("aria-label") || input.hasAttribute("aria-labelledby")) return;
+            const placeholder = input.getAttribute("placeholder");
+            const type = input.getAttribute("type") || "text";
+            const fallback = type === "password" ? "Password or access key" : type === "file" ? "Choose file" : "Text input";
+            input.setAttribute("aria-label", placeholder || fallback);
+        }
+
+        function labelButton(button) {
+            if (button.hasAttribute("aria-label") || button.hasAttribute("aria-labelledby")) return;
+            const visibleText = (button.innerText || "").replace(/\s+/g, " ").trim();
+            if (visibleText) return;
+            const context = button.closest("[role='dialog']") ? "Dialog action" :
+                button.closest("header") ? "Header action" :
+                button.parentElement && /firebase url|key|link/i.test(button.parentElement.innerText || "") ? "Copy value" :
+                "Action button";
+            button.setAttribute("aria-label", button.title || context);
+        }
+
+        function decorate(container = document) {
+            container.querySelectorAll("input, textarea").forEach(labelInput);
+            container.querySelectorAll("select").forEach(select => {
+                if (!select.hasAttribute("aria-label")) {
+                    const first = select.options && select.options[0] ? select.options[0].text : "options";
+                    select.setAttribute("aria-label", /newest|oldest|name|battery/i.test(first) ? "Sort devices" : "Select " + first);
+                }
+            });
+            container.querySelectorAll("button").forEach(labelButton);
+
+            container.querySelectorAll(".fixed.inset-0").forEach(overlay => {
+                const dialog = overlay.firstElementChild || overlay;
+                if (!dialog.hasAttribute("role")) dialog.setAttribute("role", "dialog");
+                dialog.setAttribute("aria-modal", "true");
+                if (!dialog.hasAttribute("tabindex")) dialog.setAttribute("tabindex", "-1");
+                if (!dialog.dataset.pronxtDialog) {
+                    dialog.dataset.pronxtDialog = "true";
+                    dialogCount += 1;
+                    requestAnimationFrame(() => {
+                        const target = dialog.querySelector("input, select, textarea, button, [tabindex='0']") || dialog;
+                        target.focus({ preventScroll: true });
+                    });
+                }
+            });
+
+            container.querySelectorAll("p, div, span").forEach(node => {
+                if (node.children.length > 0) return;
+                const text = (node.textContent || "").trim();
+                if (!text) return;
+                if (/permission denied|connection error|failed|invalid|cannot write|cannot send/i.test(text)) {
+                    node.dataset.pronxtState = /permission denied/i.test(text) ? "warning" : "error";
+                    node.setAttribute("role", "alert");
+                }
+                if (/no devices connected|no devices match/i.test(text)) {
+                    const empty = node.closest(".flex.flex-col") || node.parentElement;
+                    if (empty) {
+                        empty.dataset.pronxtState = "empty";
+                        empty.setAttribute("role", "status");
+                    }
+                }
+                if (/loading|connecting|refreshing/i.test(text)) {
+                    node.setAttribute("role", "status");
+                    node.setAttribute("aria-live", "polite");
+                }
+            });
+        }
+
+        let decorateQueued = false;
+        const observer = new MutationObserver(() => {
+            if (decorateQueued) return;
+            decorateQueued = true;
+            requestAnimationFrame(() => {
+                decorateQueued = false;
+                decorate(root || document);
+            });
+        });
+        if (root) observer.observe(root, { childList: true, subtree: true });
+        decorate(root || document);
+
+        document.addEventListener("keydown", event => {
+            if (event.key === "/" && !/input|textarea|select/i.test(document.activeElement?.tagName || "")) {
+                const search = document.querySelector('input[placeholder*="Search" i]');
+                if (search) {
+                    event.preventDefault();
+                    search.focus();
+                }
+            }
+            if (event.key === "Escape") {
+                const dialogs = [...document.querySelectorAll('[role="dialog"]')];
+                const dialog = dialogs[dialogs.length - 1];
+                if (!dialog) return;
+                const close = [...dialog.querySelectorAll("button")].find(button => /close|cancel|back/i.test((button.innerText || "") + " " + (button.getAttribute("aria-label") || "")));
+                if (close) close.click();
+            }
+        });
+    })();
     </script>
 </body>
 </html>
