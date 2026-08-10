@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover" />
     <title>ProNXT 24/7 Pannel</title>
     <link rel="icon" type="image/svg+xml" href="./pronxt-logo.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -4807,6 +4807,196 @@
             #pronxt-settings-toggle {
                 left: .75rem;
                 bottom: .75rem;
+            }
+        }
+
+        /* Mobile text-overlap and narrow-screen layout corrections */
+        @media (max-width: 767px) {
+            html {
+                -webkit-text-size-adjust: 100%;
+                text-size-adjust: 100%;
+            }
+
+            body, button, input, select, textarea {
+                line-height: 1.4;
+            }
+
+            #root h1, #root h2, #root h3,
+            #root p, #root span, #root code, #root label {
+                max-width: 100%;
+                line-height: 1.4;
+            }
+
+            #root h1, #root h2, #root h3 {
+                text-wrap: balance;
+            }
+
+            #root p, #root code {
+                text-wrap: pretty;
+            }
+
+            #root .truncate {
+                display: block;
+                min-width: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                word-break: normal;
+            }
+
+            #root main .grid,
+            #root main .grid > * {
+                width: 100%;
+                min-width: 0;
+                max-width: 100%;
+            }
+
+            #root main .grid > * {
+                height: auto !important;
+                overflow: hidden;
+            }
+
+            /* Card rows wrap instead of placing labels and values on top of one another. */
+            #root main .grid > * .flex {
+                min-width: 0;
+                max-width: 100%;
+                flex-wrap: wrap;
+                row-gap: .45rem;
+            }
+
+            #root main .grid > * .flex-1 {
+                flex-basis: 10rem;
+            }
+
+            #root main .grid > * code,
+            #root main .grid > * .font-mono {
+                display: inline-block;
+                max-width: 100%;
+                line-height: 1.45;
+                white-space: normal;
+                overflow-wrap: anywhere;
+            }
+
+            /* Keep the brand and actions on separate, predictable rows. */
+            header > div.max-w-screen-2xl > .flex-shrink-0 {
+                flex: 1 1 auto;
+                max-width: calc(100% - 7rem);
+            }
+
+            header > div.max-w-screen-2xl > .flex-shrink-0 > span {
+                display: block;
+                min-width: 0;
+                overflow: hidden;
+                font-size: .78rem !important;
+                line-height: 1.2;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            header > div.max-w-screen-2xl > .ml-auto {
+                flex: 0 0 auto;
+                max-width: 6.5rem;
+                margin-left: auto !important;
+                flex-wrap: nowrap !important;
+            }
+
+            header > div.max-w-screen-2xl > .ml-auto button,
+            header > div.max-w-screen-2xl > .ml-auto a {
+                flex: 0 0 auto;
+            }
+
+            header > div.max-w-screen-2xl > .relative.flex-1 {
+                min-width: 100%;
+            }
+
+            /* Dashboard totals get their own horizontal row. */
+            .max-w-screen-2xl.mx-auto.px-6.py-3.flex.items-center.gap-6 > .flex.items-center.gap-5 {
+                width: 100%;
+                max-width: 100%;
+                overflow-x: auto;
+                flex-wrap: nowrap !important;
+                padding-bottom: .2rem;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+
+            .max-w-screen-2xl.mx-auto.px-6.py-3.flex.items-center.gap-6 > .flex.items-center.gap-5::-webkit-scrollbar {
+                display: none;
+            }
+
+            .max-w-screen-2xl.mx-auto.px-6.py-3.flex.items-center.gap-6 > .flex.items-center.gap-5 > * {
+                flex: 0 0 auto;
+                min-width: 3.25rem;
+            }
+
+            /* Filter labels stay readable and scroll rather than collide. */
+            .max-w-screen-2xl.mx-auto.px-6.py-3.flex.items-center.gap-6 > .ml-auto > * {
+                flex: 0 0 auto;
+                white-space: nowrap;
+            }
+
+            #root input, #root select, #root textarea {
+                width: 100%;
+                min-width: 0;
+                font-size: 16px; /* prevents iOS zoom and resulting layout shifts */
+            }
+
+            #root button {
+                line-height: 1.2;
+                white-space: normal;
+            }
+
+            #root .fixed.inset-0 > * {
+                min-width: 0;
+                max-width: calc(100vw - 1rem) !important;
+                max-height: calc(100dvh - 1rem) !important;
+                overflow-x: hidden;
+                overflow-y: auto;
+            }
+
+            /* Keep simultaneous status messages from covering each other. */
+            #root .fixed.bottom-6.left-1\/2 {
+                bottom: 5rem !important;
+                width: calc(100vw - 1.5rem);
+                max-width: 24rem;
+                text-align: center;
+                line-height: 1.4;
+                white-space: normal;
+            }
+
+            .pronxt-segmented {
+                gap: .35rem;
+            }
+
+            .pronxt-option label {
+                padding-inline: .25rem;
+                font-size: .74rem;
+                line-height: 1.2;
+                text-align: center;
+                white-space: normal;
+            }
+
+            .pronxt-switch-row {
+                align-items: flex-start;
+            }
+        }
+
+        @media (max-width: 380px) {
+            header > div.max-w-screen-2xl > .flex-shrink-0 > span {
+                max-width: 8.5rem;
+                font-size: .72rem !important;
+            }
+
+            header > div.max-w-screen-2xl > .ml-auto {
+                max-width: 5.75rem;
+            }
+
+            .pronxt-settings-group {
+                padding: .72rem;
+            }
+
+            .pronxt-option label {
+                font-size: .7rem;
             }
         }
     </style>
