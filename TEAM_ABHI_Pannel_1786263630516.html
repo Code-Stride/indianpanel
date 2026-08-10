@@ -4078,6 +4078,117 @@
             background-clip: initial !important;
             -webkit-background-clip: initial !important;
         }
+
+        /* Responsive device-frame fixes */
+        html, body, #root {
+            width: 100%;
+            max-width: 100%;
+            min-height: 100%;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            min-width: 0;
+        }
+
+        img, video, canvas, iframe {
+            max-width: 100%;
+            height: auto;
+        }
+
+        input, select, textarea, button {
+            max-width: 100%;
+        }
+
+        /* Long IDs, URLs and account values must wrap inside cards/modals. */
+        p, span, code, pre {
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        [role="dialog"] {
+            max-width: calc(100vw - 1rem) !important;
+            max-height: calc(100dvh - 1rem) !important;
+            overflow: auto;
+        }
+
+        @media (max-width: 767px) {
+            .px-6 {
+                padding-left: 0.75rem !important;
+                padding-right: 0.75rem !important;
+            }
+
+            .py-6 {
+                padding-top: 1rem !important;
+                padding-bottom: 1rem !important;
+            }
+
+            header > div.max-w-screen-2xl {
+                flex-wrap: wrap;
+                gap: 0.65rem !important;
+            }
+
+            header > div.max-w-screen-2xl > .relative.flex-1 {
+                order: 3;
+                flex: 1 0 100%;
+                width: 100%;
+                max-width: none !important;
+            }
+
+            header > div.max-w-screen-2xl > .ml-auto {
+                gap: 0.4rem !important;
+            }
+
+            header > div.max-w-screen-2xl > .ml-auto > div:first-child,
+            header > div.max-w-screen-2xl > .ml-auto > div:nth-last-child(2) {
+                display: none;
+            }
+
+            header button {
+                padding-left: 0.65rem !important;
+                padding-right: 0.65rem !important;
+            }
+
+            .max-w-screen-2xl.mx-auto.px-6.py-3.flex.items-center.gap-6 {
+                align-items: flex-start;
+                gap: 0.75rem !important;
+            }
+
+            .max-w-screen-2xl.mx-auto.px-6.py-3.flex.items-center.gap-6 > .ml-auto {
+                width: 100%;
+                margin-left: 0 !important;
+                flex-wrap: nowrap !important;
+                overflow-x: auto;
+                padding-bottom: 0.25rem;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+
+            .max-w-screen-2xl.mx-auto.px-6.py-3.flex.items-center.gap-6 > .ml-auto::-webkit-scrollbar {
+                display: none;
+            }
+
+            .fixed.inset-0 {
+                padding: 0.5rem !important;
+            }
+
+            h1 {
+                font-size: clamp(1.75rem, 9vw, 2.25rem) !important;
+            }
+        }
+
+        @media (max-width: 359px) {
+            .px-4, .px-6 {
+                padding-left: 0.5rem !important;
+                padding-right: 0.5rem !important;
+            }
+
+            header span.font-semibold.tracking-wide {
+                font-size: 0.7rem !important;
+            }
+        }
     </style>
 </head>
 <body>
