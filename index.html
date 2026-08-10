@@ -5837,6 +5837,181 @@
                 box-shadow: none !important;
             }
         }
+
+        /* Final no-overlap safety layer */
+        #root .flex > *,
+        #root .grid > *,
+        #root header > div > *,
+        #root main > * {
+            min-width: 0;
+        }
+
+        #root h1, #root h2, #root h3,
+        #root p, #root span, #root code,
+        #root button, #root a, #root label {
+            max-width: 100%;
+        }
+
+        #root main .grid > * {
+            overflow: hidden;
+        }
+
+        #root main .grid > * p,
+        #root main .grid > * span,
+        #root main .grid > * code {
+            line-height: 1.45;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        @media (max-width: 767px) {
+            /* Stable two-row header: brand/actions above, search below. */
+            #root header > div.max-w-screen-2xl {
+                display: grid !important;
+                grid-template-columns: minmax(0, 1fr) auto;
+                align-items: center;
+                width: 100%;
+                gap: .65rem !important;
+            }
+
+            #root header > div.max-w-screen-2xl > .flex-shrink-0 {
+                width: 100%;
+                max-width: 100%;
+                overflow: hidden;
+            }
+
+            #root header > div.max-w-screen-2xl > .flex-shrink-0 > span {
+                max-width: 100%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            #root header > div.max-w-screen-2xl > .ml-auto {
+                width: auto;
+                max-width: none;
+                margin: 0 !important;
+                justify-self: end;
+            }
+
+            #root header > div.max-w-screen-2xl > .relative.flex-1 {
+                grid-column: 1 / -1;
+                grid-row: 2;
+                width: 100%;
+                min-width: 0 !important;
+                max-width: none !important;
+            }
+
+            /* Statistics and filters use roomy columns instead of colliding. */
+            #root .max-w-screen-2xl.mx-auto.px-6.py-3.flex.items-center.gap-6 > .flex.items-center.gap-5 {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            }
+
+            #root .max-w-screen-2xl.mx-auto.px-6.py-3.flex.items-center.gap-6 > .flex.items-center.gap-5 > * {
+                min-width: 0 !important;
+                width: 100%;
+            }
+
+            #root .max-w-screen-2xl.mx-auto.px-6.py-3.flex.items-center.gap-6 > .ml-auto {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                min-width: 0;
+            }
+
+            #root .max-w-screen-2xl.mx-auto.px-6.py-3.flex.items-center.gap-6 > .ml-auto > * {
+                min-width: 0 !important;
+                max-width: 100%;
+                white-space: normal !important;
+                text-align: center;
+            }
+
+            #root .max-w-screen-2xl.mx-auto.px-6.py-3.flex.items-center.gap-6 > .ml-auto > select {
+                grid-column: 1 / -1;
+            }
+
+            /* Card rows wrap naturally and values take a full line when needed. */
+            #root main .grid > * .flex {
+                width: 100%;
+                min-width: 0;
+                flex-wrap: wrap !important;
+                align-items: flex-start;
+                column-gap: .55rem !important;
+                row-gap: .45rem !important;
+            }
+
+            #root main .grid > * .flex-1,
+            #root main .grid > * [class*="min-w-"] {
+                min-width: 0 !important;
+                max-width: 100%;
+            }
+
+            #root main .grid > * button,
+            #root main .grid > * a {
+                flex-shrink: 0;
+            }
+
+            #root > div.min-h-screen h1 {
+                max-width: 100%;
+                font-size: clamp(2rem, 11vw, 3rem) !important;
+                line-height: 1.05 !important;
+                overflow-wrap: normal;
+                word-break: normal;
+            }
+
+            #root [role="dialog"],
+            .cyrus-telegram-dialog {
+                width: calc(100vw - 24px) !important;
+                max-width: calc(100vw - 24px) !important;
+                margin: auto !important;
+            }
+
+            .cyrus-telegram-dialog h2,
+            .cyrus-telegram-dialog p,
+            .cyrus-telegram-benefits li {
+                max-width: 100%;
+                overflow-wrap: anywhere;
+            }
+
+            .pronxt-settings-header {
+                flex-wrap: nowrap;
+            }
+
+            .pronxt-settings-heading {
+                overflow: hidden;
+            }
+
+            .pronxt-settings-heading h2,
+            .pronxt-settings-heading p {
+                overflow-wrap: anywhere;
+            }
+        }
+
+        @media (max-width: 390px) {
+            #root header > div.max-w-screen-2xl {
+                grid-template-columns: minmax(0, 1fr) auto;
+            }
+
+            #root header > div.max-w-screen-2xl > .flex-shrink-0 > span {
+                font-size: .7rem !important;
+            }
+
+            #root header > div.max-w-screen-2xl > .ml-auto {
+                gap: .25rem !important;
+            }
+
+            #root header > div.max-w-screen-2xl > .ml-auto button {
+                min-width: 40px;
+                padding-left: .45rem !important;
+                padding-right: .45rem !important;
+            }
+
+            .pronxt-segmented {
+                grid-template-columns: 1fr !important;
+            }
+
+            .pronxt-option label {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
