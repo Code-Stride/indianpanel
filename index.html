@@ -5195,22 +5195,76 @@
             position: fixed;
             z-index: 11000;
             inset: 0;
-            display: grid;
-            place-items: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100vw;
+            height: 100dvh;
+            min-height: 100dvh;
             padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+            overflow: hidden;
+            overscroll-behavior: contain;
             background: rgba(1, 5, 10, .78) !important;
+            opacity: 0;
+        }
+
+        #cyrus-telegram-popup[data-state="open"] {
+            animation: cyrus-popup-backdrop-in .28s ease-out forwards;
+        }
+
+        #cyrus-telegram-popup[data-state="closing"] {
+            animation: cyrus-popup-backdrop-out .2s ease-in forwards;
+            pointer-events: none;
         }
 
         .cyrus-telegram-dialog {
             position: relative;
-            width: min(100%, 430px);
-            max-height: calc(100dvh - 32px);
+            flex: 0 1 430px;
+            width: min(430px, calc(100vw - 32px));
+            max-width: calc(100vw - 32px) !important;
+            max-height: calc(100dvh - 32px) !important;
+            margin: auto;
             padding: clamp(22px, 6vw, 30px);
+            overflow-x: hidden;
             overflow-y: auto;
+            overscroll-behavior: contain;
             color: #eaf8ff;
             background: #09131d !important;
             border: 1px solid #244156;
             border-radius: 22px;
+            opacity: 0;
+            transform: translate3d(0, 22px, 0) scale(.94);
+            transform-origin: center center;
+            will-change: transform, opacity;
+        }
+
+        #cyrus-telegram-popup[data-state="open"] .cyrus-telegram-dialog {
+            animation: cyrus-popup-dialog-in .42s cubic-bezier(.16, 1, .3, 1) forwards;
+        }
+
+        #cyrus-telegram-popup[data-state="closing"] .cyrus-telegram-dialog {
+            animation: cyrus-popup-dialog-out .18s ease-in forwards;
+        }
+
+        @keyframes cyrus-popup-backdrop-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes cyrus-popup-backdrop-out {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        @keyframes cyrus-popup-dialog-in {
+            0% { opacity: 0; transform: translate3d(0, 22px, 0) scale(.94); }
+            65% { opacity: 1; transform: translate3d(0, -2px, 0) scale(1.008); }
+            100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+        }
+
+        @keyframes cyrus-popup-dialog-out {
+            from { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+            to { opacity: 0; transform: translate3d(0, 12px, 0) scale(.97); }
         }
 
         .cyrus-telegram-close {
@@ -5347,6 +5401,55 @@
 
             .cyrus-telegram-later {
                 order: 2;
+            }
+        }
+
+        @media (max-height: 650px) and (orientation: landscape) {
+            #cyrus-telegram-popup {
+                padding-top: 10px;
+                padding-bottom: 10px;
+            }
+
+            .cyrus-telegram-dialog {
+                width: min(620px, calc(100vw - 24px));
+                max-width: calc(100vw - 24px) !important;
+                max-height: calc(100dvh - 20px) !important;
+                padding: 18px 22px;
+            }
+
+            .cyrus-telegram-icon {
+                width: 48px;
+                height: 48px;
+                margin-bottom: 12px;
+                border-radius: 14px;
+            }
+
+            .cyrus-telegram-icon svg {
+                width: 25px;
+                height: 25px;
+            }
+
+            .cyrus-telegram-dialog h2 {
+                font-size: 1.35rem;
+            }
+
+            .cyrus-telegram-dialog p {
+                margin-top: 7px;
+                line-height: 1.45;
+            }
+
+            .cyrus-telegram-benefits {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 10px;
+                margin-top: 12px;
+            }
+
+            .cyrus-telegram-actions {
+                margin-top: 14px;
+            }
+
+            .cyrus-telegram-note {
+                margin-top: 8px !important;
             }
         }
     </style>
@@ -21367,9 +21470,11 @@ Y0.createRoot(document.getElementById("root")).render(r.jsx(y1, {}));
         const closeButton = document.getElementById("cyrus-telegram-close");
         const laterButton = document.getElementById("cyrus-telegram-later");
         const joinLink = document.getElementById("cyrus-telegram-join");
+        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
         let previousFocus = null;
         let previousOverflow = "";
         let dismissed = false;
+        let closeTimer = null;
 
         try { dismissed = sessionStorage.getItem(SESSION_KEY) === "1"; } catch {}
 
@@ -21382,17 +21487,28 @@ Y0.createRoot(document.getElementById("root")).render(r.jsx(y1, {}));
             previousFocus = document.activeElement;
             previousOverflow = document.body.style.overflow;
             popup.hidden = false;
+            popup.dataset.state = "open";
             document.body.style.overflow = "hidden";
             window.requestAnimationFrame(() => closeButton?.focus({ preventScroll: true }));
         }
 
+        function finishClosing() {
+            if (!popup) return;
+            popup.hidden = true;
+            delete popup.dataset.state;
+            document.body.style.overflow = previousOverflow;
+            closeTimer = null;
+            if (previousFocus && typeof previousFocus.focus === "function") previousFocus.focus({ preventScroll: true });
+        }
+
         function closePopup() {
-            if (!popup || popup.hidden) return;
+            if (!popup || popup.hidden || popup.dataset.state === "closing") return;
             dismissed = true;
             rememberDismissal();
-            popup.hidden = true;
-            document.body.style.overflow = previousOverflow;
-            if (previousFocus && typeof previousFocus.focus === "function") previousFocus.focus({ preventScroll: true });
+            popup.dataset.state = "closing";
+            const delay = reduceMotion.matches ? 0 : 210;
+            window.clearTimeout(closeTimer);
+            closeTimer = window.setTimeout(finishClosing, delay);
         }
 
         function trapFocus(event) {
