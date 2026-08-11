@@ -5536,6 +5536,162 @@
                 transform: translateX(50%);
             }
         }
+
+        /* CYRUS Spectrum colour system */
+        :root {
+            --cy-bg: #090817;
+            --cy-bg-deep: #05040e;
+            --cy-surface: #121126;
+            --cy-surface-2: #191735;
+            --cy-border: #302d56;
+            --cy-border-strong: #484176;
+            --cy-text: #f5f3ff;
+            --cy-muted: #9a96b8;
+            --cy-primary: #7c5cff;
+            --cy-primary-hover: #6c4bea;
+            --cy-cyan: #25c9d8;
+            --cy-coral: #ff5d7a;
+            --cy-green: #32c997;
+            --cy-gold: #f4bd5f;
+        }
+
+        body[data-pronxt-effective-theme="light"] {
+            --cy-bg: #f5f3ff;
+            --cy-bg-deep: #eeebfa;
+            --cy-surface: #ffffff;
+            --cy-surface-2: #ebe8fa;
+            --cy-border: #d7d1ed;
+            --cy-border-strong: #aaa0d6;
+            --cy-text: #211d3c;
+            --cy-muted: #6c6788;
+            --cy-primary: #6548db;
+            --cy-primary-hover: #5538c4;
+            --cy-cyan: #098e9b;
+            --cy-coral: #db3454;
+            --cy-green: #188461;
+            --cy-gold: #a76a06;
+        }
+
+        html, body { background-color: var(--cy-bg-deep) !important; }
+        body { color: var(--cy-text) !important; }
+
+        #root > .min-h-screen,
+        #root > div.min-h-screen {
+            color: var(--cy-text) !important;
+            background: var(--cy-bg) !important;
+        }
+
+        #root header,
+        #root [class*="bg-[#080808]"],
+        #root [class*="bg-[#0a0a0a]"] {
+            background-color: var(--cy-bg-deep) !important;
+            border-color: var(--cy-border) !important;
+        }
+
+        #root [class*="bg-[#111]"],
+        #root [class*="bg-[#1a1a1a]"],
+        #root [class*="bg-[#0d0d0d]"] {
+            background-color: var(--cy-surface) !important;
+        }
+
+        #root [class*="border-[#1a1a1a]"],
+        #root [class*="border-[#1e1e1e]"],
+        #root [class*="border-[#1f1f1f]"],
+        #root [class*="border-[#222]"],
+        #root [class*="border-[#262626]"],
+        #root [class*="border-[#2a2a2a]"] {
+            border-color: var(--cy-border) !important;
+        }
+
+        .glass-card,
+        #root main .grid > *,
+        #root [role="dialog"] {
+            color: var(--cy-text) !important;
+            background-color: var(--cy-surface) !important;
+            border-color: var(--cy-border) !important;
+        }
+
+        #root input,
+        #root textarea,
+        #root select {
+            color: var(--cy-text) !important;
+            background-color: var(--cy-surface-2) !important;
+            border-color: var(--cy-border) !important;
+        }
+
+        #root input::placeholder,
+        #root textarea::placeholder { color: var(--cy-muted) !important; opacity: .68; }
+        #root input:focus,
+        #root textarea:focus,
+        #root select:focus { border-color: var(--cy-primary) !important; }
+
+        #root h1, #root h2, #root h3,
+        #root .text-white, #root .text-foreground { color: var(--cy-text) !important; }
+        #root .text-muted-foreground,
+        #root [class*="text-[#555]"],
+        #root [class*="text-[#666]"],
+        #root [class*="text-[#777]"],
+        #root [class*="text-[#888]"] { color: var(--cy-muted) !important; }
+
+        #root span[class*="text-[#6acfff]"] { color: #a994ff !important; }
+        .red-gradient { background: var(--cy-primary) !important; }
+        .red-text-gradient { color: var(--cy-primary) !important; -webkit-text-fill-color: currentColor !important; }
+
+        #root .bg-red-600,
+        #root button[class*="bg-red-600"] {
+            color: #fff !important;
+            background-color: var(--cy-primary) !important;
+            border-color: var(--cy-primary) !important;
+        }
+
+        #root .bg-red-600:hover,
+        #root button[class*="hover:bg-red-700"]:hover { background-color: var(--cy-primary-hover) !important; }
+        #root .text-red-400, #root .text-red-500 { color: var(--cy-coral) !important; }
+        #root .text-emerald-400, #root .text-emerald-500 { color: var(--cy-green) !important; }
+        #root .text-amber-400, #root .text-yellow-400 { color: var(--cy-gold) !important; }
+        #root .text-blue-400 { color: var(--cy-cyan) !important; }
+
+        #pronxt-settings-toggle,
+        #pronxt-settings-panel,
+        .pronxt-settings-group,
+        .pronxt-option label,
+        #pronxt-settings-close,
+        #pronxt-settings-reset {
+            color: var(--cy-text) !important;
+            background-color: var(--cy-surface) !important;
+            border-color: var(--cy-border) !important;
+        }
+
+        .pronxt-option input:checked + label {
+            color: #fff !important;
+            background-color: var(--cy-primary) !important;
+            border-color: var(--cy-primary) !important;
+        }
+
+        .cyrus-telegram-dialog,
+        .cyrus-telegram-close,
+        .cyrus-telegram-later,
+        .cyrus-footer-menu {
+            color: var(--cy-text) !important;
+            background-color: var(--cy-surface) !important;
+            border-color: var(--cy-border) !important;
+        }
+
+        .cyrus-telegram-dialog p,
+        .cyrus-telegram-note,
+        #cyrus-legal-footer,
+        .cyrus-footer-nav a,
+        .cyrus-footer-more summary { color: var(--cy-muted) !important; }
+
+        #cyrus-legal-footer {
+            background-color: var(--cy-bg-deep) !important;
+            border-color: var(--cy-border) !important;
+        }
+
+        .cyrus-footer-menu a:hover {
+            color: #fff !important;
+            background-color: var(--cy-primary) !important;
+        }
     </style>
     <script>
     (() => {
