@@ -5456,6 +5456,24 @@
 
 
         /* Compact footer navigation */
+        .cyrus-footer-nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: .55rem 1.5rem;
+            width: 100%;
+            margin-top: .35rem;
+        }
+
+        .cyrus-footer-nav > a,
+        .cyrus-footer-more > summary {
+            display: inline-flex;
+            align-items: center;
+            min-height: 32px;
+            padding: .2rem .1rem;
+        }
+
         .cyrus-footer-more {
             position: relative;
         }
@@ -5510,7 +5528,7 @@
 
             .cyrus-footer-nav {
                 margin-top: .45rem;
-                gap: .35rem .9rem;
+                gap: .45rem 1.1rem;
             }
 
             .cyrus-footer-menu {
