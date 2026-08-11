@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#070b10"><title>Settings · CYRUS PANEL</title>
+<link rel="icon" type="image/svg+xml" href="/pronxt-logo.svg"><link rel="stylesheet" href="/route-assets/routes.css">
+</head>
+<body>
+<a class="skip" href="#content">Skip to content</a>
+<header class="topbar"><div class="shell"><a class="brand" href="/"><img src="/pronxt-logo.svg" alt=""><span><strong>CYRUS PANEL</strong><small>Settings route</small></span></a><a class="home-link" href="/">Home</a></div></header>
+<main id="content" class="shell"><span class="eyebrow">Settings</span><h1>Appearance preferences.</h1><p class="lead">These preferences are stored locally in this browser and shared with the main CYRUS PANEL interface.</p><div class="meta"><span>Local preferences</span><span>No account secret stored</span></div>
+<section class="card first" aria-labelledby="appearance-title"><h2 id="appearance-title">Interface appearance</h2>
+<div class="setting"><div><label for="theme">Theme</label><small>Choose light, dark, or follow the operating system.</small></div><select id="theme"><option value="system">System</option><option value="dark">Dark</option><option value="light">Light</option></select></div>
+<div class="setting"><div><label for="density">Card density</label><small>Control spacing used by cards in the dashboard.</small></div><select id="density"><option value="comfortable">Comfortable</option><option value="compact">Compact</option></select></div>
+<div class="setting"><div><label for="layout">Dashboard layout</label><small>Choose the preferred visual card arrangement.</small></div><select id="layout"><option value="grid">Grid</option><option value="list">List</option></select></div>
+<div class="setting"><div><label for="privacy">Privacy mode</label><small>Mask sensitive-looking values visually in the interface.</small></div><input id="privacy" type="checkbox"></div>
+<div class="setting"><div><label>Reset preferences</label><small>Restore system theme, comfortable density, grid layout, and privacy mode off.</small></div><button id="reset" type="button">Reset</button></div>
+</section><div class="actions"><a class="button secondary" href="/">Return to CYRUS PANEL</a></div></main>
+<footer><div class="shell footer-inner"><span>© 2026 CYRUS PANEL. All rights reserved.</span><nav class="footer-nav" aria-label="Footer navigation"><a href="/support/">Support</a><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="/copyright/">Copyright</a></nav></div></footer>
+<script>
+(() => {
+  "use strict";
+  const KEY = "pronxt_ui_preferences_v1";
+  const defaults = { theme: "system", density: "comfortable", layout: "grid", privacy: false };
+  const controls = { theme: document.getElementById("theme"), density: document.getElementById("density"), layout: document.getElementById("layout"), privacy: document.getElementById("privacy") };
+  let prefs = { ...defaults };
+  try { prefs = { ...defaults, ...JSON.parse(localStorage.getItem(KEY) || "{}") }; } catch {}
+  function sync() {
+    controls.theme.value = ["system","dark","light"].includes(prefs.theme) ? prefs.theme : defaults.theme;
+    controls.density.value = ["comfortable","compact"].includes(prefs.density) ? prefs.density : defaults.density;
+    controls.layout.value = ["grid","list"].includes(prefs.layout) ? prefs.layout : defaults.layout;
+    controls.privacy.checked = Boolean(prefs.privacy);
+  }
+  function save() {
+    prefs = { theme: controls.theme.value, density: controls.density.value, layout: controls.layout.value, privacy: controls.privacy.checked };
+    try { localStorage.setItem(KEY, JSON.stringify(prefs)); } catch {}
+  }
+  Object.values(controls).forEach(control => control.addEventListener("change", save));
+  document.getElementById("reset").addEventListener("click", () => {
+    if (!window.confirm("Reset all appearance preferences?")) return;
+    prefs = { ...defaults }; sync(); save();
+  });
+  sync();
+})();
+</script>
+</body>
+</html>
