@@ -5595,6 +5595,7 @@
                 <summary>More</summary>
                 <div class="cyrus-footer-menu">
                     <a href="/accounts/">Accounts</a>
+                    <a href="/get-accounts/">Get Account</a>
                     <a href="/profile/">Profile</a>
                     <a href="/about/">About</a>
                     <a href="/copyright/">Copyright</a>
@@ -19733,10 +19734,10 @@ Error: ${_t}`)
                         }), "New Account"]
                     }), r.jsx("button", {
                         type: "button",
-                        disabled: !0,
-                        "aria-label": "Get Account — destination coming soon",
-                        title: "Destination will be added later",
-                        className: "w-full mt-3 flex items-center justify-center gap-2 py-3 rounded-xl bg-[#111] border border-[#252525] text-[#777] text-sm font-medium cursor-not-allowed opacity-70",
+                        onClick: () => window.location.assign("/get-accounts/"),
+                        "aria-label": "Get Account",
+                        title: "Open Get Account page",
+                        className: "w-full mt-3 flex items-center justify-center gap-2 py-3 rounded-xl bg-[#111] border border-[#2d4050] text-[#9bc8d4] hover:text-white hover:border-cyan-700/60 hover:bg-[#15202a] text-sm font-medium transition-colors",
                         children: "Get Account"
                     })]
                 }), d && r.jsxs("div", {
