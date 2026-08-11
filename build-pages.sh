@@ -7,7 +7,7 @@ mkdir -p dist
 cp index.html dist/index.html
 cp pronxt-logo.svg dist/pronxt-logo.svg
 
-for directory in admin dashboard settings accounts get-accounts profile about support privacy terms copyright route-assets; do
+for directory in dashboard settings accounts get-accounts profile about support privacy terms copyright route-assets; do
   cp -R "$directory" "dist/$directory"
 done
 
