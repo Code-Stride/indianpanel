@@ -5454,6 +5454,70 @@
             }
         }
 
+
+        /* Compact footer navigation */
+        .cyrus-footer-more {
+            position: relative;
+        }
+
+        .cyrus-footer-more summary {
+            color: #8298a9;
+            list-style: none;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .cyrus-footer-more summary::-webkit-details-marker { display: none; }
+        .cyrus-footer-more summary::after { content: " +"; color: #67e8f9; }
+        .cyrus-footer-more[open] summary::after { content: " −"; }
+
+        .cyrus-footer-menu {
+            position: absolute;
+            z-index: 30;
+            right: 0;
+            bottom: calc(100% + 10px);
+            display: grid;
+            min-width: 165px;
+            padding: 7px;
+            background: #0c141d !important;
+            border: 1px solid #294154;
+            border-radius: 11px;
+            box-shadow: 0 16px 44px rgba(0, 0, 0, .42) !important;
+        }
+
+        .cyrus-footer-more:not([open]) .cyrus-footer-menu { display: none; }
+
+        .cyrus-footer-menu a {
+            padding: 8px 10px;
+            border-radius: 7px;
+            text-align: left;
+        }
+
+        .cyrus-footer-menu a:hover {
+            color: #dffcff;
+            background: #101f2a !important;
+        }
+
+        body[data-pronxt-effective-theme="light"] .cyrus-footer-menu {
+            background: #fff !important;
+            border-color: #d1dde6;
+        }
+
+        @media (max-width: 420px) {
+            #cyrus-legal-footer {
+                gap: .2rem;
+            }
+
+            .cyrus-footer-nav {
+                margin-top: .45rem;
+                gap: .35rem .9rem;
+            }
+
+            .cyrus-footer-menu {
+                right: 50%;
+                transform: translateX(50%);
+            }
+        }
     </style>
     <script>
     (() => {
@@ -5506,14 +5570,19 @@
         <span class="cyrus-footer-separator" aria-hidden="true">•</span>
         <span>Authorized use only.</span>
         <nav class="cyrus-footer-nav" aria-label="Footer navigation">
-            <a href="/accounts/">Accounts</a>
-            <a href="/profile/">Profile</a>
-            <a href="/about/">About</a>
             <a href="/support/">Support</a>
             <a href="/privacy/">Privacy</a>
             <a href="/terms/">Terms</a>
-            <a href="/copyright/">Copyright</a>
-            <a href="/settings/">Settings</a>
+            <details class="cyrus-footer-more">
+                <summary>More</summary>
+                <div class="cyrus-footer-menu">
+                    <a href="/accounts/">Accounts</a>
+                    <a href="/profile/">Profile</a>
+                    <a href="/about/">About</a>
+                    <a href="/copyright/">Copyright</a>
+                    <a href="/settings/">Settings</a>
+                </div>
+            </details>
         </nav>
     </footer>
     <button id="pronxt-settings-toggle" type="button" aria-label="Open appearance settings" aria-controls="pronxt-settings-panel" aria-expanded="false" title="Appearance settings">
