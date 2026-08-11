@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#070b10"><title>Settings · CYRUS PANEL</title>
 <link rel="icon" type="image/svg+xml" href="/pronxt-logo.svg"><link rel="stylesheet" href="/route-assets/routes.css">
-<script src="/route-assets/theme.js"></script></head>
+<script src="/route-assets/theme.js"></script><script src="/route-assets/language.js"></script><script src="/route-assets/accessibility.js"></script></head>
 <body>
 <a class="skip" href="#content">Skip to content</a>
 <header class="topbar"><div class="shell"><a class="brand" href="/"><img src="/pronxt-logo.svg" alt=""><span><strong>CYRUS PANEL</strong><small>Settings route</small></span></a><a class="home-link" href="/">Home</a></div></header>
@@ -14,9 +14,11 @@
 <div class="setting"><div><label for="layout">Dashboard layout</label><small>Choose the preferred visual card arrangement.</small></div><select id="layout"><option value="grid">Grid</option><option value="list">List</option></select></div>
 <div class="setting"><div><label for="privacy">Privacy mode</label><small>Mask sensitive-looking values visually in the interface.</small></div><input id="privacy" type="checkbox"></div>
 <div class="setting"><div><label>Reset preferences</label><small>Restore system theme, comfortable density, grid layout, and privacy mode off.</small></div><button id="reset" type="button">Reset</button></div>
+<div class="setting"><div><label>Language</label><small>Choose English, Hindi, or Bengali for common interface labels.</small></div><a class="button secondary" href="/settings/language/">Language settings</a></div>
+<div class="setting"><div><label>Accessibility</label><small>Control text size, contrast, motion, touch targets, and readable spacing.</small></div><a class="button secondary" href="/settings/accessibility/">Accessibility controls</a></div>
 <div class="setting"><div><label>Local data controls</label><small>Clear saved account metadata, preferences, privacy mode, or Telegram-popup status.</small></div><a class="button secondary" href="/settings/data/">Manage local data</a></div>
 </section><div class="actions"><a class="button secondary" href="/">Return to CYRUS PANEL</a></div></main>
-<footer><div class="shell footer-inner"><span>© 2026 CYRUS PANEL. All rights reserved.</span><nav class="footer-nav" aria-label="Footer navigation"><a href="/support/">Support</a><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><details class="footer-more"><summary>More</summary><div class="footer-menu"><a href="/accounts/">Accounts</a><a href="/profile/">Profile</a><a href="/about/">About</a><a href="/copyright/">Copyright</a><a href="/settings/">Settings</a></div></details></nav></div></footer>
+<footer><div class="shell footer-inner"><span>© 2026 CYRUS PANEL. All rights reserved.</span><nav class="footer-nav" aria-label="Footer navigation"><a href="/support/">Support</a><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><details class="footer-more"><summary>More</summary><div class="footer-menu"><a href="/accounts/">Accounts</a><a href="/profile/">Profile</a><a href="/about/">About</a><a href="/docs/">Docs</a><a href="/changelog/">Changelog</a><a href="/status/">Status</a><a href="/copyright/">Copyright</a><a href="/settings/">Settings</a></div></details></nav></div></footer>
 <script>
 (() => {
   "use strict";
@@ -49,5 +51,5 @@
   applyTheme();
 })();
 </script>
-<script src="/route-assets/support-widget.js"></script></body>
+<script src="/route-assets/command-palette.js"></script><script src="/route-assets/support-widget.js"></script></body>
 </html>

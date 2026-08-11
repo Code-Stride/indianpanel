@@ -5754,6 +5754,9 @@
 
                     <a href="/profile/">Profile</a>
                     <a href="/about/">About</a>
+                    <a href="/docs/">Docs</a>
+                    <a href="/changelog/">Changelog</a>
+                    <a href="/status/">Status</a>
                     <a href="/copyright/">Copyright</a>
                     <a href="/settings/">Settings</a>
                 </div>
@@ -21863,6 +21866,10 @@ Y0.createRoot(document.getElementById("root")).render(r.jsx(y1, {}));
 
         function openPopup() {
             if (!popup || dismissed || !popup.hidden) return;
+            if (document.getElementById("cyrus-onboarding")) {
+                window.setTimeout(openPopup, 1000);
+                return;
+            }
             previousFocus = document.activeElement;
             previousOverflow = document.body.style.overflow;
             popup.hidden = false;
@@ -21921,5 +21928,5 @@ Y0.createRoot(document.getElementById("root")).render(r.jsx(y1, {}));
         if (!dismissed && !routeWithoutInvite.has(window.location.pathname)) window.setTimeout(openPopup, 900);
     })();
     </script>
-<script src="/route-assets/support-widget.js"></script></body>
+<script src="/route-assets/language.js"></script><script src="/route-assets/accessibility.js"></script><script src="/route-assets/command-palette.js"></script><script src="/route-assets/onboarding.js"></script><script src="/route-assets/notification-center.js"></script><script src="/route-assets/support-widget.js"></script></body>
 </html>
