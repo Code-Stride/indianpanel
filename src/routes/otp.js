@@ -38,7 +38,7 @@ router.get("/", async (req, res, next) => {
     }
 
     // Get all active connections
-    const connections = ConnectionsService.getAllActive();
+    const connections = await ConnectionsService.getAllActive();
     if (connections.length === 0) {
       return res.json([]);
     }
@@ -123,7 +123,7 @@ router.get("/", async (req, res, next) => {
  */
 router.get("/stats", async (req, res, next) => {
   try {
-    const connections = ConnectionsService.getAllActive();
+    const connections = await ConnectionsService.getAllActive();
     const totalConnections = connections.length;
 
     // Use cached data if available

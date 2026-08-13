@@ -1,9 +1,14 @@
 "use strict";
 
 /**
- * Simple JSON-file database.
- * Stores data in JSON files inside the data/ directory.
- * Thread-safe for single-process Node.js (uses atomic writes).
+ * Database factory.
+ *
+ * If DATABASE_URL is set → uses PostgreSQL (Railway, production)
+ * Otherwise → uses JSON files (local development)
+ *
+ * Both backends expose the same async API:
+ *   insert(record), findOne(query), findMany(query), findAll(),
+ *   update(id, updates), delete(id), deleteMany(query), count(query)
  */
 
 const fs = require("fs");
@@ -12,27 +17,22 @@ const { v4: uuidv4 } = require("uuid");
 
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, "..", "data");
 
-class Database {
+// ═══════════════════════════════════════════════════════
+// JSON File Database (fallback for local dev)
+// ═══════════════════════════════════════════════════════
+
+class JsonDatabase {
   constructor(collection) {
     this.collection = collection;
     this.filePath = path.join(DATA_DIR, `${collection}.json`);
-    this._ensureDir();
-  }
-
-  _ensureDir() {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
+    if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
   }
 
   _read() {
     try {
       if (!fs.existsSync(this.filePath)) return [];
-      const raw = fs.readFileSync(this.filePath, "utf8");
-      return JSON.parse(raw);
-    } catch {
-      return [];
-    }
+      return JSON.parse(fs.readFileSync(this.filePath, "utf8"));
+    } catch { return []; }
   }
 
   _write(data) {
@@ -41,10 +41,7 @@ class Database {
     fs.renameSync(tmp, this.filePath);
   }
 
-  /**
-   * Insert a new record. Auto-generates an id if not provided.
-   */
-  insert(record) {
+  async insert(record) {
     const data = this._read();
     const entry = {
       id: record.id || uuidv4(),
@@ -57,20 +54,14 @@ class Database {
     return entry;
   }
 
-  /**
-   * Find a single record by a field match.
-   */
-  findOne(query) {
+  async findOne(query) {
     const data = this._read();
     return data.find((item) =>
       Object.entries(query).every(([k, v]) => item[k] === v)
     ) || null;
   }
 
-  /**
-   * Find all records matching a query.
-   */
-  findMany(query = {}) {
+  async findMany(query = {}) {
     const data = this._read();
     if (Object.keys(query).length === 0) return data;
     return data.filter((item) =>
@@ -78,24 +69,16 @@ class Database {
     );
   }
 
-  /**
-   * Find all records (no filter).
-   */
-  findAll() {
-    return this._read();
-  }
+  async findAll() { return this._read(); }
 
-  /**
-   * Update a record by id.
-   */
-  update(id, updates) {
+  async update(id, updates) {
     const data = this._read();
     const index = data.findIndex((item) => item.id === id);
     if (index === -1) return null;
     data[index] = {
       ...data[index],
       ...updates,
-      id: data[index].id, // prevent id overwrite
+      id: data[index].id,
       createdAt: data[index].createdAt,
       updatedAt: new Date().toISOString(),
     };
@@ -103,10 +86,7 @@ class Database {
     return data[index];
   }
 
-  /**
-   * Delete a record by id.
-   */
-  delete(id) {
+  async delete(id) {
     const data = this._read();
     const index = data.findIndex((item) => item.id === id);
     if (index === -1) return false;
@@ -115,10 +95,7 @@ class Database {
     return true;
   }
 
-  /**
-   * Delete records matching a query.
-   */
-  deleteMany(query) {
+  async deleteMany(query) {
     const data = this._read();
     const before = data.length;
     const filtered = data.filter((item) =>
@@ -128,12 +105,34 @@ class Database {
     return before - filtered.length;
   }
 
-  /**
-   * Count records matching a query.
-   */
-  count(query = {}) {
-    return this.findMany(query).length;
+  async count(query = {}) {
+    return (await this.findMany(query)).length;
   }
 }
 
-module.exports = Database;
+// ═══════════════════════════════════════════════════════
+// Factory: pick backend based on DATABASE_URL
+// ═══════════════════════════════════════════════════════
+
+let _usingPostgres = null;
+
+async function getDatabase(collection) {
+  if (_usingPostgres === null) {
+    _usingPostgres = Boolean(process.env.DATABASE_URL);
+    if (_usingPostgres) {
+      console.log("  🐘 Using PostgreSQL database");
+      const { runMigrations } = require("./pg-database");
+      await runMigrations();
+    } else {
+      console.log("  📁 Using JSON file database (local)");
+    }
+  }
+
+  if (_usingPostgres) {
+    const { PostgresDatabase } = require("./pg-database");
+    return new PostgresDatabase(collection);
+  }
+  return new JsonDatabase(collection);
+}
+
+module.exports = { JsonDatabase, getDatabase };

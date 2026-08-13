@@ -1,9 +1,5 @@
 "use strict";
 
-/**
- * JWT Authentication middleware.
- */
-
 const AuthService = require("../services/auth");
 
 function extractToken(req) {
@@ -13,9 +9,6 @@ function extractToken(req) {
   return null;
 }
 
-/**
- * Require authentication.
- */
 function requireAuth(req, res, next) {
   const token = extractToken(req);
   if (!token) return res.status(401).json({ error: "Authentication required. Please log in." });
@@ -27,9 +20,6 @@ function requireAuth(req, res, next) {
   next();
 }
 
-/**
- * Require admin role.
- */
 function requireAdmin(req, res, next) {
   const token = extractToken(req);
   if (!token) return res.status(401).json({ error: "Authentication required." });
@@ -42,9 +32,6 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-/**
- * Optional auth — sets req.user if valid token present.
- */
 function optionalAuth(req, res, next) {
   const token = extractToken(req);
   if (token) {
@@ -54,14 +41,11 @@ function optionalAuth(req, res, next) {
   next();
 }
 
-/**
- * API key authentication.
- */
-function requireApiKey(req, res, next) {
+async function requireApiKey(req, res, next) {
   const apiKey = req.headers["x-api-key"] || req.query.key;
   if (!apiKey) return res.status(401).json({ error: "API key required." });
 
-  const user = AuthService.getUserByApiKey(apiKey);
+  const user = await AuthService.getUserByApiKey(apiKey);
   if (!user) return res.status(401).json({ error: "Invalid API key." });
 
   req.user = user;

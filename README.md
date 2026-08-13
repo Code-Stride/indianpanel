@@ -118,9 +118,15 @@ Pick your platform below. All options work out of the box — the `postinstall` 
 
 ---
 
-### Railway (Free Credit)
+# Railway PostgreSQL Setup
 
-**Best for: Easy deploy with persistent volume.**
+After deploying on Railway:
+
+1. Click **"+ New"** → **"Database"** → **"PostgreSQL"**
+2. Click on the PostgreSQL service → **"Connect"** → copy **`DATABASE_URL`**
+3. Go to your web service → **"Variables"** → add:
+   - `DATABASE_URL` = (paste the connection string)
+4. Railway will auto-redeploy → tables are created automatically
 
 1. Go to [railway.app](https://railway.app) → Sign up with GitHub
 2. Click **"New Project" → "Deploy from GitHub repo"**
