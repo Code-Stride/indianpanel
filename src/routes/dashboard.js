@@ -76,7 +76,7 @@ router.get("/", async (req, res, next) => {
                 const rawTs = msg.timestamp || msg.time || msg.date || "";
                 otps.push({
                   service: extracted.service,
-                  phone: OtpExtractor.maskPhone(phone),
+                  phone: phone || "Unknown",
                   code: extracted.code,
                   message: text.trim().slice(0, 200),
                   timestamp: rawTs ? (typeof rawTs === "number" ? new Date(rawTs).toISOString() : String(rawTs)) : new Date().toISOString(),

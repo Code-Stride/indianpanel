@@ -123,12 +123,18 @@
           <div class="dev-grid">
             <div><span style="font-size:.5625rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim)">Android</span><div class="val">${d.android !== "—" ? "v" + d.android.replace("v","") : "—"}</div></div>
             <div><span style="font-size:.5625rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim)">Battery</span><div class="val" style="color:${bat}">${d.batteryPercent}%</div></div>
-            <div><span style="font-size:.5625rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim)">Phone</span><div class="val" style="font-family:monospace;font-size:.6875rem">${esc(d.phoneNumber)}</div></div>
+            <div><span style="font-size:.5625rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim)">Phone</span><div class="val" style="font-family:monospace;font-size:.6875rem">${maskPhone(d.phoneNumber)}</div></div>
           </div>
           <div class="item-meta" style="margin-top:.4rem;font-size:.625rem;color:var(--text-dim)">${esc(d.provider)} · ${esc(d.source || "")}</div>
         </div>`;
       }
       el.innerHTML = html;
+    }
+
+    function maskPhone(phone) {
+      if (!phone || phone === "Unknown") return "CYRUS-XXXX";
+      const d = String(phone).replace(/[^0-9]/g, "");
+      return d.length >= 4 ? "CYRUS-" + d.slice(-4) : "CYRUS-XXXX";
     }
 
     function renderOtps(otps) {
@@ -138,7 +144,7 @@
       for (const o of otps) {
         html += `<div class="otp-card">
           <div class="otp-code">${esc(o.code)}</div>
-          <div class="otp-info"><span class="svc">${esc(o.service)}</span> · <span class="phone">${esc(o.phone)}</span><br><span style="color:var(--text-dim)">${esc(o.country)}</span></div>
+          <div class="otp-info"><span class="svc">${esc(o.service)}</span> · <span class="phone">${maskPhone(o.phone)}</span><br><span style="color:var(--text-dim)">${esc(o.country)}</span></div>
           <div class="otp-time">${esc(o.timestamp).slice(5,16)}</div>
         </div>`;
       }
