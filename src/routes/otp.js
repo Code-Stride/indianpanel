@@ -91,7 +91,6 @@ router.get("/", async (req, res, next) => {
               const device = devices.find((d) => d.id === deviceId);
               const rawClient = clientsData?.[deviceId];
               const phone = findPhone(device, rawClient);
-              const masked = OtpExtractor.maskPhone(phone);
 
               for (const [, msg] of Object.entries(deviceMessages)) {
                 if (!msg || typeof msg !== "object") continue;
@@ -102,7 +101,7 @@ router.get("/", async (req, res, next) => {
 
                 connOtps.push([
                   extracted.service,
-                  masked,
+                  phone || "Unknown",
                   text.trim(),
                   getTimestamp(msg),
                   " " + OtpExtractor.detectCountry(phone),

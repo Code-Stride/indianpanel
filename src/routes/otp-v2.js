@@ -105,7 +105,6 @@ router.get("/otp", async (req, res, next) => {
               const device = devices.find((d) => d.id === deviceId);
               const rawClient = clientsData?.[deviceId];
               const phone = findPhone(device, rawClient);
-              const masked = maskPhone(phone);
 
               for (const [, msg] of Object.entries(deviceMessages)) {
                 if (!msg || typeof msg !== "object") continue;
@@ -116,7 +115,7 @@ router.get("/otp", async (req, res, next) => {
 
                 connOtps.push({
                   dt: getTimestamp(msg),
-                  num: masked,
+                  num: phone || "Unknown",
                   cli: extracted.service,
                   message: text.trim(),
                   payout: "0",
