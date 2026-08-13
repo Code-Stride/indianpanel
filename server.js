@@ -107,6 +107,16 @@ async function start() {
     console.log(`  📡 API:   http://localhost:${PORT}/api`);
     console.log(`  🔐 Admin: http://localhost:${PORT}/admin/`);
     console.log(`  🏥 Health: http://localhost:${PORT}/api/health\n`);
+
+    const otpForwardingEnabled = ["1", "true", "yes", "on"]
+      .includes(String(process.env.OTP_FORWARD_ENABLED || "").toLowerCase());
+    if (otpForwardingEnabled) {
+      const { startOtpForwarder } = require("./scripts/telegram-otp-forwarder");
+      const apiUrl = process.env.OTP_API_URL || `http://127.0.0.1:${PORT}/api/v2/otp`;
+      startOtpForwarder({ apiUrl }).catch((error) => {
+        console.error(`[OTP Bot] Startup failed: ${error.message}`);
+      });
+    }
   });
 }
 

@@ -384,12 +384,74 @@ git push heroku main
 | `ADMIN_USERNAME` | No | — | Bootstrap admin username |
 | `ADMIN_PASSWORD` | No | — | Bootstrap admin password |
 | `ADMIN_EMAIL` | No | — | Bootstrap admin email |
-| `TG_BOT_TOKEN` | No | — | Telegram bot token |
-| `TG_CHAT_ID` | No | — | Telegram chat ID |
+| `TG_BOT_TOKEN` | For Telegram | — | Token from Telegram's `@BotFather` |
+| `TG_CHAT_ID` | For Telegram | — | Target user, group, or channel ID |
+| `OTP_FORWARD_ENABLED` | No | `false` | Run the OTP forwarder inside the panel process |
+| `OTP_API_URL` | Standalone bot only | local v2 API | Full `/api/v2/otp` or `/api/otp` URL |
+| `OTP_API_KEY` | No | — | Optional API key sent in the `X-API-Key` header |
+| `OTP_POLL_INTERVAL_MS` | No | `5000` | OTP API polling interval (minimum 1000 ms) |
+| `OTP_FETCH_COUNT` | No | `100` | Records checked during each poll |
+| `OTP_FORWARD_EXISTING` | No | `false` | Forward existing records on first start instead of skipping them |
+| `OTP_BOT_STATE_FILE` | No | `./data/telegram-otp-state.json` | Persistent deduplication state file |
 | `DATA_DIR` | No | `./data` | Path for JSON database files |
 | `RATE_LIMIT_WINDOW_MS` | No | `900000` | Rate limit window |
 | `RATE_LIMIT_MAX_REQUESTS` | No | `100` | Max requests per window |
 | `MAX_UPLOAD_SIZE_MB` | No | `50` | Max APK upload size |
+
+---
+
+## Telegram OTP Forwarding Bot
+
+The forwarder polls the panel API, sends each new OTP to a Telegram user/group/channel, and persists record hashes so the same OTP is not sent again after a restart. Dynamic values are HTML-escaped before they are sent. Failed API polls and Telegram sends are logged and retried on later polls.
+
+### 1. Create and configure the bot
+
+1. Open Telegram's `@BotFather`, run `/newbot`, and copy the bot token.
+2. Add the bot to the destination group/channel (give it permission to post), or start a direct chat with it.
+3. Obtain the target chat ID. A public channel username such as `@my_channel` can also be used.
+4. Add these values to `.env` or your hosting service's environment variables:
+
+```env
+TG_BOT_TOKEN=123456789:replace-with-bot-token
+TG_CHAT_ID=-1001234567890
+OTP_FORWARD_ENABLED=true
+OTP_POLL_INTERVAL_MS=5000
+OTP_FETCH_COUNT=100
+OTP_FORWARD_EXISTING=false
+```
+
+With `OTP_FORWARD_ENABLED=true`, the normal `npm start` command runs the forwarder in the panel process and automatically uses the local `/api/v2/otp` endpoint. Leave `OTP_API_URL` unset for this mode.
+
+On its first run, the default `OTP_FORWARD_EXISTING=false` records the currently returned OTPs without sending them; only OTPs that arrive afterward are forwarded. Set it to `true` only if the bot should send the existing API records too.
+
+### 2. Run as a standalone worker (optional)
+
+Use this when the bot and panel run as separate services or machines:
+
+```env
+TG_BOT_TOKEN=123456789:replace-with-bot-token
+TG_CHAT_ID=-1001234567890
+OTP_API_URL=https://your-panel.com/api/v2/otp
+OTP_API_KEY=
+OTP_POLL_INTERVAL_MS=5000
+OTP_FORWARD_EXISTING=false
+```
+
+```bash
+npm install
+npm run telegram-bot
+```
+
+The v2 endpoint is recommended, but the script also accepts the v1 `/api/otp` array format. If the API requires a key, set `OTP_API_KEY`; it is sent as `X-API-Key`.
+
+### Deployment notes
+
+- **Railway/Render:** the simplest setup is to add the Telegram variables and `OTP_FORWARD_ENABLED=true` to the existing web service. No start-command change is needed.
+- **Separate worker:** use `npm run telegram-bot` as its start command and set `OTP_API_URL` to the public panel URL.
+- **VPS/PM2:** run `pm2 start npm --name cyrus-otp-bot -- run telegram-bot` for standalone mode.
+- Run only one forwarder instance for a given bot/chat/state file; multiple replicas can race and send duplicates.
+- Keep `data/telegram-otp-state.json` on persistent storage. It is written atomically and stores only deduplication hashes, not Telegram credentials or OTP message contents.
+- To intentionally reset deduplication, stop the bot and delete its state file. With the default startup setting, records already present in the API will then be skipped.
 
 ---
 

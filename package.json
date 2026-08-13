@@ -8,6 +8,7 @@
     "dev": "nodemon server.js",
     "build": "node scripts/build-frontend.js",
     "postinstall": "node scripts/build-frontend.js || true",
+    "telegram-bot": "node scripts/telegram-otp-forwarder.js",
     "test": "node --test",
     "lint": "eslint src/ server.js"
   },
