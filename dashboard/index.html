@@ -110,7 +110,8 @@
         document.getElementById("nav").insertBefore(a, document.getElementById("nav").children[1]);
       }
       loadDashboard();
-      setInterval(loadDashboard, 30000);
+      setInterval(loadDashboard, 15000); // Refresh devices every 15s
+      startLiveOtp(); // Live OTP via SSE (pushes every 5s)
     }
 
     async function loadDashboard() {
@@ -119,6 +120,32 @@
         if (!res.ok) throw new Error("Failed");
         render(await res.json());
       } catch (err) { document.getElementById("subtitle").textContent = "Error: " + err.message; }
+    }
+
+    // Live OTP via Server-Sent Events
+    function startLiveOtp() {
+      const evtSource = new EventSource("/api/live/otp", { withCredentials: true });
+      evtSource.onmessage = function(event) {
+        try {
+          const data = JSON.parse(event.data);
+          document.getElementById("s-otps").textContent = data.total;
+          renderOtps(data.recent);
+        } catch {}
+      };
+      evtSource.onerror = function() {
+        // Fallback to polling if SSE fails
+        evtSource.close();
+        setInterval(async () => {
+          try {
+            const res = await fetch("/api/dashboard", { credentials: "include" });
+            if (res.ok) {
+              const data = await res.json();
+              document.getElementById("s-otps").textContent = data.otps.total;
+              renderOtps(data.otps.recent);
+            }
+          } catch {}
+        }, 5000);
+      };
     }
 
     function render(d) {
