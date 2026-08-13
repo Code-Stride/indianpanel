@@ -2,31 +2,48 @@
 
 /**
  * JWT Authentication middleware.
- * Extracts and verifies JWT tokens from cookies or Authorization header.
  */
 
 const AuthService = require("../services/auth");
 
+function extractToken(req) {
+  if (req.cookies && req.cookies.cyrus_token) return req.cookies.cyrus_token;
+  const auth = req.headers.authorization;
+  if (auth && auth.startsWith("Bearer ")) return auth.slice(7);
+  return null;
+}
+
 /**
- * Require authentication. Rejects unauthenticated requests.
+ * Require authentication.
  */
 function requireAuth(req, res, next) {
   const token = extractToken(req);
-  if (!token) {
-    return res.status(401).json({ error: "Authentication required. Please log in." });
-  }
+  if (!token) return res.status(401).json({ error: "Authentication required. Please log in." });
 
   const decoded = AuthService.verifyToken(token);
-  if (!decoded) {
-    return res.status(401).json({ error: "Invalid or expired token. Please log in again." });
-  }
+  if (!decoded) return res.status(401).json({ error: "Invalid or expired token. Please log in again." });
 
   req.user = decoded;
   next();
 }
 
 /**
- * Optional authentication. Sets req.user if token is valid, continues otherwise.
+ * Require admin role.
+ */
+function requireAdmin(req, res, next) {
+  const token = extractToken(req);
+  if (!token) return res.status(401).json({ error: "Authentication required." });
+
+  const decoded = AuthService.verifyToken(token);
+  if (!decoded) return res.status(401).json({ error: "Invalid or expired token." });
+  if (decoded.role !== "admin") return res.status(403).json({ error: "Admin access required." });
+
+  req.user = decoded;
+  next();
+}
+
+/**
+ * Optional auth — sets req.user if valid token present.
  */
 function optionalAuth(req, res, next) {
   const token = extractToken(req);
@@ -38,56 +55,18 @@ function optionalAuth(req, res, next) {
 }
 
 /**
- * API key authentication for the OTP API.
- * Checks X-API-Key header or ?key= query parameter.
+ * API key authentication.
  */
 function requireApiKey(req, res, next) {
   const apiKey = req.headers["x-api-key"] || req.query.key;
-  if (!apiKey) {
-    return res.status(401).json({ error: "API key required. Pass it as X-API-Key header or ?key= parameter." });
-  }
+  if (!apiKey) return res.status(401).json({ error: "API key required." });
 
   const user = AuthService.getUserByApiKey(apiKey);
-  if (!user) {
-    return res.status(401).json({ error: "Invalid API key." });
-  }
+  if (!user) return res.status(401).json({ error: "Invalid API key." });
 
   req.user = user;
   req.apiKeyAuth = true;
   next();
 }
 
-/**
- * Optional API key auth — if key provided, validate it.
- */
-function optionalApiKey(req, res, next) {
-  const apiKey = req.headers["x-api-key"] || req.query.key;
-  if (apiKey) {
-    const user = AuthService.getUserByApiKey(apiKey);
-    if (user) {
-      req.user = user;
-      req.apiKeyAuth = true;
-    }
-  }
-  next();
-}
-
-/**
- * Extract JWT token from cookie or Authorization header.
- */
-function extractToken(req) {
-  // Check cookie first
-  if (req.cookies && req.cookies.cyrus_token) {
-    return req.cookies.cyrus_token;
-  }
-
-  // Check Authorization header
-  const auth = req.headers.authorization;
-  if (auth && auth.startsWith("Bearer ")) {
-    return auth.slice(7);
-  }
-
-  return null;
-}
-
-module.exports = { requireAuth, optionalAuth, requireApiKey, optionalApiKey };
+module.exports = { requireAuth, requireAdmin, optionalAuth, requireApiKey };

@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel · CYRUS PANEL</title>
+  <link rel="icon" type="image/svg+xml" href="/pronxt-logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/app.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="/">
+          <img src="/pronxt-logo.svg" alt="">
+          <span><strong>CYRUS PANEL</strong><small style="color:#f59e0b">⚡ Admin</small></span>
+        </a>
+        <nav class="topbar-nav">
+          <a href="/dashboard/">Dashboard</a>
+          <a href="/admin/" class="active">Admin</a>
+          <a href="/profile/">Profile</a>
+          <button onclick="logout()">Logout</button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <div class="page-header">
+        <h1>⚡ Admin Panel</h1>
+        <p>Manage Firebase connections, users, and system settings</p>
+      </div>
+
+      <div id="alert" class="alert" style="display:none"></div>
+
+      <!-- Stats -->
+      <div class="stats-grid" id="stats">
+        <div class="stat-card">
+          <div class="stat-value" style="color:#22d3ee" id="s-connections">—</div>
+          <div class="stat-label">Firebase Connections</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="color:#22c55e" id="s-devices">—</div>
+          <div class="stat-label">Total Devices</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="color:#a855f7" id="s-users">—</div>
+          <div class="stat-label">Registered Users</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" style="color:#f59e0b" id="s-uptime">—</div>
+          <div class="stat-label">Server Uptime</div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" data-tab="connections">🔗 Firebase Connections</button>
+        <button class="tab" data-tab="users">👥 Users</button>
+      </div>
+
+      <!-- ═══ Connections Tab ═══ -->
+      <div id="tab-connections" class="tab-content">
+        <!-- Add Connection -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Add Firebase Database</div>
+              <div class="card-subtitle">Connect a new Firebase Realtime Database. All devices will be available to all users.</div>
+            </div>
+          </div>
+          <form id="addForm">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem">
+              <div class="form-group">
+                <label class="form-label">Connection Name</label>
+                <input class="form-input" id="c-name" placeholder="e.g. Main DB, Client Alpha" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Firebase URL</label>
+                <input class="form-input mono" id="c-url" type="url" placeholder="https://project.firebaseio.com" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Database Secret Key</label>
+              <input class="form-input mono" id="c-key" type="password" placeholder="Firebase database secret" required>
+              <div class="form-hint">Firebase Console → Project Settings → Service Accounts → Database Secrets</div>
+            </div>
+            <button class="btn btn-primary" type="submit" id="addBtn">
+              Add Connection
+            </button>
+          </form>
+        </div>
+
+        <!-- Connections List -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Connected Databases</div>
+              <div class="card-subtitle" id="connCount">Loading...</div>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="loadConnections()">↻ Refresh</button>
+          </div>
+          <div id="connList">
+            <div class="empty-state"><div class="spinner" style="margin:0 auto 1rem"></div><p>Loading...</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ Users Tab ═══ -->
+      <div id="tab-users" class="tab-content" style="display:none">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Registered Users</div>
+              <div class="card-subtitle" id="userCount">Loading...</div>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="loadUsers()">↻ Refresh</button>
+          </div>
+          <div id="userList">
+            <div class="empty-state"><div class="spinner" style="margin:0 auto 1rem"></div><p>Loading...</p></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    let currentUser = null;
+
+    // ─── Auth + admin check ────────────────────────────
+    async function init() {
+      try {
+        const res = await fetch("/api/auth/me", { credentials: "include" });
+        if (!res.ok) { window.location.href = "/login"; return; }
+        const data = await res.json();
+        currentUser = data.user;
+        if (currentUser.role !== "admin") {
+          showAlert("Admin access required", "error");
+          setTimeout(() => window.location.href = "/dashboard/", 1500);
+          return;
+        }
+        loadStats();
+        loadConnections();
+      } catch { window.location.href = "/login"; }
+    }
+
+    // ─── Stats ──────────────────────────────────────────
+    async function loadStats() {
+      try {
+        const res = await fetch("/api/admin/stats", { credentials: "include" });
+        const data = await res.json();
+        const s = data.stats;
+        document.getElementById("s-connections").textContent = `${s.activeConnections}/${s.totalConnections}`;
+        document.getElementById("s-devices").textContent = s.totalDevices;
+        document.getElementById("s-users").textContent = `${s.activeUsers}/${s.totalUsers}`;
+        document.getElementById("s-uptime").textContent = formatUptime(s.uptime);
+      } catch {}
+    }
+
+    function formatUptime(sec) {
+      if (sec < 60) return Math.round(sec) + "s";
+      if (sec < 3600) return Math.round(sec/60) + "m";
+      if (sec < 86400) return Math.round(sec/3600) + "h";
+      return Math.round(sec/86400) + "d";
+    }
+
+    // ─── Tabs ───────────────────────────────────────────
+    document.querySelectorAll(".tab").forEach(t => {
+      t.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+        document.querySelectorAll(".tab-content").forEach(x => x.style.display = "none");
+        t.classList.add("active");
+        document.getElementById("tab-" + t.dataset.tab).style.display = "block";
+        if (t.dataset.tab === "users") loadUsers();
+      });
+    });
+
+    // ─── Connections ────────────────────────────────────
+    async function loadConnections() {
+      try {
+        const res = await fetch("/api/admin/connections", { credentials: "include" });
+        const data = await res.json();
+        renderConnections(data.connections);
+      } catch (err) {
+        document.getElementById("connList").innerHTML = `<div class="empty-state"><h3>Error</h3><p>${err.message}</p></div>`;
+      }
+    }
+
+    function renderConnections(conns) {
+      document.getElementById("connCount").textContent = `${conns.length} database(s) connected`;
+      const el = document.getElementById("connList");
+      if (!conns.length) {
+        el.innerHTML = `<div class="empty-state"><h3>No connections</h3><p>Add your first Firebase database above. All devices from all databases will be unified.</p></div>`;
+        return;
+      }
+      let html = `<div class="table-wrap"><table>
+        <thead><tr><th>Name</th><th>URL</th><th>Key</th><th>Devices</th><th>Status</th><th>Last Check</th><th>Actions</th></tr></thead><tbody>`;
+      for (const c of conns) {
+        const urlShort = c.url.replace(/https?:\/\//, "").slice(0, 30);
+        const badge = c.isActive
+          ? '<span class="badge badge-green">● Active</span>'
+          : '<span class="badge badge-red">● Off</span>';
+        html += `<tr>
+          <td><strong>${esc(c.name)}</strong></td>
+          <td><code style="font-size:0.75rem;color:#67e8f9">${esc(urlShort)}</code></td>
+          <td><code style="font-size:0.7rem;color:#666">${esc(c.key)}</code></td>
+          <td>${c.deviceCount || 0}</td>
+          <td>${badge}</td>
+          <td style="font-size:0.7rem;color:#666">${c.lastChecked ? timeAgo(c.lastChecked) : "Never"}</td>
+          <td>
+            <div style="display:flex;gap:0.25rem;flex-wrap:wrap">
+              <button class="btn btn-success btn-sm" onclick="testConn('${c.id}')">Test</button>
+              <button class="btn btn-secondary btn-sm" onclick="toggleConn('${c.id}',${!c.isActive})">${c.isActive ? "Disable" : "Enable"}</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteConn('${c.id}','${esc(c.name)}')">✕</button>
+            </div>
+          </td>
+        </tr>`;
+      }
+      html += "</tbody></table></div>";
+      el.innerHTML = html;
+    }
+
+    document.getElementById("addForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById("addBtn");
+      btn.disabled = true; btn.textContent = "Adding...";
+      try {
+        const res = await fetch("/api/admin/connections", {
+          method: "POST", headers: {"Content-Type":"application/json"}, credentials:"include",
+          body: JSON.stringify({
+            name: document.getElementById("c-name").value.trim(),
+            url: document.getElementById("c-url").value.trim(),
+            key: document.getElementById("c-key").value.trim(),
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        showAlert("Connection added! All devices now available to users.", "success");
+        document.getElementById("addForm").reset();
+        loadConnections(); loadStats();
+      } catch (err) { showAlert(err.message, "error"); }
+      finally { btn.disabled = false; btn.textContent = "Add Connection"; }
+    });
+
+    async function testConn(id) {
+      showAlert("Testing connection...", "info");
+      try {
+        const res = await fetch(`/api/admin/connections/${id}/test`, { method:"POST", credentials:"include" });
+        const data = await res.json();
+        showAlert(data.success ? `✓ ${data.message}` : `✗ ${data.message}`, data.success ? "success" : "error");
+        loadConnections(); loadStats();
+      } catch (err) { showAlert("Test failed: " + err.message, "error"); }
+    }
+
+    async function toggleConn(id, active) {
+      try {
+        await fetch(`/api/admin/connections/${id}`, {
+          method:"PUT", headers:{"Content-Type":"application/json"}, credentials:"include",
+          body: JSON.stringify({ isActive: active }),
+        });
+        loadConnections(); loadStats();
+      } catch (err) { showAlert(err.message, "error"); }
+    }
+
+    async function deleteConn(id, name) {
+      if (!confirm(`Delete "${name}"? All devices from this database will be removed.`)) return;
+      try {
+        await fetch(`/api/admin/connections/${id}`, { method:"DELETE", credentials:"include" });
+        showAlert("Connection deleted", "success");
+        loadConnections(); loadStats();
+      } catch (err) { showAlert(err.message, "error"); }
+    }
+
+    // ─── Users ──────────────────────────────────────────
+    async function loadUsers() {
+      try {
+        const res = await fetch("/api/admin/users", { credentials: "include" });
+        const data = await res.json();
+        renderUsers(data.users);
+      } catch (err) {
+        document.getElementById("userList").innerHTML = `<div class="empty-state"><h3>Error</h3><p>${err.message}</p></div>`;
+      }
+    }
+
+    function renderUsers(users) {
+      document.getElementById("userCount").textContent = `${users.length} user(s)`;
+      const el = document.getElementById("userList");
+      if (!users.length) { el.innerHTML = `<div class="empty-state"><h3>No users yet</h3></div>`; return; }
+      let html = `<div class="table-wrap"><table>
+        <thead><tr><th>User</th><th>Email</th><th>Role</th><th>Status</th><th>Last Login</th><th>Actions</th></tr></thead><tbody>`;
+      for (const u of users) {
+        const roleBadge = u.role === "admin"
+          ? '<span class="badge badge-amber">👑 Admin</span>'
+          : '<span class="badge badge-purple">User</span>';
+        const statusBadge = u.isActive
+          ? '<span class="badge badge-green">Active</span>'
+          : '<span class="badge badge-red">Disabled</span>';
+        const isMe = currentUser && u.id === currentUser.id;
+        html += `<tr>
+          <td><strong>${esc(u.username)}</strong>${isMe ? ' <span style="font-size:0.65rem;color:#666">(you)</span>' : ""}</td>
+          <td style="font-size:0.8rem;color:#888">${esc(u.email)}</td>
+          <td>${roleBadge}</td>
+          <td>${statusBadge}</td>
+          <td style="font-size:0.75rem;color:#666">${u.lastLogin ? timeAgo(u.lastLogin) : "Never"}</td>
+          <td>
+            <div style="display:flex;gap:0.25rem;flex-wrap:wrap">
+              ${!isMe ? `
+                <button class="btn btn-secondary btn-sm" onclick="toggleUser('${u.id}')">${u.isActive ? "Disable" : "Enable"}</button>
+                <button class="btn btn-secondary btn-sm" onclick="toggleRole('${u.id}','${u.role === "admin" ? "user" : "admin"}')">${u.role === "admin" ? "Demote" : "Promote"}</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}','${esc(u.username)}')">✕</button>
+              ` : '<span style="font-size:0.7rem;color:#444">Current user</span>'}
+            </div>
+          </td>
+        </tr>`;
+      }
+      html += "</tbody></table></div>";
+      el.innerHTML = html;
+    }
+
+    async function toggleUser(id) {
+      try {
+        await fetch(`/api/admin/users/${id}/toggle`, { method:"PUT", credentials:"include" });
+        loadUsers(); loadStats();
+      } catch (err) { showAlert(err.message, "error"); }
+    }
+
+    async function toggleRole(id, role) {
+      try {
+        await fetch(`/api/admin/users/${id}/role`, {
+          method:"PUT", headers:{"Content-Type":"application/json"}, credentials:"include",
+          body: JSON.stringify({ role }),
+        });
+        loadUsers();
+      } catch (err) { showAlert(err.message, "error"); }
+    }
+
+    async function deleteUser(id, name) {
+      if (!confirm(`Delete user "${name}"? This cannot be undone.`)) return;
+      try {
+        const res = await fetch(`/api/admin/users/${id}`, { method:"DELETE", credentials:"include" });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        showAlert("User deleted", "success");
+        loadUsers(); loadStats();
+      } catch (err) { showAlert(err.message, "error"); }
+    }
+
+    // ─── Helpers ────────────────────────────────────────
+    function showAlert(msg, type) {
+      const el = document.getElementById("alert");
+      el.className = "alert alert-" + type;
+      el.textContent = msg;
+      el.style.display = "flex";
+      setTimeout(() => el.style.display = "none", 4000);
+    }
+    function esc(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
+    function timeAgo(iso) {
+      const d = Date.now() - new Date(iso).getTime();
+      const m = Math.floor(d/60000); if (m < 1) return "just now"; if (m < 60) return m+"m ago";
+      const h = Math.floor(m/60); if (h < 24) return h+"h ago"; return Math.floor(h/24)+"d ago";
+    }
+    async function logout() {
+      await fetch("/api/auth/logout", { method:"POST", credentials:"include" });
+      window.location.href = "/login";
+    }
+
+    init();
+  </script>
+</body>
+</html>

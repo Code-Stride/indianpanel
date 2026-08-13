@@ -11,6 +11,7 @@ const morgan = require("morgan");
 
 const { rateLimiter } = require("./src/middleware/rateLimiter");
 const { errorHandler, notFoundHandler } = require("./src/middleware/errorHandler");
+const AuthService = require("./src/services/auth");
 
 const apiRoutes = require("./src/routes/api");
 
@@ -19,7 +20,7 @@ const PORT = parseInt(process.env.PORT || "3000", 10);
 
 // ─── Security & Compression ───────────────────────────────────────────────────
 app.use(helmet({
-  contentSecurityPolicy: false, // allow inline scripts in served HTML
+  contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false,
 }));
 app.use(compression());
@@ -42,51 +43,35 @@ app.use("/api/", rateLimiter);
 app.use("/api", apiRoutes);
 
 // ─── Static Frontend ──────────────────────────────────────────────────────────
-// Serve the panel frontend from the public directory
 app.use(express.static(path.join(__dirname, "public"), {
   index: "index.html",
   maxAge: process.env.NODE_ENV === "production" ? "1h" : 0,
 }));
 
 // ─── SPA Route Fallback ───────────────────────────────────────────────────────
-// All non-API routes serve the frontend (the app handles client-side routing)
 const frontendRoutes = [
   "/",
-  "/dashboard",
-  "/dashboard/*",
-  "/settings",
-  "/settings/*",
-  "/accounts",
-  "/accounts/*",
-  "/get-accounts",
-  "/get-accounts/*",
-  "/profile",
-  "/profile/*",
-  "/about",
-  "/about/*",
-  "/support",
-  "/support/*",
-  "/privacy",
-  "/privacy/*",
-  "/terms",
-  "/terms/*",
-  "/copyright",
-  "/copyright/*",
-  "/changelog",
-  "/changelog/*",
-  "/status",
-  "/status/*",
-  "/docs",
-  "/docs/*",
+  "/dashboard", "/dashboard/*",
+  "/settings", "/settings/*",
+  "/accounts", "/accounts/*",
+  "/get-accounts", "/get-accounts/*",
+  "/profile", "/profile/*",
+  "/about", "/about/*",
+  "/support", "/support/*",
+  "/privacy", "/privacy/*",
+  "/terms", "/terms/*",
+  "/copyright", "/copyright/*",
+  "/changelog", "/changelog/*",
+  "/status", "/status/*",
+  "/docs", "/docs/*",
   "/login",
   "/register",
-  "/connections",
-  "/connections/*",
+  "/admin", "/admin/*",
+  "/connections", "/connections/*",
 ];
 
 frontendRoutes.forEach((route) => {
   app.get(route, (req, res) => {
-    // Try route-specific index first, fall back to root index
     const specificIndex = path.join(__dirname, "public", req.path, "index.html");
     res.sendFile(specificIndex, (err) => {
       if (err) {
@@ -101,12 +86,23 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 // ─── Start Server ─────────────────────────────────────────────────────────────
-if (require.main === module) {
+async function start() {
+  // Bootstrap admin from .env if configured
+  await AuthService.bootstrapAdmin();
+
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`\n  ⚡ CYRUS PANEL Server v2.0.0`);
     console.log(`  🌐 http://localhost:${PORT}`);
-    console.log(`  📡 API:  http://localhost:${PORT}/api`);
+    console.log(`  📡 API:   http://localhost:${PORT}/api`);
+    console.log(`  🔐 Admin: http://localhost:${PORT}/admin/`);
     console.log(`  🏥 Health: http://localhost:${PORT}/api/health\n`);
+  });
+}
+
+if (require.main === module) {
+  start().catch((err) => {
+    console.error("Failed to start server:", err);
+    process.exit(1);
   });
 }
 

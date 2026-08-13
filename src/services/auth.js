@@ -3,6 +3,10 @@
 /**
  * Authentication service.
  * Handles user registration, login, JWT tokens, and API key generation.
+ *
+ * Admin seeding:
+ *   - First registered user automatically gets role: "admin"
+ *   - .env ADMIN_USERNAME + ADMIN_PASSWORD can bootstrap/recover admin
  */
 
 const bcrypt = require("bcryptjs");
@@ -18,10 +22,47 @@ const JWT_EXPIRY = "7d";
 
 class AuthService {
   /**
+   * Bootstrap admin from .env if configured and no admin exists.
+   * Called once on server startup.
+   */
+  static async bootstrapAdmin() {
+    const adminUser = config.admin.username;
+    const adminPass = config.admin.password;
+    if (!adminUser || !adminPass) return;
+
+    // Check if this admin already exists
+    const existing = usersDb.findOne({ username: adminUser });
+    if (existing) {
+      // Ensure they have admin role
+      if (existing.role !== "admin") {
+        usersDb.update(existing.id, { role: "admin" });
+        console.log(`  👑 Promoted ${adminUser} to admin`);
+      }
+      return;
+    }
+
+    // Create admin from env
+    const hashedPassword = await bcrypt.hash(adminPass, SALT_ROUNDS);
+    usersDb.insert({
+      username: adminUser,
+      email: config.admin.email || `${adminUser}@admin.local`,
+      password: hashedPassword,
+      apiKey: AuthService.generateApiKey(),
+      role: "admin",
+      avatar: "",
+      bio: "System Administrator",
+      phone: "",
+      isActive: true,
+      lastLogin: null,
+    });
+    console.log(`  👑 Admin account created: ${adminUser}`);
+  }
+
+  /**
    * Register a new user.
+   * First user to register automatically gets admin role.
    */
   static async register({ username, email, password }) {
-    // Validate inputs
     if (!username || username.length < 3) {
       throw Object.assign(new Error("Username must be at least 3 characters"), { status: 400 });
     }
@@ -32,7 +73,6 @@ class AuthService {
       throw Object.assign(new Error("Password must be at least 6 characters"), { status: 400 });
     }
 
-    // Check uniqueness
     if (usersDb.findOne({ username })) {
       throw Object.assign(new Error("Username already taken"), { status: 409 });
     }
@@ -43,18 +83,27 @@ class AuthService {
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
     const apiKey = AuthService.generateApiKey();
 
+    // First user = admin
+    const allUsers = usersDb.findAll();
+    const isFirstUser = allUsers.length === 0;
+    const role = isFirstUser ? "admin" : "user";
+
     const user = usersDb.insert({
       username,
       email,
       password: hashedPassword,
       apiKey,
-      role: "user",
+      role,
       avatar: "",
       bio: "",
       phone: "",
       isActive: true,
       lastLogin: null,
     });
+
+    if (isFirstUser) {
+      console.log(`  👑 First user "${username}" registered as admin`);
+    }
 
     return AuthService.sanitizeUser(user);
   }
@@ -72,7 +121,7 @@ class AuthService {
       throw Object.assign(new Error("Invalid credentials"), { status: 401 });
     }
     if (!user.isActive) {
-      throw Object.assign(new Error("Account is deactivated"), { status: 403 });
+      throw Object.assign(new Error("Account is deactivated. Contact admin."), { status: 403 });
     }
 
     const valid = await bcrypt.compare(password, user.password);
@@ -80,7 +129,6 @@ class AuthService {
       throw Object.assign(new Error("Invalid credentials"), { status: 401 });
     }
 
-    // Update last login
     usersDb.update(user.id, { lastLogin: new Date().toISOString() });
 
     const token = AuthService.generateToken(user);
@@ -90,24 +138,14 @@ class AuthService {
     };
   }
 
-  /**
-   * Generate a JWT token for a user.
-   */
   static generateToken(user) {
     return jwt.sign(
-      {
-        userId: user.id,
-        username: user.username,
-        role: user.role,
-      },
+      { userId: user.id, username: user.username, role: user.role },
       config.session.secret,
       { expiresIn: JWT_EXPIRY }
     );
   }
 
-  /**
-   * Verify a JWT token.
-   */
   static verifyToken(token) {
     try {
       return jwt.verify(token, config.session.secret);
@@ -116,25 +154,16 @@ class AuthService {
     }
   }
 
-  /**
-   * Generate a unique API key.
-   */
   static generateApiKey() {
     return "cp_" + crypto.randomBytes(24).toString("hex");
   }
 
-  /**
-   * Regenerate a user's API key.
-   */
   static regenerateApiKey(userId) {
     const newKey = AuthService.generateApiKey();
     usersDb.update(userId, { apiKey: newKey });
     return newKey;
   }
 
-  /**
-   * Update user profile fields.
-   */
   static updateProfile(userId, updates) {
     const allowed = ["avatar", "bio", "phone", "email"];
     const safeUpdates = {};
@@ -146,9 +175,6 @@ class AuthService {
     return AuthService.sanitizeUser(updated);
   }
 
-  /**
-   * Change password.
-   */
   static async changePassword(userId, currentPassword, newPassword) {
     const user = usersDb.findOne({ id: userId });
     if (!user) throw Object.assign(new Error("User not found"), { status: 404 });
@@ -165,27 +191,44 @@ class AuthService {
     return true;
   }
 
-  /**
-   * Get user by ID (sanitized).
-   */
   static getUserById(userId) {
     const user = usersDb.findOne({ id: userId });
     if (!user) return null;
     return AuthService.sanitizeUser(user);
   }
 
-  /**
-   * Get user by API key.
-   */
   static getUserByApiKey(apiKey) {
     const user = usersDb.findOne({ apiKey });
     if (!user) return null;
     return AuthService.sanitizeUser(user);
   }
 
-  /**
-   * Remove sensitive fields from user object.
-   */
+  // ─── Admin user management ────────────────────────────
+
+  static listAllUsers() {
+    return usersDb.findAll().map((u) => AuthService.sanitizeUser(u));
+  }
+
+  static toggleUserActive(userId) {
+    const user = usersDb.findOne({ id: userId });
+    if (!user) throw Object.assign(new Error("User not found"), { status: 404 });
+    const updated = usersDb.update(userId, { isActive: !user.isActive });
+    return AuthService.sanitizeUser(updated);
+  }
+
+  static setUserRole(userId, role) {
+    if (!["user", "admin"].includes(role)) {
+      throw Object.assign(new Error("Invalid role"), { status: 400 });
+    }
+    const updated = usersDb.update(userId, { role });
+    if (!updated) throw Object.assign(new Error("User not found"), { status: 404 });
+    return AuthService.sanitizeUser(updated);
+  }
+
+  static deleteUser(userId) {
+    return usersDb.delete(userId);
+  }
+
   static sanitizeUser(user) {
     const { password, ...safe } = user;
     return safe;

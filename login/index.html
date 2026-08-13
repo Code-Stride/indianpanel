@@ -47,7 +47,12 @@
 
     // Redirect if already logged in
     fetch("/api/auth/me", { credentials: "include" })
-      .then(r => { if (r.ok) window.location.href = "/dashboard/"; });
+      .then(r => { if (r.ok) return r.json(); throw new Error(); })
+      .then(data => {
+        if (data.user.role === "admin") window.location.href = "/admin/";
+        else window.location.href = "/dashboard/";
+      })
+      .catch(() => {});
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -69,7 +74,9 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Login failed");
 
-        window.location.href = "/dashboard/";
+        // Redirect based on role
+        if (data.user.role === "admin") window.location.href = "/admin/";
+        else window.location.href = "/dashboard/";
       } catch (err) {
         alert.textContent = err.message;
         alert.style.display = "flex";

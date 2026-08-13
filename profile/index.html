@@ -17,9 +17,8 @@
           <img src="/pronxt-logo.svg" alt="">
           <span><strong>CYRUS PANEL</strong><small>Profile</small></span>
         </a>
-        <nav class="topbar-nav">
+        <nav class="topbar-nav" id="nav">
           <a href="/dashboard/">Dashboard</a>
-          <a href="/connections/">Connections</a>
           <a href="/profile/" class="active">Profile</a>
           <button onclick="logout()">Logout</button>
         </nav>
@@ -167,6 +166,16 @@
         if (!res.ok) { window.location.href = "/login"; return; }
         const data = await res.json();
         currentUser = data.user;
+
+        // Add admin link to nav if admin
+        if (currentUser.role === "admin") {
+          const nav = document.getElementById("nav");
+          const adminLink = document.createElement("a");
+          adminLink.href = "/admin/";
+          adminLink.textContent = "⚡ Admin";
+          nav.insertBefore(adminLink, nav.querySelector('a[href="/profile/"]'));
+        }
+
         renderProfile(data);
       } catch {
         window.location.href = "/login";

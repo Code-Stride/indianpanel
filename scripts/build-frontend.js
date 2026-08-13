@@ -35,6 +35,7 @@ const COPY_DIRS = [
   "register",
   "connections",
   "assets",
+  "admin",
 ];
 
 // Individual files to copy
