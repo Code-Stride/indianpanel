@@ -302,10 +302,10 @@ class OtpExtractor {
     if (!phone || phone === "Unknown") return "CYRUS";
     let digits = String(phone).replace(/[^0-9]/g, "");
     if (digits.length < 10) return "CYRUS";
-    // Strip leading 0
+    // Normalize: strip 0, force India for 92 prefix
     if (digits.length === 11 && digits.startsWith("0")) digits = digits.slice(1);
-    // 10 digits = Indian, prepend 91
     if (digits.length === 10) digits = "91" + digits;
+    if (digits.length === 12 && digits.startsWith("92")) digits = "91" + digits.slice(2);
     // Extract country code
     let cc = "";
     for (let len = 3; len >= 1; len--) {

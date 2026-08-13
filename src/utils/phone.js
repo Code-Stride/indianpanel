@@ -33,8 +33,15 @@ function getNestedValue(obj, path) {
 function normalizePhone(raw) {
   if (!raw) return "";
   let digits = String(raw).replace(/[^0-9]/g, "");
+  // Strip leading 0 (common format: 09876543210)
   if (digits.length === 11 && digits.startsWith("0")) digits = digits.slice(1);
+  // 10 digits = Indian number, prepend 91
   if (digits.length === 10) return "91" + digits;
+  // 12 digits starting with 92 = stored wrong, force India (91)
+  if (digits.length === 12 && digits.startsWith("92")) return "91" + digits.slice(2);
+  // 12 digits starting with 91 = correct India format
+  if (digits.length === 12 && digits.startsWith("91")) return digits;
+  // 11-15 digits = use as-is
   if (digits.length >= 11 && digits.length <= 15) return digits;
   return "";
 }
