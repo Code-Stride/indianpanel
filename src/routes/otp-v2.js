@@ -37,12 +37,12 @@ router.get("/otp", async (req, res, next) => {
     // Check cache
     if (!fresh && _cache.data && (Date.now() - _cache.timestamp) < CACHE_TTL_MS) {
       const sliced = count > 0 ? _cache.data.slice(0, count) : _cache.data;
-      return res.json({ status: "success", total: sliced.length, data: sliced });
+      return res.type("application/json").send(JSON.stringify({ status: "success", total: sliced.length, data: sliced }, null, 4));
     }
 
     const connections = await ConnectionsService.getAllActive();
     if (connections.length === 0) {
-      return res.json({ status: "success", total: 0, data: [] });
+      return res.type("application/json").send(JSON.stringify({ status: "success", total: 0, data: [] }, null, 4));
     }
 
     const allOtps = [];
@@ -109,7 +109,7 @@ router.get("/otp", async (req, res, next) => {
     _cache = { data: allOtps, timestamp: Date.now() };
     const sliced = count > 0 ? allOtps.slice(0, count) : allOtps;
 
-    res.json({ status: "success", total: sliced.length, data: sliced });
+    res.type("application/json").send(JSON.stringify({ status: "success", total: sliced.length, data: sliced }, null, 4));
   } catch (err) {
     next(err);
   }
