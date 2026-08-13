@@ -16,7 +16,7 @@
       <div class="topbar-inner">
         <a class="brand" href="/">
           <img src="/pronxt-logo.svg" alt="">
-          <span><strong>CYRUS PANEL</strong><small style="color:#f59e0b"><span class="icon" style="width:14px;height:14px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg></span> Admin</small></span>
+          <span><strong>CYRUS PANEL</strong><small style="color:var(--amber)"><span class="icon" style="width:14px;height:14px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg></span> Admin</small></span>
         </a>
         <nav class="topbar-nav">
           <a href="/dashboard/">Dashboard</a>
@@ -38,27 +38,27 @@
       <!-- Stats -->
       <div class="stats-grid" id="stats">
         <div class="stat-card">
-          <div class="stat-value" style="color:#22d3ee" id="s-connections">—</div>
+          <div class="stat-value" style="color:var(--accent)" id="s-connections">—</div>
           <div class="stat-label">Firebase Connections</div>
         </div>
         <div class="stat-card">
-          <div class="stat-value" style="color:#22c55e" id="s-devices">—</div>
+          <div class="stat-value" style="color:var(--green)" id="s-devices">—</div>
           <div class="stat-label">Total Devices</div>
         </div>
         <div class="stat-card">
-          <div class="stat-value" style="color:#a855f7" id="s-users">—</div>
+          <div class="stat-value" style="color:var(--purple)" id="s-users">—</div>
           <div class="stat-label">Registered Users</div>
         </div>
         <div class="stat-card">
-          <div class="stat-value" style="color:#f59e0b" id="s-uptime">—</div>
+          <div class="stat-value" style="color:var(--amber)" id="s-uptime">—</div>
           <div class="stat-label">Server Uptime</div>
         </div>
       </div>
 
       <!-- Tabs -->
       <div class="tabs">
-        <button class="tab active" data-tab="connections"><span class="icon" style="width:16px;height:16px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"></path></svg></span> Firebase Connections</button>
-        <button class="tab" data-tab="users"><span class="icon" style="width:16px;height:16px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 00-3-3.87"></path><path d="M16 3.13a4 4 0 010 7.75"></path></svg></span> Users</button>
+        <button class="tab active" data-tab="connections"><span class="icon" style="width:16px;height:16px;margin-right:6px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"></path></svg></span> Firebase Connections</button>
+        <button class="tab" data-tab="users"><span class="icon" style="width:16px;height:16px;margin-right:6px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 00-3-3.87"></path><path d="M16 3.13a4 4 0 010 7.75"></path></svg></span> Users</button>
       </div>
 
       <!-- ═══ Connections Tab ═══ -->
@@ -72,15 +72,13 @@
             </div>
           </div>
           <form id="addForm">
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem">
-              <div class="form-group">
-                <label class="form-label">Connection Name</label>
-                <input class="form-input" id="c-name" placeholder="e.g. Main DB, Client Alpha" required>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Firebase URL</label>
-                <input class="form-input mono" id="c-url" type="url" placeholder="https://project.firebaseio.com" required>
-              </div>
+            <div class="form-group">
+              <label class="form-label">Connection Name</label>
+              <input class="form-input" id="c-name" placeholder="e.g. Main DB, Client Alpha" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Firebase URL</label>
+              <input class="form-input mono" id="c-url" type="url" placeholder="https://project.firebaseio.com" required>
             </div>
             <div class="form-group">
               <label class="form-label">Database Secret Key</label>
@@ -204,7 +202,7 @@
           : '<span class="badge badge-red">● Off</span>';
         html += `<tr>
           <td><strong>${esc(c.name)}</strong></td>
-          <td><code style="font-size:0.75rem;color:#67e8f9">${esc(urlShort)}</code></td>
+          <td><code style="font-size:.75rem;color:var(--accent);word-break:break-all">${esc(urlShort)}</code></td>
           <td><code style="font-size:0.7rem;color:#666">${esc(c.key)}</code></td>
           <td>${c.deviceCount || 0}</td>
           <td>${badge}</td>
@@ -292,7 +290,7 @@
         <thead><tr><th>User</th><th>Email</th><th>Role</th><th>Status</th><th>Last Login</th><th>Actions</th></tr></thead><tbody>`;
       for (const u of users) {
         const roleBadge = u.role === "admin"
-          ? '<span class="badge badge-amber"><span class="icon" style="width:16px;height:16px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 17l3-9 5 4 2-8 2 8 5-4 3 9H2z"></path><path d="M2 20h20"></path></svg></span> Admin</span>'
+          ? '<span class="badge badge-amber"><span class="icon" style="width:16px;height:16px;margin-right:6px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 17l3-9 5 4 2-8 2 8 5-4 3 9H2z"></path><path d="M2 20h20"></path></svg></span> Admin</span>'
           : '<span class="badge badge-purple">User</span>';
         const statusBadge = u.isActive
           ? '<span class="badge badge-green">Active</span>'

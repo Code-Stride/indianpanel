@@ -118,8 +118,24 @@ tr:hover td { background: rgba(255,255,255,.01); }
 .tab { padding: .5rem .875rem; font-size: .8125rem; font-weight: 500; color: var(--text-muted); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; transition: all .15s; font-family: inherit; margin-bottom: -1px; }
 .tab:hover { color: var(--text-secondary); }
 .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-content { display: block; }
 
 .app-shell { min-height: 100vh; display: flex; flex-direction: column; }
+
+/* Responsive table */
+td code { word-break: break-all; }
+td .btn { white-space: nowrap; }
+
+/* Responsive fixes */
+@media (max-width: 768px) {
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: .5rem; }
+  .stat-card { padding: .875rem; }
+  .stat-value { font-size: 1.25rem; }
+  .table-wrap { font-size: .75rem; }
+  th, td { padding: .5rem .625rem; }
+  .card { padding: 1rem; }
+  .card-header { flex-direction: column; align-items: flex-start; gap: .5rem; }
+}
 
 @media (max-width: 640px) {
   .topbar { padding: 0 1rem; }
@@ -127,4 +143,7 @@ tr:hover td { background: rgba(255,255,255,.01); }
   .auth-card { padding: 1.5rem; }
   .stats-grid { grid-template-columns: 1fr 1fr; }
   .topbar-nav a span { display: none; }
+  .tabs { overflow-x: auto; }
+  .tab { white-space: nowrap; padding: .5rem .625rem; font-size: .75rem; }
+  .page-header h1 { font-size: 1.125rem; }
 }
