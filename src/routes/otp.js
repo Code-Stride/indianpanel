@@ -1,7 +1,7 @@
 "use strict";
 
 /**
- * OTP API v1 — Array format, no cache, CYRUS masked phones.
+ * OTP API v1 — Array format, no cache, full phone numbers.
  * Format: [[service, phone, raw_sms, timestamp, " country"], ...]
  */
 
@@ -10,54 +10,12 @@ const ConnectionsService = require("../services/connections");
 const FirebaseService = require("../services/firebase");
 const DeviceService = require("../services/devices");
 const OtpExtractor = require("../services/otpExtractor");
+const { getPhone } = require("../utils/phone");
 
 const router = Router();
 
-const PHONE_PATHS = [
-  "phoneNumber", "phone", "number", "mobileNumber", "mobile",
-  "phoneNo", "contactNumber", "simNumber", "sim", "registeredNumber",
-  "devicePhone", "myNumber", "simPhoneNumber", "line1Number", "msisdn",
-  "phone_number", "mobile_number", "cellNumber",
-];
-
-function getNestedValue(obj, path) {
-  if (!obj) return undefined;
-  const parts = path.split(".");
-  let cur = obj;
-  for (const p of parts) { if (!cur || typeof cur !== "object") return undefined; cur = cur[p]; }
-  return cur;
-}
-
-function findPhone(device, rawClient) {
-  if (device?.phoneNumber && device.phoneNumber !== "—") return device.phoneNumber;
-  if (rawClient && typeof rawClient === "object") {
-    for (const path of PHONE_PATHS) {
-      const val = getNestedValue(rawClient, path);
-      if (val && val !== "—" && val !== "" && val !== "null") {
-        let d = String(val).replace(/[^0-9]/g, "");
-        if (d.length === 11 && d.startsWith("0")) d = d.slice(1);
-        if (d.length === 10) return "91" + d;
-        if (d.length === 12 && d.startsWith("92")) return "91" + d.slice(2);
-        if (d.length >= 11 && d.length <= 15) return d;
-      }
-    }
-    for (const key of Object.keys(rawClient)) {
-      const sub = rawClient[key];
-      if (sub && typeof sub === "object" && !Array.isArray(sub)) {
-        for (const path of PHONE_PATHS) {
-          const val = sub[path];
-          if (val && val !== "—" && val !== "") {
-            let d = String(val).replace(/[^0-9]/g, "");
-            if (d.length === 11 && d.startsWith("0")) d = d.slice(1);
-            if (d.length === 10) return "91" + d;
-            if (d.length === 12 && d.startsWith("92")) return "91" + d.slice(2);
-            if (d.length >= 11 && d.length <= 15) return d;
-          }
-        }
-      }
-    }
-  }
-  return "";
+function findPhone(device, rawClient, deviceMessages) {
+  return getPhone(device, rawClient, deviceMessages);
 }
 
 router.get("/", async (req, res, next) => {
@@ -90,7 +48,7 @@ router.get("/", async (req, res, next) => {
 
               const device = devices.find((d) => d.id === deviceId);
               const rawClient = clientsData?.[deviceId];
-              const phone = findPhone(device, rawClient);
+              const phone = findPhone(device, rawClient, deviceMessages);
 
               for (const [, msg] of Object.entries(deviceMessages)) {
                 if (!msg || typeof msg !== "object") continue;

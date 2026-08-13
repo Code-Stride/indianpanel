@@ -8,7 +8,7 @@
     "dev": "nodemon server.js",
     "build": "node scripts/build-frontend.js",
     "postinstall": "node scripts/build-frontend.js || true",
-    "test": "jest --passWithNoTests",
+    "test": "node --test",
     "lint": "eslint src/ server.js"
   },
   "keywords": [
