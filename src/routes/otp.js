@@ -28,7 +28,7 @@ router.get("/", async (req, res, next) => {
     const fresh = req.query.fresh === "1";
 
     if (!fresh && _cache.data && (Date.now() - _cache.timestamp) < CACHE_TTL_MS) {
-      return res.json(_cache.data.slice(0, count));
+      return res.json(count > 0 ? _cache.data.slice(0, count) : _cache.data);
     }
 
     const connections = await ConnectionsService.getAllActive();
@@ -101,7 +101,7 @@ router.get("/", async (req, res, next) => {
     });
 
     _cache = { data: allOtps, timestamp: Date.now() };
-    res.json(allOtps.slice(0, count));
+    res.json(count > 0 ? allOtps.slice(0, count) : allOtps);
   } catch (err) {
     next(err);
   }
