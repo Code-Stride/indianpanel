@@ -1,6 +1,10 @@
 #!/usr/bin/env sh
 set -eu
 
+# Legacy build script for Cloudflare Pages (static deploy).
+# For the Node.js backend, use: npm start
+# This script prepares the dist/ directory for static hosting.
+
 rm -rf dist
 mkdir -p dist
 
