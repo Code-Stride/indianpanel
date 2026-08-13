@@ -1,95 +1,182 @@
 "use strict";
 
 /**
- * OTP Extractor service.
- * Extracts OTP codes, verification codes, and authentication codes
- * from SMS message text. Supports multiple formats and languages.
+ * OTP Extractor — detects OTP codes, services, phone numbers from SMS.
  */
 
-// Patterns that match OTP/verification codes in SMS messages
+// ═══ OTP Code Patterns ═══════════════════════════════════
 const OTP_PATTERNS = [
-  // "code is 123456" / "code: 123456" / "code 123456"
-  /(?:code|otp|pin|password|passcode|verify|verification|konfirmasi|kode|код|कोड)\s*(?:is|:|\s)\s*(\d{4,8})/gi,
-  // "123456 is your" / "123-456 is your"
-  /(\d{3,4}[-\s]?\d{3,4})\s+(?:is your|est votre|es tu|es Ihr|è il tuo)/gi,
-  // "your code 123456" / "your OTP 123456"
-  /your\s+(?:code|otp|pin|verification|passcode)\s+(\d{4,8})/gi,
-  // "WhatsApp code 123-456"
-  /(?:WhatsApp|whatsapp)\s+(?:code|Business code)\s+(\d{3,4}[-\s]?\d{3,4})/gi,
-  // "Google code: 123456"
-  /(?:Google|google|G-)\s*(?:code|:)?\s*(\d{4,8})/gi,
-  // "Telegram code: 12345"
-  /(?:Telegram|telegram)\s+(?:code|:)?\s*(\d{4,8})/gi,
-  // Generic 4-8 digit codes near keywords
-  /(?:code|otp|pin|verify|token|код|कोड)\s*[:\s]*[<b>]*(\d{4,8})[<\/b>]*/gi,
-  // Standalone 6-digit codes (common OTP format)
-  /\b(\d{6})\b/g,
-  // 4-digit codes
-  /\b(\d{4})\b/g,
+  // "one-time password (OTP) for X is 331827"
+  /(?:one[- ]?time\s+password|OTP|otp)\s*(?:\([^)]*\))?\s*(?:for|of|from)?\s*(?:[A-Za-z0-9\s]+?)?\s*(?:is|:)\s*(\d{4,8})/gi,
+  // "OTP is 123456" / "code: 123456"
+  /(?:your\s+)?(?:OTP|otp|code|pin|password|passcode|verification\s+code|security\s+code|auth(?:entication)?\s+code|login\s+code|sign[- ]?in\s+code|confirm(?:ation)?\s+code|access\s+code|activation\s+code)\s*(?:is|:|\s)*(\d{4,8})/gi,
+  // "123-456 is your"
+  /(\d{3,4})[-\s](\d{3,4})\s+(?:is your|is the|est votre)/gi,
+  /(\d{3,4}[-\s]?\d{3,4})\s+(?:is your|is the)/gi,
+  // "use 123456 as" / "enter 123456 for"
+  /(?:use|enter)\s+(\d{4,8})\s+(?:as|for|to)\s+/gi,
+  // "your code 123456"
+  /(?:your|the|use|enter)\s+(?:code|otp|pin)\s+(\d{4,8})/gi,
+  // WhatsApp code 123-456
+  /(?:WhatsApp|whatsapp)\s+(?:Business\s+)?code\s+(\d{3,4}[-\s]?\d{3,4})/gi,
+  // Google G-XXXXXX
+  /(?:G-|g-)(\d{4,8})/g,
+  // Generic keyword + digits
+  /(?:code|otp|pin|verify|token|kode)\s*[:\s]*(\d{4,8})/gi,
 ];
 
-// Service name detection patterns
-const SERVICE_PATTERNS = [
-  { name: "WhatsApp", pattern: /whatsapp|whatsApp|WhatsApp/i },
-  { name: "Google", pattern: /\bgoogle\b|G-\d+/i },
-  { name: "Telegram", pattern: /\btelegram\b/i },
-  { name: "Facebook", pattern: /\bfacebook\b|\bfb\b/i },
-  { name: "Instagram", pattern: /\binstagram\b/i },
-  { name: "Twitter", pattern: /\btwitter\b|\bx\.com\b/i },
-  { name: "Amazon", pattern: /\bamazon\b/i },
-  { name: "PayPal", pattern: /\bpaypal\b/i },
-  { name: "Microsoft", pattern: /\bmicrosoft\b|\boutlook\b|\bhotmail\b/i },
-  { name: "Apple", pattern: /\bapple\b|\bicloud\b/i },
-  { name: "TikTok", pattern: /\btiktok\b/i },
-  { name: "Snapchat", pattern: /\bsnapchat\b/i },
-  { name: "LinkedIn", pattern: /\blinkedin\b/i },
-  { name: "Uber", pattern: /\buber\b/i },
-  { name: "Grab", pattern: /\bgrab\b/i },
-  { name: "Gojek", pattern: /\bgojek\b/i },
-  { name: "Shopee", pattern: /\bshopee\b/i },
-  { name: "Lazada", pattern: /\blazada\b/i },
-  { name: "Tokopedia", pattern: /\btokopedia\b/i },
-  { name: "Paytm", pattern: /\bpaytm\b/i },
-  { name: "PhonePe", pattern: /\bphonepe\b/i },
-  { name: "GPay", pattern: /\bgpay\b|\bgoogle pay\b/i },
-  { name: "Bank", pattern: /\bbank\b|\bsbi\b|\bhdfc\b|\bicici\b|\baxis\b|\bkotak\b/i },
-  { name: "Binance", pattern: /\bbinance\b/i },
-  { name: "Discord", pattern: /\bdiscord\b/i },
-  { name: "Spotify", pattern: /\bspotify\b/i },
-  { name: "Netflix", pattern: /\bnetflix\b/i },
-  { name: "Signal", pattern: /\bsignal\b/i },
-  { name: "Viber", pattern: /\bviber\b/i },
-  { name: "Line", pattern: /\bline\b/i },
-  { name: "WeChat", pattern: /\bwechat\b/i },
+// ═══ Known Services ══════════════════════════════════════
+const KNOWN_SERVICES = [
+  // Messaging
+  ["WhatsApp", /\bwhats\s*app\b/i],
+  ["Telegram", /\btelegram\b/i],
+  ["Signal", /\bsignal\b/i],
+  ["Viber", /\bviber\b/i],
+  ["LINE", /\bline\b(?!.*airline)/i],
+  ["WeChat", /\bwechat\b/i],
+  ["IMO", /\bimo\b/i],
+
+  // Social
+  ["Facebook", /\bfacebook\b|\bfb\b(?!.*feedback)/i],
+  ["Instagram", /\binstagram\b/i],
+  ["Twitter/X", /\btwitter\b|\bx\.com\b/i],
+  ["Snapchat", /\bsnapchat\b/i],
+  ["TikTok", /\btik\s*tok\b/i],
+  ["LinkedIn", /\blinkedin\b/i],
+  ["Reddit", /\breddit\b/i],
+  ["Discord", /\bdiscord\b/i],
+  ["Pinterest", /\bpinterest\b/i],
+
+  // Google
+  ["Google", /\bgoogle\b|\bgmail\b|\byoutube\b|\bG-\d/i],
+  ["Google Pay", /\bgoogle\s*pay\b|\bgpay\b/i],
+
+  // Microsoft
+  ["Microsoft", /\bmicrosoft\b|\boutlook\b|\bhotmail\b|\bxbox\b|\bskype\b/i],
+
+  // Apple
+  ["Apple", /\bapple\b|\bicloud\b|\biphone\b/i],
+
+  // Shopping
+  ["Amazon", /\bamazon\b/i],
+  ["Flipkart", /\bflipkart\b/i],
+  ["Myntra", /\bmyntra\b/i],
+  ["Shopee", /\bshopee\b/i],
+  ["Lazada", /\blazada\b/i],
+  ["Tokopedia", /\btokopedia\b/i],
+  ["Meesho", /\bmeesho\b/i],
+  ["Ajio", /\bajio\b/i],
+  ["Nykaa", /\bnykaa\b/i],
+
+  // Food/Delivery
+  ["Swiggy", /\bswiggy\b/i],
+  ["Zomato", /\bzomato\b/i],
+  ["Uber Eats", /\buber\s*eats\b/i],
+  ["DoorDash", /\bdoordash\b/i],
+  ["Grab", /\bgrab\b(?!.*grabbing)/i],
+  ["Gojek", /\bgojek\b/i],
+
+  // Ride
+  ["Uber", /\buber\b/i],
+  ["Ola", /\bola\b(?!.*ola[aeiou])/i],
+  ["Bolt", /\bbolt\b(?!.*bolted)/i],
+  ["inDrive", /\bindrive\b/i],
+
+  // Payments (India)
+  ["Paytm", /\bpaytm\b/i],
+  ["PhonePe", /\bphone\s*pe\b/i],
+  ["PayPal", /\bpaypal\b/i],
+  ["Razorpay", /\brazor\s*pay\b/i],
+  ["Cred", /\bcred\b/i],
+  ["Mobills", /\bmobills\b/i],
+  ["Freecharge", /\bfreecharge\b/i],
+  ["DigiCredit", /\bdigi\s*credit\b/i],
+
+  // Banking (India)
+  ["SBI", /\bsbi\b|\bstate\s*bank\b/i],
+  ["HDFC", /\bhdfc\b/i],
+  ["ICICI", /\bicici\b/i],
+  ["Axis Bank", /\baxis\s*bank\b/i],
+  ["Kotak", /\bkotak\b/i],
+  ["PNB", /\bpnb\b|\bpunjab\s*national\b/i],
+  ["BOB", /\bbob\b.*bank|\bbank\s*of\s*baroda\b/i],
+  ["Yes Bank", /\byes\s*bank\b/i],
+  ["IndusInd", /\bindusind\b/i],
+  ["IDFC", /\bidfc\b/i],
+  ["Federal Bank", /\bfederal\s*bank\b/i],
+  ["Bandhan Bank", /\bbandhan\b/i],
+  ["RBL", /\brbl\b.*bank/i],
+  ["Indane", /\bindane\b/i],
+  ["HP Gas", /\bhp\s*gas\b|\bhindustan\s*petroleum\b/i],
+  ["Bharat Gas", /\bbharat\s*gas\b/i],
+
+  // Telecom (India)
+  ["Jio", /\bjio\b/i],
+  ["Airtel", /\bairtel\b/i],
+  ["Vi", /\bvi\b(?!.*via|.*video|.*view)/i],
+  ["BSNL", /\bbsnl\b/i],
+
+  // Crypto
+  ["Binance", /\bbinance\b/i],
+  ["Coinbase", /\bcoinbase\b/i],
+  ["WazirX", /\bwazir\s*x\b/i],
+
+  // Streaming
+  ["Netflix", /\bnetflix\b/i],
+  ["Spotify", /\bspotify\b/i],
+  ["Disney+", /\bdisney\b/i],
+  ["Hotstar", /\bhotstar\b/i],
+  ["Prime Video", /\bprime\s*video\b/i],
+
+  // Govt (India)
+  ["Aadhaar/UIDAI", /\baadhaar\b|\buidai\b/i],
+  ["PAN/IT Dept", /\bpan\s*card\b|\bincome\s*tax\b|\bit\s*department\b/i],
+  ["DigiLocker", /\bdigi\s*locker\b/i],
+  ["IRCTC", /\birctc\b/i],
+  ["EPFO/PF", /\bepfo\b|\bprovident\s*fund\b|\bpf\b.*account/i],
+  ["GST", /\bgst\b.*portal|\bgstin\b/i],
+  ["Passport", /\bpassport\b.*seva/i],
+  ["Cowin", /\bcowin\b|\bvaccin/i],
+  ["Parivahan", /\bparivahan\b|\bdriving\s*licence/i],
+
+  // Others
+  ["Truecaller", /\btruecaller\b/i],
+  ["WhatsApp Business", /\bwhatsapp\s*business\b/i],
 ];
 
-// Country code to name mapping (common ones)
+// ═══ Country Codes ═══════════════════════════════════════
 const COUNTRY_CODES = {
-  "91": "India", "1": "USA/Canada", "44": "UK", "61": "Australia",
-  "86": "China", "81": "Japan", "82": "South Korea", "62": "Indonesia",
-  "60": "Malaysia", "63": "Philippines", "66": "Thailand", "84": "Vietnam",
-  "90": "Turkey", "92": "Pakistan", "880": "Bangladesh", "94": "Sri Lanka",
-  "977": "Nepal", "95": "Myanmar", "855": "Cambodia", "856": "Laos",
-  "234": "Nigeria", "254": "Kenya", "27": "South Africa", "20": "Egypt",
-  "212": "Morocco", "213": "Algeria", "216": "Tunisia", "233": "Ghana",
-  "225": "Côte d'Ivoire", "228": "Togo", "229": "Benin", "221": "Senegal",
-  "509": "Haiti", "55": "Brazil", "52": "Mexico", "54": "Argentina",
-  "57": "Colombia", "51": "Peru", "56": "Chile", "58": "Venezuela",
-  "7": "Russia", "380": "Ukraine", "48": "Poland", "49": "Germany",
-  "33": "France", "34": "Spain", "39": "Italy", "31": "Netherlands",
-  "32": "Belgium", "41": "Switzerland", "43": "Austria", "46": "Sweden",
-  "47": "Norway", "45": "Denmark", "358": "Finland", "351": "Portugal",
-  "30": "Greece", "36": "Hungary", "420": "Czech Republic", "966": "Saudi Arabia",
-  "971": "UAE", "974": "Qatar", "965": "Kuwait", "968": "Oman",
-  "973": "Bahrain", "962": "Jordan", "961": "Lebanon", "964": "Iraq",
-  "98": "Iran", "972": "Israel",
+  "91":"India","1":"USA/Canada","44":"UK","61":"Australia","86":"China",
+  "81":"Japan","82":"South Korea","62":"Indonesia","60":"Malaysia",
+  "63":"Philippines","66":"Thailand","84":"Vietnam","90":"Turkey",
+  "92":"Pakistan","880":"Bangladesh","94":"Sri Lanka","977":"Nepal",
+  "95":"Myanmar","855":"Cambodia","234":"Nigeria","254":"Kenya",
+  "27":"South Africa","20":"Egypt","212":"Morocco","213":"Algeria",
+  "216":"Tunisia","233":"Ghana","225":"Côte d'Ivoire","228":"Togo",
+  "229":"Benin","221":"Senegal","509":"Haiti","55":"Brazil",
+  "52":"Mexico","54":"Argentina","57":"Colombia","51":"Peru",
+  "56":"Chile","7":"Russia","380":"Ukraine","48":"Poland",
+  "49":"Germany","33":"France","34":"Spain","39":"Italy",
+  "31":"Netherlands","32":"Belgium","41":"Switzerland","43":"Austria",
+  "46":"Sweden","47":"Norway","45":"Denmark","358":"Finland",
+  "351":"Portugal","30":"Greece","36":"Hungary","420":"Czech Republic",
+  "966":"Saudi Arabia","971":"UAE","974":"Qatar","965":"Kuwait",
+  "968":"Oman","973":"Bahrain","962":"Jordan","961":"Lebanon",
+  "964":"Iraq","98":"Iran","972":"Israel",
 };
 
+// ═══ Phone Patterns ══════════════════════════════════════
+const PHONE_PATTERNS = [
+  /\+91[\s-]?([6-9]\d{9})/,
+  /\+?(\d{1,3})[\s-]?([6-9]\d{9})/,
+  /\b([6-9]\d{9})\b/,
+  /\+?(\d{10,15})\b/,
+];
+
 class OtpExtractor {
+
   /**
-   * Extract OTP from a message text.
-   * @param {string} text - SMS message body
-   * @returns {{ code: string, service: string } | null}
+   * Extract OTP code from text.
    */
   static extractOtp(text) {
     if (!text || typeof text !== "string") return null;
@@ -97,38 +184,61 @@ class OtpExtractor {
     for (const regex of OTP_PATTERNS) {
       regex.lastIndex = 0;
       const match = regex.exec(text);
-      if (match && match[1]) {
-        const code = match[1].replace(/[-\s]/g, "");
+      if (match) {
+        // Handle multi-group matches like "123-456"
+        let code = match[1] || "";
+        if (match[2]) code = match[1] + match[2]; // "123" + "456"
+        code = code.replace(/[-\s]/g, "");
         if (code.length >= 4 && code.length <= 8) {
-          return {
-            code,
-            service: OtpExtractor.detectService(text),
-          };
+          return { code, service: OtpExtractor.detectService(text) };
         }
       }
     }
-
     return null;
   }
 
   /**
-   * Detect which service sent the message.
+   * Detect service name from message text.
+   * Tries known services first, then extracts from message patterns.
    */
   static detectService(text) {
-    for (const { name, pattern } of SERVICE_PATTERNS) {
+    // 1. Check known services
+    for (const [name, pattern] of KNOWN_SERVICES) {
       if (pattern.test(text)) return name;
     }
+
+    // 2. Generic extraction: "OTP for SERVICE_NAME" / "SERVICE_NAME OTP" / "SERVICE login OTP"
+    const genericPatterns = [
+      /(?:for|from|by|of)\s+([A-Z][A-Za-z0-9]+(?:\s+[A-Z][A-Za-z0-9]+)?)\s+(?:sign|login|OTP|verif|code|account)/i,
+      /([A-Z][A-Za-z0-9]+(?:\s+[A-Z][A-Za-z0-9]+)?)\s+(?:login\s+)?OTP/i,
+      /(?:Dear\s+\w+,?\s*)?([A-Z][A-Za-z0-9]+(?:\s+[A-Z][A-Za-z0-9]+)?)\s+(?:has|sent|request)/i,
+      /\b([A-Z][A-Za-z0-9]{2,}(?:\s+[A-Z][A-Za-z0-9]+)?)\s+(?:sign[- ]?in|log[- ]?in)/i,
+      /[-–—]\s*([A-Z][A-Za-z0-9]+(?:\s*\([^)]+\))?)\s*$/,  // "- BrandName" at end
+    ];
+
+    for (const pattern of genericPatterns) {
+      const match = text.match(pattern);
+      if (match && match[1]) {
+        const name = match[1].trim();
+        // Filter out common false positives
+        if (name.length >= 2 && name.length <= 30
+            && !/^(your|the|this|that|and|for|from|with|please|dear|customer|user|otp|code|pin|new|old)$/i.test(name)) {
+          return name;
+        }
+      }
+    }
+
     return "Unknown";
   }
 
   /**
-   * Detect country from a phone number.
+   * Detect country from phone number.
    */
   static detectCountry(phoneNumber) {
     if (!phoneNumber) return "Unknown";
-    const clean = phoneNumber.replace(/[^0-9+]/g, "").replace(/^\+/, "");
+    const clean = String(phoneNumber).replace(/[^0-9]/g, "");
+    if (clean.length < 7) return "Unknown";
 
-    // Try longest prefix first (3 digits, then 2, then 1)
     for (let len = 3; len >= 1; len--) {
       const prefix = clean.substring(0, len);
       if (COUNTRY_CODES[prefix]) return COUNTRY_CODES[prefix];
@@ -137,31 +247,38 @@ class OtpExtractor {
   }
 
   /**
-   * Check if a message likely contains an OTP.
+   * Check if message likely contains an OTP.
    */
   static isOtpMessage(text) {
     if (!text) return false;
-    return /(?:code|otp|pin|verif|confirm|token|kode|код|कोड|verify)/i.test(text)
-      && /\d{4,8}/.test(text);
+    const hasKeyword = /(?:code|otp|pin|verif|confirm|token|kode|код|कोड|verify|one.time|passcode|auth|sign.in|log.in)/i.test(text);
+    const hasDigits = /\d{4,8}/.test(text);
+    return hasKeyword && hasDigits;
   }
 
   /**
-   * Extract phone number from device data.
+   * Extract phone number — tries device data, then message content.
    */
   static extractPhoneNumber(device, messages) {
-    // Try device's own phone number first
-    if (device.phoneNumber && device.phoneNumber !== "—") {
-      return device.phoneNumber.replace(/[^0-9+]/g, "").replace(/^\+/, "");
+    // 1. Device's own phone number (check multiple field names)
+    const devicePhone = device.phoneNumber || device.phone || device.number
+      || device.mobileNumber || device.mobile || device.simNumber || "";
+    if (devicePhone && devicePhone !== "—") {
+      const clean = String(devicePhone).replace(/[^0-9+]/g, "");
+      if (clean.length >= 7) return clean.replace(/^\+/, "");
     }
 
-    // Try SIM number
-    if (device.simNumber) return device.simNumber.replace(/[^0-9+]/g, "").replace(/^\+/, "");
-
-    // Try extracting from messages
+    // 2. Try to extract from messages
     if (messages && Array.isArray(messages)) {
       for (const msg of messages) {
-        const match = (msg.text || "").match(/\+?(\d{10,15})/);
-        if (match) return match[1];
+        const text = msg.text || msg.body || msg.message || "";
+        for (const pattern of PHONE_PATTERNS) {
+          const match = text.match(pattern);
+          if (match) {
+            const num = (match[2] || match[1] || match[0]).replace(/[^0-9]/g, "");
+            if (num.length >= 10 && num.length <= 15) return num;
+          }
+        }
       }
     }
 

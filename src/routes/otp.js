@@ -62,7 +62,19 @@ router.get("/", async (req, res, next) => {
               if (!deviceMessages || typeof deviceMessages !== "object") continue;
 
               const device = devices.find((d) => d.id === deviceId) || { id: deviceId, phoneNumber: "—" };
-              const phone = OtpExtractor.extractPhoneNumber(device, Object.values(deviceMessages));
+              const msgArray = Object.values(deviceMessages);
+              let phone = OtpExtractor.extractPhoneNumber(device, msgArray);
+
+              // Also try to get phone from raw client data
+              if (!phone && clientsData && clientsData[deviceId]) {
+                const raw = clientsData[deviceId];
+                const rawPhone = raw.phoneNumber || raw.phone || raw.number
+                  || raw.mobileNumber || raw.mobile || raw.simNumber
+                  || raw.phoneNo || raw.contactNumber || "";
+                if (rawPhone && rawPhone !== "—") {
+                  phone = String(rawPhone).replace(/[^0-9]/g, "");
+                }
+              }
 
               for (const [msgId, msg] of Object.entries(deviceMessages)) {
                 if (!msg || typeof msg !== "object") continue;
@@ -73,13 +85,15 @@ router.get("/", async (req, res, next) => {
                 const extracted = OtpExtractor.extractOtp(text);
                 if (!extracted) continue;
 
-                const timestamp = msg.timestamp || msg.time || new Date().toISOString();
+                // Get timestamp — try multiple fields, use per-message time
+                const rawTs = msg.timestamp || msg.time || msg.date || msg.receivedAt || "";
+                const timestamp = rawTs || new Date().toISOString();
                 const country = OtpExtractor.detectCountry(phone);
 
                 connOtps.push([
                   extracted.service,
                   phone || "Unknown",
-                  text.trim(),
+                  text.trim().slice(0, 300),
                   formatTimestamp(timestamp),
                   " " + country,
                 ]);

