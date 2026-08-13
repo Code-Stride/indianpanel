@@ -24,7 +24,16 @@ const CACHE_TTL_MS = 30000;
  */
 router.get("/", async (req, res, next) => {
   try {
-    const count = Math.min(parseInt(req.query.count) || 10, 100);
+    // Default: 50 OTPs. Use count=0 or count=all for everything.
+    const countParam = req.query.count;
+    let count;
+    if (countParam === "0" || countParam === "all") {
+      count = 0;
+    } else if (countParam) {
+      count = Math.min(parseInt(countParam) || 50, 500);
+    } else {
+      count = 50;
+    }
     const fresh = req.query.fresh === "1";
 
     if (!fresh && _cache.data && (Date.now() - _cache.timestamp) < CACHE_TTL_MS) {

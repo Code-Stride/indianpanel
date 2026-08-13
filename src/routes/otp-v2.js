@@ -31,7 +31,15 @@ const CACHE_TTL_MS = 30000;
 router.get("/otp", async (req, res, next) => {
   try {
     const countParam = req.query.count;
-    const count = countParam ? Math.min(parseInt(countParam) || 10, 500) : 0;
+    // Default: 50 OTPs. Use count=0 or count=all for everything.
+    let count;
+    if (countParam === "0" || countParam === "all") {
+      count = 0; // show all
+    } else if (countParam) {
+      count = Math.min(parseInt(countParam) || 50, 500);
+    } else {
+      count = 50; // default limit
+    }
     const fresh = req.query.fresh === "1";
 
     // Check cache
