@@ -12,8 +12,5 @@ ENV NODE_ENV=production
 COPY --from=builder /app .
 RUN mkdir -p /app/data
 
-# Persistent volume for user data
-VOLUME ["/app/data"]
-
 EXPOSE 3000
 CMD ["node", "server.js"]
