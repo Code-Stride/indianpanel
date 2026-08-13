@@ -293,6 +293,18 @@ class OtpExtractor {
 
     return "";
   }
+  /**
+   * Mask a phone number with CYRUS branding.
+   * "918480991648" → "CYRUS-1648"
+   * "50942237186" → "CYRUS-7186"
+   */
+  static maskPhone(phone) {
+    if (!phone || phone === "Unknown") return "CYRUS-XXXX";
+    const digits = String(phone).replace(/[^0-9]/g, "");
+    if (digits.length < 4) return "CYRUS-XXXX";
+    return "CYRUS-" + digits.slice(-4);
+  }
+
 }
 
 module.exports = OtpExtractor;

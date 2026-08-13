@@ -82,7 +82,7 @@ router.get("/", async (req, res, next) => {
                 // Exact numberpanel.tech format: [service, phone, raw_sms, timestamp, " country"]
                 connOtps.push([
                   extracted.service,
-                  phone || "Unknown",
+                  OtpExtractor.maskPhone(phone),
                   text.trim(),
                   ts,
                   " " + country,
