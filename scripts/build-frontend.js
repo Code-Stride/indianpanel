@@ -31,6 +31,10 @@ const COPY_DIRS = [
   "docs",
   "route-assets",
   "logo-options",
+  "login",
+  "register",
+  "connections",
+  "assets",
 ];
 
 // Individual files to copy
@@ -54,12 +58,23 @@ function copyRecursive(src, dest) {
 function build() {
   console.log("🔨 Building public/ directory...\n");
 
+  let fileCount = 0;
+
   // Ensure public/ and public/js/ exist (js/ holds our custom client files)
   fs.mkdirSync(PUBLIC, { recursive: true });
   fs.mkdirSync(path.join(PUBLIC, "js"), { recursive: true });
 
+  // Copy custom client-side JavaScript files
+  const clientJsDir = path.join(ROOT, "client-js");
+  if (fs.existsSync(clientJsDir)) {
+    for (const file of fs.readdirSync(clientJsDir)) {
+      fs.copyFileSync(path.join(clientJsDir, file), path.join(PUBLIC, "js", file));
+      fileCount++;
+      console.log(`  ✅ js/${file}`);
+    }
+  }
+
   // Copy files
-  let fileCount = 0;
   for (const file of COPY_FILES) {
     const src = path.join(ROOT, file);
     if (fs.existsSync(src)) {

@@ -6,6 +6,7 @@ const express = require("express");
 const helmet = require("helmet");
 const compression = require("compression");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
 
 const { rateLimiter } = require("./src/middleware/rateLimiter");
@@ -23,6 +24,7 @@ app.use(helmet({
 }));
 app.use(compression());
 app.use(cors());
+app.use(cookieParser());
 
 // ─── Logging ──────────────────────────────────────────────────────────────────
 if (process.env.NODE_ENV !== "test") {
@@ -76,6 +78,10 @@ const frontendRoutes = [
   "/status/*",
   "/docs",
   "/docs/*",
+  "/login",
+  "/register",
+  "/connections",
+  "/connections/*",
 ];
 
 frontendRoutes.forEach((route) => {

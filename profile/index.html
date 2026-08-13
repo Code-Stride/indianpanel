@@ -1,3 +1,301 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#070b10"><title>Profile · CYRUS PANEL</title><link rel="icon" type="image/svg+xml" href="/pronxt-logo.svg"><link rel="stylesheet" href="/route-assets/routes.css"><script src="/route-assets/theme.js"></script><script src="/route-assets/language.js"></script><script src="/route-assets/accessibility.js"></script></head>
-<body><a class="skip" href="#content">Skip to content</a><header class="topbar"><div class="shell"><a class="brand" href="/"><img src="/pronxt-logo.svg" alt=""><span><strong>CYRUS PANEL</strong><small>Profile route</small></span></a><a class="home-link" href="/">Home</a></div></header><main id="content" class="shell"><span class="eyebrow">Profile</span><h1>Profile settings.</h1><p class="lead">A separate profile route for future authenticated identity and account preferences.</p><div class="meta"><span>Standalone HTML route</span><span>Updated: August 11, 2026</span></div><article class="card first"><h2>No authenticated profile</h2><p>This deployment does not currently provide a real user identity session. Profile information is therefore not loaded, sent, or stored here.</p></article><article class="card"><h2>Appearance preferences</h2><p>Theme, density, layout, and privacy mode remain available through the dedicated settings page and may be saved locally in your browser.</p><div class="actions"><a class="button secondary" href="/settings/">Open settings</a></div></article><article class="card"><h2>Future requirements</h2><p>A functional profile requires server-side authentication, verified identity, secure sessions, authorization checks, and an account-deletion process.</p></article><div class="actions"><a class="button secondary" href="/">Return home</a></div></main><footer><div class="shell footer-inner"><span>© 2026 CYRUS PANEL. All rights reserved.</span><nav class="footer-nav" aria-label="Footer navigation"><a href="/support/">Support</a><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><details class="footer-more"><summary>More</summary><div class="footer-menu"><a href="/accounts/">Accounts</a><a href="/profile/">Profile</a><a href="/about/">About</a><a href="/docs/">Docs</a><a href="/changelog/">Changelog</a><a href="/status/">Status</a><a href="/copyright/">Copyright</a><a href="/settings/">Settings</a></div></details></nav></div></footer><script src="/route-assets/command-palette.js"></script><script src="/route-assets/support-widget.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile · CYRUS PANEL</title>
+  <link rel="icon" type="image/svg+xml" href="/pronxt-logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/app.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="/">
+          <img src="/pronxt-logo.svg" alt="">
+          <span><strong>CYRUS PANEL</strong><small>Profile</small></span>
+        </a>
+        <nav class="topbar-nav">
+          <a href="/dashboard/">Dashboard</a>
+          <a href="/connections/">Connections</a>
+          <a href="/profile/" class="active">Profile</a>
+          <button onclick="logout()">Logout</button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <div class="page-header">
+        <h1>Profile</h1>
+        <p>Manage your account settings and API key</p>
+      </div>
+
+      <div id="alert" class="alert" style="display:none"></div>
+
+      <div class="stats-grid" id="stats">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-connections">—</div>
+          <div class="stat-label">Firebase Connections</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-member">—</div>
+          <div class="stat-label">Member Since</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-lastlogin">—</div>
+          <div class="stat-label">Last Login</div>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab active" data-tab="profile">Profile Info</button>
+        <button class="tab" data-tab="apikey">API Key</button>
+        <button class="tab" data-tab="security">Security</button>
+      </div>
+
+      <!-- Profile Tab -->
+      <div id="tab-profile" class="tab-content">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Profile Information</div>
+              <div class="card-subtitle">Update your personal details</div>
+            </div>
+          </div>
+          <form id="profileForm">
+            <div class="form-group">
+              <label class="form-label" for="p-username">Username</label>
+              <input class="form-input" type="text" id="p-username" disabled>
+              <div class="form-hint">Username cannot be changed</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="p-email">Email</label>
+              <input class="form-input" type="email" id="p-email">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="p-phone">Phone</label>
+              <input class="form-input" type="tel" id="p-phone" placeholder="+91 XXXXX XXXXX">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="p-bio">Bio</label>
+              <input class="form-input" type="text" id="p-bio" placeholder="Short bio about yourself" maxlength="200">
+            </div>
+            <button class="btn btn-primary" type="submit" id="profileSave">Save Changes</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- API Key Tab -->
+      <div id="tab-apikey" class="tab-content" style="display:none">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">API Key</div>
+              <div class="card-subtitle">Use this key to access the OTP API programmatically</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Your API Key</label>
+            <div class="key-display">
+              <code id="apiKey">Loading...</code>
+              <button class="btn btn-secondary btn-sm" onclick="copyKey()" id="copyBtn">Copy</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Usage Example</label>
+            <div class="key-display">
+              <code id="apiExample">Loading...</code>
+            </div>
+          </div>
+
+          <div class="alert alert-info" style="margin-top:1rem">
+            <span>⚡</span>
+            <span>API endpoint: <strong>GET /api/otp?count=10&key=YOUR_KEY</strong></span>
+          </div>
+
+          <div style="margin-top:1.5rem">
+            <button class="btn btn-danger" onclick="regenerateKey()" id="regenBtn">
+              Regenerate Key
+            </button>
+            <span class="form-hint" style="display:inline; margin-left:0.75rem">
+              This will invalidate your current key
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Security Tab -->
+      <div id="tab-security" class="tab-content" style="display:none">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Change Password</div>
+              <div class="card-subtitle">Update your account password</div>
+            </div>
+          </div>
+          <form id="passwordForm">
+            <div class="form-group">
+              <label class="form-label" for="current-pw">Current Password</label>
+              <input class="form-input" type="password" id="current-pw" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="new-pw">New Password</label>
+              <input class="form-input" type="password" id="new-pw" required minlength="6">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="confirm-pw">Confirm New Password</label>
+              <input class="form-input" type="password" id="confirm-pw" required>
+            </div>
+            <button class="btn btn-primary" type="submit">Update Password</button>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    let currentUser = null;
+
+    // ─── Auth check ────────────────────────────────────
+    async function loadProfile() {
+      try {
+        const res = await fetch("/api/profile", { credentials: "include" });
+        if (!res.ok) { window.location.href = "/login"; return; }
+        const data = await res.json();
+        currentUser = data.user;
+        renderProfile(data);
+      } catch {
+        window.location.href = "/login";
+      }
+    }
+
+    function renderProfile(data) {
+      const u = data.user;
+      document.getElementById("p-username").value = u.username;
+      document.getElementById("p-email").value = u.email || "";
+      document.getElementById("p-phone").value = u.phone || "";
+      document.getElementById("p-bio").value = u.bio || "";
+      document.getElementById("apiKey").textContent = u.apiKey || "—";
+      document.getElementById("apiExample").textContent =
+        `curl "${window.location.origin}/api/otp?count=10&key=${u.apiKey}"`;
+
+      // Stats
+      document.getElementById("stat-connections").textContent = data.stats.connections;
+      document.getElementById("stat-member").textContent = formatDate(u.createdAt);
+      document.getElementById("stat-lastlogin").textContent = u.lastLogin ? formatDate(u.lastLogin) : "First login";
+    }
+
+    function formatDate(iso) {
+      if (!iso) return "—";
+      const d = new Date(iso);
+      return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+    }
+
+    // ─── Tabs ──────────────────────────────────────────
+    document.querySelectorAll(".tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+        document.querySelectorAll(".tab-content").forEach(c => c.style.display = "none");
+        tab.classList.add("active");
+        document.getElementById("tab-" + tab.dataset.tab).style.display = "block";
+      });
+    });
+
+    // ─── Profile form ──────────────────────────────────
+    document.getElementById("profileForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      showAlert("Saving...", "info");
+      try {
+        const res = await fetch("/api/profile", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            email: document.getElementById("p-email").value.trim(),
+            phone: document.getElementById("p-phone").value.trim(),
+            bio: document.getElementById("p-bio").value.trim(),
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        showAlert("Profile updated!", "success");
+      } catch (err) {
+        showAlert(err.message, "error");
+      }
+    });
+
+    // ─── Password form ─────────────────────────────────
+    document.getElementById("passwordForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const newPw = document.getElementById("new-pw").value;
+      const confirmPw = document.getElementById("confirm-pw").value;
+      if (newPw !== confirmPw) return showAlert("Passwords do not match", "error");
+
+      try {
+        const res = await fetch("/api/auth/password", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            currentPassword: document.getElementById("current-pw").value,
+            newPassword: newPw,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        showAlert("Password updated!", "success");
+        document.getElementById("passwordForm").reset();
+      } catch (err) {
+        showAlert(err.message, "error");
+      }
+    });
+
+    // ─── API key ───────────────────────────────────────
+    function copyKey() {
+      const key = document.getElementById("apiKey").textContent;
+      navigator.clipboard.writeText(key).then(() => {
+        document.getElementById("copyBtn").textContent = "Copied!";
+        setTimeout(() => document.getElementById("copyBtn").textContent = "Copy", 2000);
+      });
+    }
+
+    async function regenerateKey() {
+      if (!confirm("Regenerate API key? The old key will stop working.")) return;
+      try {
+        const res = await fetch("/api/profile/regenerate-key", {
+          method: "POST",
+          credentials: "include",
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        document.getElementById("apiKey").textContent = data.apiKey;
+        document.getElementById("apiExample").textContent =
+          `curl "${window.location.origin}/api/otp?count=10&key=${data.apiKey}"`;
+        showAlert("API key regenerated!", "success");
+      } catch (err) {
+        showAlert(err.message, "error");
+      }
+    }
+
+    // ─── Helpers ────────────────────────────────────────
+    function showAlert(msg, type) {
+      const el = document.getElementById("alert");
+      el.className = "alert alert-" + type;
+      el.textContent = msg;
+      el.style.display = "flex";
+      setTimeout(() => el.style.display = "none", 4000);
+    }
+
+    async function logout() {
+      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+      window.location.href = "/login";
+    }
+
+    loadProfile();
+  </script>
+</body>
+</html>

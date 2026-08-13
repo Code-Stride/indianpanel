@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login · CYRUS PANEL</title>
+  <link rel="icon" type="image/svg+xml" href="/pronxt-logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/app.css">
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <img src="/pronxt-logo.svg" alt="CYRUS PANEL">
+        <h1>CYRUS PANEL</h1>
+        <p>Sign in to your account</p>
+      </div>
+
+      <div id="alert" class="alert alert-error" style="display:none"></div>
+
+      <form id="loginForm" autocomplete="on">
+        <div class="form-group">
+          <label class="form-label" for="login">Username or Email</label>
+          <input class="form-input" type="text" id="login" name="login" placeholder="Enter username or email" required autofocus>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <input class="form-input" type="password" id="password" name="password" placeholder="Enter password" required>
+        </div>
+        <button class="btn btn-primary btn-block" type="submit" id="submitBtn">
+          Sign In
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        Don't have an account? <a href="/register">Create one</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById("loginForm");
+    const alert = document.getElementById("alert");
+    const submitBtn = document.getElementById("submitBtn");
+
+    // Redirect if already logged in
+    fetch("/api/auth/me", { credentials: "include" })
+      .then(r => { if (r.ok) window.location.href = "/dashboard/"; });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      alert.style.display = "none";
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Signing in...";
+
+      try {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            login: document.getElementById("login").value.trim(),
+            password: document.getElementById("password").value,
+          }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Login failed");
+
+        window.location.href = "/dashboard/";
+      } catch (err) {
+        alert.textContent = err.message;
+        alert.style.display = "flex";
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Sign In";
+      }
+    });
+  </script>
+</body>
+</html>

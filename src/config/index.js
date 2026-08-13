@@ -25,7 +25,7 @@ const config = {
   },
 
   session: {
-    secret: process.env.SESSION_SECRET || "change-me",
+    secret: process.env.SESSION_SECRET || "cyrus-panel-default-secret-change-me-in-production",
   },
 };
 

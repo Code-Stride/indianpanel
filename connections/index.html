@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firebase Connections · CYRUS PANEL</title>
+  <link rel="icon" type="image/svg+xml" href="/pronxt-logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/app.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="/">
+          <img src="/pronxt-logo.svg" alt="">
+          <span><strong>CYRUS PANEL</strong><small>Connections</small></span>
+        </a>
+        <nav class="topbar-nav">
+          <a href="/dashboard/">Dashboard</a>
+          <a href="/connections/" class="active">Connections</a>
+          <a href="/profile/">Profile</a>
+          <button onclick="logout()">Logout</button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <div class="page-header">
+        <h1>Firebase Connections</h1>
+        <p>Add and manage your Firebase Realtime Database URLs and secret keys</p>
+      </div>
+
+      <div id="alert" class="alert" style="display:none"></div>
+
+      <!-- Add Connection Form -->
+      <div class="card" id="addForm">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Add New Connection</div>
+            <div class="card-subtitle">Connect a Firebase Realtime Database</div>
+          </div>
+        </div>
+        <form id="connectionForm">
+          <div class="form-group">
+            <label class="form-label" for="conn-name">Connection Name</label>
+            <input class="form-input" type="text" id="conn-name" placeholder="e.g. Main Database, Client DB" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="conn-url">Firebase Database URL</label>
+            <input class="form-input mono" type="url" id="conn-url" placeholder="https://your-project.firebaseio.com" required>
+            <div class="form-hint">Must end with firebaseio.com or firebasedatabase.app</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="conn-key">Database Secret Key</label>
+            <input class="form-input mono" type="password" id="conn-key" placeholder="Your Firebase database secret" required>
+            <div class="form-hint">From Firebase Console → Project Settings → Service Accounts → Database Secrets</div>
+          </div>
+          <div style="display:flex; gap:0.75rem; align-items:center">
+            <button class="btn btn-primary" type="submit" id="addBtn">Add Connection</button>
+            <span class="form-hint" id="addStatus"></span>
+          </div>
+        </form>
+      </div>
+
+      <!-- Connections List -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Your Connections</div>
+            <div class="card-subtitle" id="connCount">Loading...</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="loadConnections()">Refresh</button>
+        </div>
+
+        <div id="connectionsList">
+          <div class="empty-state">
+            <div class="spinner" style="margin:0 auto 1rem"></div>
+            <p>Loading connections...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- OTP API Info -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">OTP API</div>
+            <div class="card-subtitle">Fetch OTP codes from all your connected databases</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Public Endpoint</label>
+          <div class="key-display">
+            <code id="otpEndpoint">Loading...</code>
+            <button class="btn btn-secondary btn-sm" onclick="copyEndpoint()">Copy</button>
+          </div>
+        </div>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap">
+          <a class="btn btn-secondary btn-sm" id="otpLink" href="/api/otp?count=10" target="_blank">Test API (10 OTPs)</a>
+          <a class="btn btn-secondary btn-sm" id="otpLink50" href="/api/otp?count=50" target="_blank">Test API (50 OTPs)</a>
+          <a class="btn btn-secondary btn-sm" href="/api/otp/stats" target="_blank">API Stats</a>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // ─── Auth check ────────────────────────────────────
+    fetch("/api/auth/me", { credentials: "include" })
+      .then(r => { if (!r.ok) window.location.href = "/login"; });
+
+    // ─── Load connections ──────────────────────────────
+    async function loadConnections() {
+      try {
+        const res = await fetch("/api/connections", { credentials: "include" });
+        if (!res.ok) throw new Error("Failed to load");
+        const data = await res.json();
+        renderConnections(data.connections);
+      } catch (err) {
+        document.getElementById("connectionsList").innerHTML =
+          `<div class="empty-state"><h3>Error</h3><p>${err.message}</p></div>`;
+      }
+    }
+
+    function renderConnections(connections) {
+      const container = document.getElementById("connectionsList");
+      document.getElementById("connCount").textContent = `${connections.length} connection(s)`;
+      document.getElementById("otpEndpoint").textContent =
+        `${window.location.origin}/api/otp?count=10`;
+
+      if (connections.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <h3>No connections yet</h3>
+            <p>Add your first Firebase database connection above to start collecting OTP codes.</p>
+          </div>`;
+        return;
+      }
+
+      let html = `<div class="table-wrap"><table>
+        <thead><tr>
+          <th>Name</th>
+          <th>Firebase URL</th>
+          <th>Key</th>
+          <th>Devices</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr></thead><tbody>`;
+
+      for (const c of connections) {
+        const urlShort = c.url.replace(/https?:\/\//, "").slice(0, 35);
+        const status = c.isActive
+          ? '<span class="badge badge-green">Active</span>'
+          : '<span class="badge badge-red">Disabled</span>';
+        const devices = c.deviceCount !== undefined ? c.deviceCount : "—";
+        const lastChecked = c.lastChecked ? timeAgo(c.lastChecked) : "Never";
+
+        html += `<tr>
+          <td><strong>${esc(c.name)}</strong><br><span style="font-size:0.6875rem;color:#666">Checked: ${lastChecked}</span></td>
+          <td><code style="font-size:0.75rem;color:#67e8f9">${esc(urlShort)}</code></td>
+          <td><code style="font-size:0.75rem;color:#666">${esc(c.key)}</code></td>
+          <td>${devices}</td>
+          <td>${status}</td>
+          <td>
+            <div style="display:flex;gap:0.375rem">
+              <button class="btn btn-success btn-sm" onclick="testConnection('${c.id}')" title="Test">Test</button>
+              <button class="btn btn-secondary btn-sm" onclick="toggleConnection('${c.id}', ${!c.isActive})" title="Toggle">${c.isActive ? "Disable" : "Enable"}</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteConnection('${c.id}', '${esc(c.name)}')" title="Delete">Delete</button>
+            </div>
+          </td>
+        </tr>`;
+      }
+
+      html += "</tbody></table></div>";
+      container.innerHTML = html;
+    }
+
+    // ─── Add connection ────────────────────────────────
+    document.getElementById("connectionForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById("addBtn");
+      const status = document.getElementById("addStatus");
+      btn.disabled = true;
+      btn.textContent = "Adding...";
+
+      try {
+        const res = await fetch("/api/connections", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            name: document.getElementById("conn-name").value.trim(),
+            url: document.getElementById("conn-url").value.trim(),
+            key: document.getElementById("conn-key").value.trim(),
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+
+        showAlert("Connection added!", "success");
+        document.getElementById("connectionForm").reset();
+        loadConnections();
+      } catch (err) {
+        showAlert(err.message, "error");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Add Connection";
+      }
+    });
+
+    // ─── Actions ───────────────────────────────────────
+    async function testConnection(id) {
+      showAlert("Testing connection...", "info");
+      try {
+        const res = await fetch(`/api/connections/${id}/test`, {
+          method: "POST",
+          credentials: "include",
+        });
+        const data = await res.json();
+        if (data.success) {
+          showAlert(`✓ ${data.message}`, "success");
+        } else {
+          showAlert(`✗ ${data.message}`, "error");
+        }
+        loadConnections();
+      } catch (err) {
+        showAlert("Test failed: " + err.message, "error");
+      }
+    }
+
+    async function toggleConnection(id, isActive) {
+      try {
+        await fetch(`/api/connections/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ isActive }),
+        });
+        loadConnections();
+      } catch (err) {
+        showAlert(err.message, "error");
+      }
+    }
+
+    async function deleteConnection(id, name) {
+      if (!confirm(`Delete connection "${name}"? This cannot be undone.`)) return;
+      try {
+        const res = await fetch(`/api/connections/${id}`, {
+          method: "DELETE",
+          credentials: "include",
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
+        showAlert("Connection deleted", "success");
+        loadConnections();
+      } catch (err) {
+        showAlert(err.message, "error");
+      }
+    }
+
+    function copyEndpoint() {
+      const text = document.getElementById("otpEndpoint").textContent;
+      navigator.clipboard.writeText(text);
+      showAlert("URL copied!", "success");
+    }
+
+    // ─── Helpers ────────────────────────────────────────
+    function showAlert(msg, type) {
+      const el = document.getElementById("alert");
+      el.className = "alert alert-" + type;
+      el.textContent = msg;
+      el.style.display = "flex";
+      setTimeout(() => el.style.display = "none", 4000);
+    }
+
+    function esc(str) {
+      const div = document.createElement("div");
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function timeAgo(iso) {
+      const diff = Date.now() - new Date(iso).getTime();
+      const min = Math.floor(diff / 60000);
+      if (min < 1) return "just now";
+      if (min < 60) return min + "m ago";
+      const hr = Math.floor(min / 60);
+      if (hr < 24) return hr + "h ago";
+      return Math.floor(hr / 24) + "d ago";
+    }
+
+    async function logout() {
+      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+      window.location.href = "/login";
+    }
+
+    loadConnections();
+  </script>
+</body>
+</html>
