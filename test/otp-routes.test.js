@@ -5,6 +5,8 @@ const assert = require("node:assert/strict");
 const express = require("express");
 const ConnectionsService = require("../src/services/connections");
 const FirebaseService = require("../src/services/firebase");
+const AuthService = require("../src/services/auth");
+const OtpExtractor = require("../src/services/otpExtractor");
 
 const clients = {
   "device-a": { name: "Device A" },
@@ -26,7 +28,7 @@ const messages = {
   },
 };
 
-test("v1 and v2 OTP routes return full phones extracted per device", async (t) => {
+test("OTP and dashboard routes return phones extracted per device", async (t) => {
   const originalGetAllActive = ConnectionsService.getAllActive;
   const originalRead = FirebaseService.read;
 
@@ -42,6 +44,8 @@ test("v1 and v2 OTP routes return full phones extracted per device", async (t) =
   const app = express();
   app.use("/api/otp", require("../src/routes/otp"));
   app.use("/api/v2", require("../src/routes/otp-v2"));
+  app.use("/api/dashboard", require("../src/routes/dashboard"));
+  app.use("/api/live", require("../src/routes/otp-live"));
 
   const server = await new Promise((resolve) => {
     const listeningServer = app.listen(0, "127.0.0.1", () => resolve(listeningServer));
@@ -70,4 +74,43 @@ test("v1 and v2 OTP routes return full phones extracted per device", async (t) =
   assert.equal(v2.total, 2);
   assert.deepEqual(v2.data.map((entry) => entry.num), ["919876543210", "913001234567"]);
   assert.ok(v2.data.every((entry) => !entry.num.includes("CYRUS")));
+
+  const token = AuthService.generateToken({ id: "test-user", username: "tester", role: "user" });
+  const dashboardResponse = await fetch(`http://127.0.0.1:${port}/api/dashboard`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  assert.equal(dashboardResponse.status, 200);
+  const dashboard = await dashboardResponse.json();
+  assert.deepEqual(
+    dashboard.devices.list.map((device) => device.phoneNumber),
+    ["919876543210", "913001234567"]
+  );
+  assert.deepEqual(
+    dashboard.otps.recent.map((otp) => otp.phone),
+    ["919876543210", "913001234567"]
+  );
+  assert.deepEqual(
+    dashboard.otps.recent.map((otp) => OtpExtractor.maskPhone(otp.phone)),
+    ["91CYRUS43210", "91CYRUS34567"]
+  );
+
+  const liveResponse = await fetch(`http://127.0.0.1:${port}/api/live/otp`);
+  assert.equal(liveResponse.status, 200);
+  const reader = liveResponse.body.getReader();
+  const decoder = new TextDecoder();
+  let liveText = "";
+  while (!liveText.includes("data: ")) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    liveText += decoder.decode(value, { stream: true });
+  }
+  await reader.cancel();
+
+  const dataLine = liveText.split("\n").find((line) => line.startsWith("data: "));
+  assert.ok(dataLine);
+  const live = JSON.parse(dataLine.slice(6));
+  assert.deepEqual(
+    live.recent.map((otp) => otp.phone),
+    ["919876543210", "913001234567"]
+  );
 });

