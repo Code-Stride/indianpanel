@@ -175,6 +175,34 @@ router.post("/devices/:id/sms", async (req, res, next) => {
   }
 });
 
+/**
+ * GET /api/dashboard/debug/:id
+ * Debug: show raw Firebase data for a device.
+ */
+router.get("/debug/:id", async (req, res, next) => {
+  try {
+    const connections = await ConnectionsService.getAllActive();
+    const { id } = req.params;
+    for (const conn of connections) {
+      try {
+        const raw = await FirebaseService.read(conn.url, conn.key, `clients/${id}`);
+        if (raw) {
+          // Return all field names and their types/values (truncate long values)
+          const fields = {};
+          for (const [key, val] of Object.entries(raw)) {
+            if (val === null || val === undefined) fields[key] = null;
+            else if (typeof val === "object") fields[key] = { __type: "object", keys: Object.keys(val).slice(0, 20) };
+            else if (typeof val === "string" && val.length > 100) fields[key] = val.slice(0, 100) + "...";
+            else fields[key] = val;
+          }
+          return res.json({ success: true, source: conn.name, deviceId: id, fields });
+        }
+      } catch {}
+    }
+    res.status(404).json({ error: "Device not found" });
+  } catch (err) { next(err); }
+});
+
 module.exports = router;
 
 // ═══ Helpers ═══════════════════════════════════════════════
