@@ -34,8 +34,8 @@
       </div>
 
       <div class="tabs">
-        <button class="tab active" data-tab="connections">Connections</button>
-        <button class="tab" data-tab="users">Users</button>
+        <button class="tab active" data-tab="connections" onclick="switchTab('connections')">Connections</button>
+        <button class="tab" data-tab="users" onclick="switchTab('users')">Users</button>
       </div>
 
       <!-- Connections -->
@@ -76,6 +76,7 @@
         currentUser = data.user;
         if (currentUser.role !== "admin") { showAlert("Admin access required", "error"); setTimeout(() => window.location.href = "/dashboard/", 1500); return; }
         loadStats(); loadConnections();
+        switchTab(getActiveTab(), false); // Activate correct tab from URL
       } catch { window.location.href = "/login"; }
     }
 
@@ -91,13 +92,29 @@
       } catch {}
     }
 
-    document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+    // Tab routing — URL based
+    const tabRoutes = { connections: "/admin/", users: "/admin/users/" };
+    const routeToTab = {};
+    Object.entries(tabRoutes).forEach(([tab, route]) => { routeToTab[route] = tab; });
+
+    function getActiveTab() {
+      return routeToTab[window.location.pathname] || "connections";
+    }
+
+    function switchTab(tabName, pushState = true) {
       document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
       document.querySelectorAll(".tab-content").forEach(x => x.style.display = "none");
-      t.classList.add("active");
-      document.getElementById("tab-" + t.dataset.tab).style.display = "block";
-      if (t.dataset.tab === "users") loadUsers();
-    }));
+      const btn = document.querySelector('[data-tab="' + tabName + '"]');
+      if (btn) btn.classList.add("active");
+      const content = document.getElementById("tab-" + tabName);
+      if (content) content.style.display = "block";
+      if (pushState && tabRoutes[tabName]) history.pushState({ tab: tabName }, "", tabRoutes[tabName]);
+      if (tabName === "users") loadUsers();
+    }
+
+    window.addEventListener("popstate", (e) => {
+      switchTab(e.state?.tab || getActiveTab(), false);
+    });
 
     // ─── Connections as cards ────────────────────────
     async function loadConnections() {

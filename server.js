@@ -58,10 +58,14 @@ app.use(express.static(path.join(__dirname, "public"), {
 const frontendRoutes = [
   "/",
   "/dashboard", "/dashboard/*",
+  "/dashboard/numbers",
+  "/dashboard/otp",
   "/settings", "/settings/*",
   "/accounts", "/accounts/*",
   "/get-accounts", "/get-accounts/*",
   "/profile", "/profile/*",
+  "/profile/apikey",
+  "/profile/security",
   "/about", "/about/*",
   "/support", "/support/*",
   "/privacy", "/privacy/*",
@@ -73,6 +77,7 @@ const frontendRoutes = [
   "/login",
   "/register",
   "/admin", "/admin/*",
+  "/admin/users",
   "/connections", "/connections/*",
 ];
 

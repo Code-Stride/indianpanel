@@ -178,6 +178,7 @@
         }
 
         renderProfile(data);
+        switchTab(getActiveTab(), false);
       } catch {
         window.location.href = "/login";
       }
@@ -205,15 +206,28 @@
       return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
     }
 
-    // ─── Tabs ──────────────────────────────────────────
+    // ─── Tabs (URL-based routing) ─────────────────────
+    const tabRoutes = { profile: "/profile/", apikey: "/profile/apikey/", security: "/profile/security/" };
+    const routeToTab = {};
+    Object.entries(tabRoutes).forEach(([tab, route]) => { routeToTab[route] = tab; });
+
+    function getActiveTab() { return routeToTab[window.location.pathname] || "profile"; }
+
+    function switchTab(tabName, pushState = true) {
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".tab-content").forEach(c => c.style.display = "none");
+      const btn = document.querySelector('[data-tab="' + tabName + '"]');
+      if (btn) btn.classList.add("active");
+      const content = document.getElementById("tab-" + tabName);
+      if (content) content.style.display = "block";
+      if (pushState && tabRoutes[tabName]) history.pushState({ tab: tabName }, "", tabRoutes[tabName]);
+    }
+
     document.querySelectorAll(".tab").forEach(tab => {
-      tab.addEventListener("click", () => {
-        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-        document.querySelectorAll(".tab-content").forEach(c => c.style.display = "none");
-        tab.classList.add("active");
-        document.getElementById("tab-" + tab.dataset.tab).style.display = "block";
-      });
+      tab.addEventListener("click", () => switchTab(tab.dataset.tab));
     });
+
+    window.addEventListener("popstate", (e) => switchTab(e.state?.tab || getActiveTab(), false));
 
     // ─── Profile form ──────────────────────────────────
     document.getElementById("profileForm").addEventListener("submit", async (e) => {
