@@ -108,7 +108,7 @@ const KNOWN_SERVICES = [
   ["RBL", /\brbl\b.*bank/i],
   ["Indane", /\bindane\b/i],
   ["HP Gas", /\bhp\s*gas\b|\bhindustan\s*petroleum\b/i],
-  ["Bharat Gas", /\bbharat\s*gas\b/i],
+  ["Bharat Gas", /\bbharat\s*gas\b|\bbharatgas\b|\bBPCL\b/i],
 
   // Telecom (India)
   ["Jio", /\bjio\b/i],
@@ -176,6 +176,13 @@ const PHONE_PATTERNS = [
 class OtpExtractor {
 
   /**
+   * Check if a word is a common stop word (not a service name).
+   */
+  static _isStopWord(word) {
+    return /^(your|the|this|that|and|for|from|with|please|dear|customer|user|otp|code|pin|new|old|use|enter|keep|share|valid|do|not|it|is|are|was|has|had|been|will|can|may|must|shall|should|would|could)$/i.test(word);
+  }
+
+  /**
    * Extract OTP code from text.
    */
   static extractOtp(text) {
@@ -202,38 +209,40 @@ class OtpExtractor {
    * Tries known services first, then extracts from message patterns.
    */
   static detectService(text) {
-    // 1. Check known services
+    // 1. Check known services first
     for (const [name, pattern] of KNOWN_SERVICES) {
       if (pattern.test(text)) return name;
     }
 
-    // 2. Generic extraction: "OTP for SERVICE_NAME" / "SERVICE_NAME OTP" / "SERVICE login OTP"
+    // 2. "-BRAND" at end of message (most reliable)
+    const endMatch = text.match(/[-–—]\s*([A-Z][A-Za-z0-9]+(?:\s*\([^)]+\))?)\s*$/);
+    if (endMatch && endMatch[1] && !OtpExtractor._isStopWord(endMatch[1])) {
+      return endMatch[1].trim();
+    }
+
+    // 3. Generic extraction — uses case-sensitive patterns to avoid false positives
     const genericPatterns = [
-      /(?:for|from|by|of)\s+([A-Z][A-Za-z0-9]+(?:\s+[A-Z][A-Za-z0-9]+)?)\s+(?:sign|login|OTP|verif|code|account)/i,
-      /([A-Z][A-Za-z0-9]+(?:\s+[A-Z][A-Za-z0-9]+)?)\s+(?:login\s+)?OTP/i,
-      /(?:Dear\s+\w+,?\s*)?([A-Z][A-Za-z0-9]+(?:\s+[A-Z][A-Za-z0-9]+)?)\s+(?:has|sent|request)/i,
-      /\b([A-Z][A-Za-z0-9]{2,}(?:\s+[A-Z][A-Za-z0-9]+)?)\s+(?:sign[- ]?in|log[- ]?in)/i,
-      /[-–—]\s*([A-Z][A-Za-z0-9]+(?:\s*\([^)]+\))?)\s*$/,  // "- BrandName" at end
+      // "for SERVICE Sign in" / "for SERVICE login" (case-sensitive: service must be uppercase-start)
+      /(?:for|from|by)\s+([A-Z][A-Za-z0-9]+(?:\s+[A-Z][A-Za-z0-9]+)?)\s+(?:[Ss]ign|[Ll]ogin|OTP|[Vv]erif|[Cc]ode|[Aa]ccount|[Rr]egistration)/,
+      // "SERVICE login OTP" / "SERVICE OTP"
+      /([A-Z][A-Za-z0-9]+(?:\s+[A-Z][A-Za-z0-9]+)?)\s+(?:login\s+)?OTP/,
+      // "on SERVICE app"
+      /(?:on|in)\s+([A-Z][A-Za-z0-9]+(?:\s+[A-Z][A-Za-z0-9]+)?)\s+(?:app|portal|website|account)/,
+      // "Dear customer,your OTP for SERVICE..." — extract SERVICE before "is NNNN"
+      /OTP\s+(?:for\s+)?(?:\w+\s+)?([A-Z][A-Za-z0-9]+(?:\s+[A-Za-z0-9]+)?)\s+(?:is\s+\d|network|service)/i,
     ];
 
     for (const pattern of genericPatterns) {
       const match = text.match(pattern);
-      if (match && match[1]) {
+      if (match && match[1] && !OtpExtractor._isStopWord(match[1])) {
         const name = match[1].trim();
-        // Filter out common false positives
-        if (name.length >= 2 && name.length <= 30
-            && !/^(your|the|this|that|and|for|from|with|please|dear|customer|user|otp|code|pin|new|old)$/i.test(name)) {
-          return name;
-        }
+        if (name.length >= 2 && name.length <= 30 && /^[A-Z]/.test(name)) return name;
       }
     }
 
     return "Unknown";
   }
 
-  /**
-   * Detect country from phone number.
-   */
   static detectCountry(phoneNumber) {
     if (!phoneNumber) return "Unknown";
     const clean = String(phoneNumber).replace(/[^0-9]/g, "");
