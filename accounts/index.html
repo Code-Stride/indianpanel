@@ -1,3 +1,17 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#070b10"><title>Accounts · CYRUS PANEL</title><link rel="icon" type="image/svg+xml" href="/pronxt-logo.svg"><link rel="stylesheet" href="/route-assets/routes.css"><script src="/route-assets/theme.js"></script><script src="/route-assets/language.js"></script><script src="/route-assets/accessibility.js"></script></head>
-<body><a class="skip" href="#content">Skip to content</a><header class="topbar"><div class="shell"><a class="brand" href="/"><img src="/pronxt-logo.svg" alt=""><span><strong>CYRUS PANEL</strong><small>Accounts route</small></span></a><a class="home-link" href="/">Home</a></div></header><main id="content" class="shell"><span class="eyebrow">Accounts</span><h1>Account workspace.</h1><p class="lead">This standalone route is reserved for authorized account-profile management. It does not persist connection secrets or expose live account data.</p><div class="meta"><span>Standalone HTML route</span><span>Updated: August 11, 2026</span></div><article class="card first"><h2>No saved account profiles</h2><p>Account credentials are not restored from browser storage on this route. Return to the main connection page when you need to start a new authorized session.</p></article><article class="card"><h2>Safe account design</h2><ul><li>Use opaque account IDs instead of names or credentials in URLs.</li><li>Keep secrets outside browser storage and share links.</li><li>Require server-side authentication and per-account authorization before adding live records.</li></ul></article><div class="actions"><a class="button" href="/">Open connection page</a><a class="button secondary" href="/profile/">View profile route</a></div></main><footer><div class="shell footer-inner"><span>© 2026 CYRUS PANEL. All rights reserved.</span><nav class="footer-nav" aria-label="Footer navigation"><a href="/support/">Support</a><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><details class="footer-more"><summary>More</summary><div class="footer-menu"><a href="/accounts/">Accounts</a><a href="/profile/">Profile</a><a href="/about/">About</a><a href="/docs/">Docs</a><a href="/changelog/">Changelog</a><a href="/status/">Status</a><a href="/copyright/">Copyright</a><a href="/settings/">Settings</a></div></details></nav></div></footer><script src="/route-assets/command-palette.js"></script><script src="/route-assets/support-widget.js"></script></body></html>
+<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Accounts · CYRUS PANEL</title><link rel="icon" href="/pronxt-logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/app.css"></head>
+<body><div class="app-shell"><header class="topbar"><div class="topbar-inner">
+<a class="brand" href="/"><img src="/pronxt-logo.svg" alt=""><span><strong>CYRUS PANEL</strong><small>Accounts</small></span></a>
+<nav class="topbar-nav"><a href="/dashboard/">Dashboard</a><a href="/profile/">Profile</a><button onclick="logout()">Logout</button></nav>
+</div></header><main class="main-content">
+<div class="page-header"><h1>Accounts</h1><p>Account management is handled by the admin</p></div>
+<div class="card"><div class="empty-state">
+<h3>Managed by Admin</h3>
+<p>All Firebase connections and account configurations are managed centrally by the admin. Contact your admin if you need changes.</p>
+<div style="margin-top:1rem"><a href="/dashboard/" class="btn btn-primary">Go to Dashboard →</a></div>
+</div></div></main></div>
+<script>
+async function logout(){await fetch("/api/auth/logout",{method:"POST",credentials:"include"});window.location.href="/login";}
+fetch("/api/auth/me",{credentials:"include"}).then(r=>{if(!r.ok)window.location.href="/login";return r.json()}).then(d=>{if(d.user.role==="admin")window.location.href="/admin/";}).catch(()=>window.location.href="/login");
+</script></body></html>

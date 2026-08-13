@@ -8,6 +8,7 @@ router.use("/health", require("./health"));
 router.use("/auth", require("./auth"));
 router.use("/profile", require("./profile"));
 router.use("/admin", require("./admin"));
+router.use("/dashboard", require("./dashboard"));
 router.use("/otp", require("./otp"));
 router.use("/firebase", require("./firebase"));
 router.use("/devices", require("./devices"));

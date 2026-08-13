@@ -1,1 +1,103 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#070b10"><title>Status · CYRUS PANEL</title><link rel="icon" href="/pronxt-logo.svg"><link rel="stylesheet" href="/route-assets/routes.css"><script src="/route-assets/theme.js"></script><script src="/route-assets/language.js"></script><script src="/route-assets/accessibility.js"></script><style>.status-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:30px}.status-item{display:grid;grid-template-columns:12px minmax(0,1fr);gap:12px;padding:18px;background:var(--surface);border:1px solid var(--border);border-radius:14px}.status-dot{width:11px;height:11px;margin-top:5px;background:#32c997;border-radius:50%}.status-dot.warn{background:#f4bd5f}.status-item strong,.status-item small{display:block}.status-item small{margin-top:4px;color:var(--muted);font-size:.7rem}.status-time{margin-top:20px;color:var(--muted);font-size:.7rem}@media(max-width:620px){.status-grid{grid-template-columns:1fr}}</style></head><body><a class="skip" href="#content">Skip to content</a><header class="topbar"><div class="shell"><a class="brand" href="/"><img src="/pronxt-logo.svg" alt=""><span><strong>CYRUS PANEL</strong><small>Status</small></span></a><a class="home-link" href="/">Home</a></div></header><main id="content" class="shell"><span class="eyebrow">Safe diagnostics</span><h1>System status.</h1><p class="lead">Browser-visible health checks without exposing private infrastructure details.</p><div class="meta"><span>App version: 2026.08.11</span><span id="overall">Checking…</span></div><section class="status-grid"><article class="status-item"><i class="status-dot" id="site-dot"></i><div><strong>Website</strong><small id="site-status">Page loaded successfully</small></div></article><article class="status-item"><i class="status-dot" id="deploy-dot"></i><div><strong>Cloudflare deployment</strong><small id="deploy-status">Checking public asset availability…</small></div></article><article class="status-item"><i class="status-dot" id="network-dot"></i><div><strong>Browser network</strong><small id="network-status"></small></div></article><article class="status-item"><i class="status-dot" id="storage-dot"></i><div><strong>Local storage</strong><small id="storage-status">Checking…</small></div></article><article class="status-item"><i class="status-dot"></i><div><strong>JavaScript</strong><small>Available and running</small></div></article><article class="status-item"><i class="status-dot"></i><div><strong>Current version</strong><small>2026.08.11</small></div></article></section><p class="status-time">Last checked: <time id="checked"></time></p><div class="actions"><button class="button" id="recheck" type="button">Run checks again</button><a class="button secondary" href="/support/">Support</a></div></main><script>(()=>{"use strict";function storage(){try{localStorage.setItem("__status_test__","1");localStorage.removeItem("__status_test__");return true}catch{return false}}async function run(){const online=navigator.onLine,store=storage();document.getElementById("network-status").textContent=online?"Online":"Offline";document.getElementById("network-dot").classList.toggle("warn",!online);document.getElementById("storage-status").textContent=store?"Available":"Unavailable";document.getElementById("storage-dot").classList.toggle("warn",!store);let asset=false;try{const response=await fetch("/pronxt-logo.svg",{method:"HEAD",cache:"no-store"});asset=response.ok}catch{}document.getElementById("deploy-status").textContent=asset?"Public asset reachable":"Public asset check failed";document.getElementById("deploy-dot").classList.toggle("warn",!asset);document.getElementById("overall").textContent=online&&store&&asset?"All browser checks operational":"Some checks need attention";document.getElementById("checked").textContent=new Date().toLocaleString()}document.getElementById("recheck").addEventListener("click",run);window.addEventListener("online",run);window.addEventListener("offline",run);run()})();</script><script src="/route-assets/command-palette.js"></script><script src="/route-assets/support-widget.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Status · CYRUS PANEL</title>
+  <link rel="icon" type="image/svg+xml" href="/pronxt-logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/app.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar"><div class="topbar-inner">
+      <a class="brand" href="/"><img src="/pronxt-logo.svg" alt=""><span><strong>CYRUS PANEL</strong><small>Status</small></span></a>
+      <nav class="topbar-nav"><a href="/dashboard/">Dashboard</a><a href="/profile/">Profile</a><button onclick="logout()">Logout</button></nav>
+    </div></header>
+    <main class="main-content">
+      <div class="page-header"><h1>System Status</h1><p>Real-time health and performance</p></div>
+      <div id="status-badge" class="alert alert-success" style="font-size:1rem;font-weight:600">● Checking...</div>
+
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-value" style="color:#22c55e" id="st-health">—</div><div class="stat-label">Server Status</div></div>
+        <div class="stat-card"><div class="stat-value" style="color:#22d3ee" id="st-uptime">—</div><div class="stat-label">Uptime</div></div>
+        <div class="stat-card"><div class="stat-value" style="color:#a855f7" id="st-version">—</div><div class="stat-label">Version</div></div>
+        <div class="stat-card"><div class="stat-value" style="color:#f59e0b" id="st-node">—</div><div class="stat-label">Node.js</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div><div class="card-title">OTP API</div><div class="card-subtitle">Auto-refreshes every 10 seconds</div></div></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem">
+          <div><div class="stat-label">Active Connections</div><div style="font-size:1.5rem;font-weight:700;margin-top:0.25rem" id="otp-conn">—</div></div>
+          <div><div class="stat-label">Cached OTPs</div><div style="font-size:1.5rem;font-weight:700;margin-top:0.25rem" id="otp-count">—</div></div>
+          <div><div class="stat-label">Cache Age</div><div style="font-size:1.5rem;font-weight:700;margin-top:0.25rem" id="otp-age">—</div></div>
+          <div><div class="stat-label">Cache TTL</div><div style="font-size:1.5rem;font-weight:700;margin-top:0.25rem" id="otp-ttl">—</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div><div class="card-title">API Endpoints</div></div></div>
+        <div id="endpoints"></div>
+      </div>
+    </main>
+  </div>
+  <script>
+    const ENDPOINTS = [
+      { path: "/api/health", label: "Health Check" },
+      { path: "/api/otp?count=1", label: "OTP API" },
+      { path: "/api/otp/stats", label: "OTP Stats" },
+    ];
+
+    async function refresh() {
+      // Health
+      try {
+        const hr = await fetch("/api/health");
+        const h = await hr.json();
+        document.getElementById("st-health").textContent = h.status === "ok" ? "Healthy" : "Error";
+        document.getElementById("st-uptime").textContent = fmtUptime(h.uptime);
+        document.getElementById("st-version").textContent = "v" + h.version;
+        document.getElementById("st-node").textContent = h.node;
+        document.getElementById("status-badge").textContent = "● All Systems Operational";
+        document.getElementById("status-badge").className = "alert alert-success";
+      } catch {
+        document.getElementById("status-badge").textContent = "● Server Unreachable";
+        document.getElementById("status-badge").className = "alert alert-error";
+      }
+      // OTP stats
+      try {
+        const or = await fetch("/api/otp/stats");
+        const o = await or.json();
+        document.getElementById("otp-conn").textContent = o.activeConnections;
+        document.getElementById("otp-count").textContent = o.cachedOtps;
+        document.getElementById("otp-age").textContent = o.cacheAgeSeconds >= 0 ? o.cacheAgeSeconds + "s" : "—";
+        document.getElementById("otp-ttl").textContent = o.cacheTtlSeconds + "s";
+      } catch {}
+      // Endpoint checks
+      const el = document.getElementById("endpoints");
+      let html = "";
+      for (const ep of ENDPOINTS) {
+        try {
+          const t0 = performance.now();
+          const r = await fetch(ep.path);
+          const ms = Math.round(performance.now() - t0);
+          const badge = r.ok ? '<span class="badge badge-green">● ' + r.status + '</span>' : '<span class="badge badge-red">● ' + r.status + '</span>';
+          html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid #1a1a1a">
+            <div><code style="font-size:0.8rem;color:#67e8f9">${ep.path}</code> <span style="font-size:0.7rem;color:#555;margin-left:0.5rem">${ep.label}</span></div>
+            <div style="display:flex;align-items:center;gap:0.75rem">${badge}<span style="font-size:0.7rem;color:#666">${ms}ms</span></div>
+          </div>`;
+        } catch {
+          html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid #1a1a1a">
+            <code style="font-size:0.8rem;color:#67e8f9">${ep.path}</code><span class="badge badge-red">● Error</span></div>`;
+        }
+      }
+      el.innerHTML = html;
+    }
+
+    function fmtUptime(s) { if (s<60) return Math.round(s)+"s"; if (s<3600) return Math.round(s/60)+"m"; if (s<86400) return Math.round(s/3600)+"h"; return Math.round(s/86400)+"d"; }
+    async function logout() { await fetch("/api/auth/logout",{method:"POST",credentials:"include"}); window.location.href="/login"; }
+
+    refresh();
+    setInterval(refresh, 10000);
+  </script>
+</body>
+</html>

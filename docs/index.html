@@ -1,1 +1,172 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#070b10"><title>Documentation · CYRUS PANEL</title><link rel="icon" href="/pronxt-logo.svg"><link rel="stylesheet" href="/route-assets/routes.css"><script src="/route-assets/theme.js"></script><script src="/route-assets/language.js"></script><script src="/route-assets/accessibility.js"></script><style>.docs-layout{display:grid;grid-template-columns:210px minmax(0,1fr);gap:24px;margin-top:32px}.docs-nav{position:sticky;top:84px;align-self:start;display:grid;gap:5px}.docs-nav a{padding:8px 10px;color:var(--muted);border-radius:8px;font-size:.73rem;text-decoration:none}.docs-nav a:hover{color:var(--text);background:var(--surface)}.docs-content{min-width:0}.docs-content .card{scroll-margin-top:85px}.docs-content code{padding:2px 5px;background:var(--surface2);border-radius:5px}.docs-content ol,.docs-content ul{color:var(--muted);font-size:.82rem}@media(max-width:720px){.docs-layout{grid-template-columns:1fr}.docs-nav{position:static;grid-template-columns:repeat(2,minmax(0,1fr))}}</style></head><body><a class="skip" href="#content">Skip to content</a><header class="topbar"><div class="shell"><a class="brand" href="/"><img src="/pronxt-logo.svg" alt=""><span><strong>CYRUS PANEL</strong><small>Documentation</small></span></a><a class="home-link" href="/">Home</a></div></header><main id="content" class="shell"><span class="eyebrow">Documentation</span><h1>Learn CYRUS PANEL.</h1><p class="lead">Getting started, refresh behaviour, privacy controls, troubleshooting, and official support guidance.</p><div class="docs-layout"><nav class="docs-nav" aria-label="Documentation sections"><a href="#getting-started">Getting started</a><a href="#login">Login guide</a><a href="#refresh">Refresh behaviour</a><a href="#privacy">Privacy mode</a><a href="#theme">Theme settings</a><a href="#troubleshooting">Troubleshooting</a><a href="#support">Official support</a><a href="#safety">Safety</a></nav><section class="docs-content"><article id="getting-started" class="card first"><h2>Getting started</h2><ol><li>Open the main page.</li><li>Select <strong>Login</strong>.</li><li>Enter an authorized Firebase Database URL.</li><li>Enter the authentication key for the current session.</li><li>Connect and wait for a successful response.</li></ol></article><article id="login" class="card"><h2>Login guide</h2><p>Use only account information you are authorized to access. Verify the database hostname and never paste credentials into public messages or screenshots.</p></article><article id="refresh" class="card"><h2>Refresh behaviour</h2><p>The live connection is memory-only. Refreshing disconnects it. The site may restore the last validated database URL and derived label, but it does not store the authentication key for reconnect.</p></article><article id="privacy" class="card"><h2>Privacy mode</h2><p>Privacy mode visually masks sensitive-looking values. It is a screen-sharing aid—not encryption or access control. Enable it through <a href="/settings/">Settings</a>.</p></article><article id="theme" class="card"><h2>Theme settings</h2><p>Choose System, Dark, or Light theme, plus card density and layout. Preferences are local to this browser. Accessibility controls are available at <a href="/settings/accessibility/">Accessibility</a>.</p></article><article id="troubleshooting" class="card"><h2>Troubleshooting</h2><ul><li>Check the exact error message.</li><li>Verify network connectivity.</li><li>Try one refresh or a private browser window.</li><li>Generate a redacted summary using the <a href="/support/ticket/">Support Ticket Generator</a>.</li></ul></article><article id="support" class="card"><h2>Official support links</h2><p>Support bot: <a href="https://t.me/CYRUSPANEL_SUPPORTBOT" target="_blank" rel="noopener noreferrer">@CYRUSPANEL_SUPPORTBOT</a><br>Channel: <a href="https://t.me/cyrus_c_panel" target="_blank" rel="noopener noreferrer">@cyrus_c_panel</a></p></article><article class="card"><h2>Command palette</h2><p>Press <code>Ctrl + K</code> on Windows/Linux or <code>Command + K</code> on macOS to open route, theme, privacy, language, accessibility, status, documentation, and support commands.</p></article><article id="safety" class="card"><h2>Safety guidelines</h2><p>Never share passwords, OTPs, CVVs, card PINs, private keys, recovery codes, or complete tokens. Use only systems you own or are explicitly authorized to access.</p></article></section></div></main><script src="/route-assets/command-palette.js"></script><script src="/route-assets/support-widget.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Docs · CYRUS PANEL</title>
+  <link rel="icon" type="image/svg+xml" href="/pronxt-logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/app.css">
+  <style>
+    .endpoint { border: 1px solid #1a1a1a; border-radius: 10px; margin-bottom: 0.75rem; overflow: hidden; }
+    .ep-header { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; cursor: pointer; background: rgba(255,255,255,0.01); }
+    .ep-header:hover { background: rgba(255,255,255,0.03); }
+    .ep-method { font-size: 0.65rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 4px; letter-spacing: 0.05em; }
+    .ep-method.get { background: rgba(34,211,238,0.1); color: #22d3ee; }
+    .ep-method.post { background: rgba(34,197,94,0.1); color: #22c55e; }
+    .ep-method.put { background: rgba(245,158,11,0.1); color: #f59e0b; }
+    .ep-method.delete { background: rgba(239,68,68,0.1); color: #ef4444; }
+    .ep-path { font-family: monospace; font-size: 0.8rem; color: #ccc; }
+    .ep-desc { font-size: 0.75rem; color: #666; margin-left: auto; }
+    .ep-body { padding: 1rem; border-top: 1px solid #1a1a1a; display: none; font-size: 0.8rem; }
+    .ep-body.open { display: block; }
+    .ep-body code { background: #0a0a0a; padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.75rem; color: #22d3ee; }
+    .ep-body pre { background: #0a0a0a; padding: 0.75rem; border-radius: 8px; overflow-x: auto; margin-top: 0.5rem; font-size: 0.7rem; color: #aaa; }
+    .section-label { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #555; margin: 2rem 0 0.75rem; }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar"><div class="topbar-inner">
+      <a class="brand" href="/"><img src="/pronxt-logo.svg" alt=""><span><strong>CYRUS PANEL</strong><small>API Docs</small></span></a>
+      <nav class="topbar-nav"><a href="/dashboard/">Dashboard</a><a href="/profile/">Profile</a><button onclick="logout()">Logout</button></nav>
+    </div></header>
+    <main class="main-content">
+      <div class="page-header"><h1>API Documentation</h1><p>Complete reference for all CYRUS PANEL endpoints</p></div>
+
+      <div class="section-label">📡 Public — OTP API</div>
+
+      <div class="endpoint"><div class="ep-header" onclick="toggle(this)">
+        <span class="ep-method get">GET</span><span class="ep-path">/api/otp</span><span class="ep-desc">Get OTP codes from all databases</span>
+      </div><div class="ep-body">
+        <p><strong>Query params:</strong> <code>count</code> (default 10, max 100), <code>fresh</code> (1 = bypass cache), <code>key</code> (API key)</p>
+        <p style="margin-top:0.5rem"><strong>Response:</strong> Array of <code>[service, phone, raw_sms, timestamp, country]</code></p>
+        <pre>curl /api/otp?count=10
+
+// Response
+[
+  ["WhatsApp", "919876543210", "Your code 123-456...", "2026-08-13 13:00:00", " India"],
+  ["Google", "14155551234", "G-654321 is your code", "2026-08-13 12:59:00", " USA"]
+]</pre>
+      </div></div>
+
+      <div class="endpoint"><div class="ep-header" onclick="toggle(this)">
+        <span class="ep-method get">GET</span><span class="ep-path">/api/otp/stats</span><span class="ep-desc">OTP API statistics</span>
+      </div><div class="ep-body">
+        <p>Returns active connections count, cached OTPs, and cache age.</p>
+        <pre>{"activeConnections": 2, "cachedOtps": 45, "cacheAgeSeconds": 12, "cacheTtlSeconds": 30}</pre>
+      </div></div>
+
+      <div class="section-label">🔐 Authentication</div>
+
+      <div class="endpoint"><div class="ep-header" onclick="toggle(this)">
+        <span class="ep-method post">POST</span><span class="ep-path">/api/auth/register</span><span class="ep-desc">Create account</span>
+      </div><div class="ep-body">
+        <p><strong>Body:</strong> <code>{ username, email, password }</code></p>
+        <p>First user to register automatically becomes admin.</p>
+        <pre>curl -X POST /api/auth/register -H "Content-Type: application/json" \
+  -d '{"username":"john","email":"john@test.com","password":"pass1234"}'</pre>
+      </div></div>
+
+      <div class="endpoint"><div class="ep-header" onclick="toggle(this)">
+        <span class="ep-method post">POST</span><span class="ep-path">/api/auth/login</span><span class="ep-desc">Login</span>
+      </div><div class="ep-body">
+        <p><strong>Body:</strong> <code>{ login, password }</code> — login can be username or email</p>
+        <p>Sets <code>cyrus_token</code> httpOnly cookie. Returns JWT token in response too.</p>
+      </div></div>
+
+      <div class="endpoint"><div class="ep-header" onclick="toggle(this)">
+        <span class="ep-method post">POST</span><span class="ep-path">/api/auth/logout</span><span class="ep-desc">Clear session</span>
+      </div><div class="ep-body"><p>Clears the auth cookie.</p></div></div>
+
+      <div class="endpoint"><div class="ep-header" onclick="toggle(this)">
+        <span class="ep-method get">GET</span><span class="ep-path">/api/auth/me</span><span class="ep-desc">Current user</span>
+      </div><div class="ep-body"><p>Returns the authenticated user's profile. Requires auth cookie or Bearer token.</p></div></div>
+
+      <div class="section-label">👤 Profile</div>
+
+      <div class="endpoint"><div class="ep-header" onclick="toggle(this)">
+        <span class="ep-method get">GET</span><span class="ep-path">/api/profile</span><span class="ep-desc">Get profile + stats</span>
+      </div><div class="ep-body"><p>Returns user profile with connection count, member since date, and last login.</p></div></div>
+
+      <div class="endpoint"><div class="ep-header" onclick="toggle(this)">
+        <span class="ep-method put">PUT</span><span class="ep-path">/api/profile</span><span class="ep-desc">Update profile</span>
+      </div><div class="ep-body"><p><strong>Body:</strong> <code>{ email?, phone?, bio? }</code></p></div></div>
+
+      <div class="endpoint"><div class="ep-header" onclick="toggle(this)">
+        <span class="ep-method post">POST</span><span class="ep-path">/api/profile/regenerate-key</span><span class="ep-desc">New API key</span>
+      </div><div class="ep-body"><p>Generates a new API key, invalidating the old one.</p></div></div>
+
+      <div class="section-label">👑 Admin (requires admin role)</div>
+
+      <div class="endpoint"><div class="ep-header" onclick="toggle(this)">
+        <span class="ep-method get">GET</span><span class="ep-path">/api/admin/connections</span><span class="ep-desc">List Firebase connections</span>
+      </div><div class="ep-body"><p>Returns all connections with masked keys.</p></div></div>
+
+      <div class="endpoint"><div class="ep-header" onclick="toggle(this)">
+        <span class="ep-method post">POST</span><span class="ep-path">/api/admin/connections</span><span class="ep-desc">Add connection</span>
+      </div><div class="ep-body">
+        <p><strong>Body:</strong> <code>{ name, url, key }</code></p>
+        <p>URL must be HTTPS ending with <code>.firebaseio.com</code> or <code>.firebasedatabase.app</code></p>
+      </div></div>
+
+      <div class="endpoint"><div class="ep-header" onclick="toggle(this)">
+        <span class="ep-method put">PUT</span><span class="ep-path">/api/admin/connections/:id</span><span class="ep-desc">Update connection</span>
+      </div><div class="ep-body"><p><strong>Body:</strong> <code>{ name?, url?, key?, isActive? }</code></p></div></div>
+
+      <div class="endpoint"><div class="ep-header" onclick="toggle(this)">
+        <span class="ep-method delete">DELETE</span><span class="ep-path">/api/admin/connections/:id</span><span class="ep-desc">Remove connection</span>
+      </div><div class="ep-body"><p>Permanently removes the Firebase connection.</p></div></div>
+
+      <div class="endpoint"><div class="ep-header" onclick="toggle(this)">
+        <span class="ep-method post">POST</span><span class="ep-path">/api/admin/connections/:id/test</span><span class="ep-desc">Test connection</span>
+      </div><div class="ep-body"><p>Tests the Firebase connection and returns device count.</p></div></div>
+
+      <div class="endpoint"><div class="ep-header" onclick="toggle(this)">
+        <span class="ep-method get">GET</span><span class="ep-path">/api/admin/users</span><span class="ep-desc">List all users</span>
+      </div><div class="ep-body"><p>Returns all registered users with roles and status.</p></div></div>
+
+      <div class="endpoint"><div class="ep-header" onclick="toggle(this)">
+        <span class="ep-method put">PUT</span><span class="ep-path">/api/admin/users/:id/toggle</span><span class="ep-desc">Enable/disable user</span>
+      </div><div class="ep-body"><p>Toggles user active status. Disabled users cannot login.</p></div></div>
+
+      <div class="endpoint"><div class="ep-header" onclick="toggle(this)">
+        <span class="ep-method put">PUT</span><span class="ep-path">/api/admin/users/:id/role</span><span class="ep-desc">Change role</span>
+      </div><div class="ep-body"><p><strong>Body:</strong> <code>{ role: "admin" | "user" }</code></p></div></div>
+
+      <div class="endpoint"><div class="ep-header" onclick="toggle(this)">
+        <span class="ep-method get">GET</span><span class="ep-path">/api/admin/stats</span><span class="ep-desc">System statistics</span>
+      </div><div class="ep-body"><p>Returns total users, connections, devices, and server uptime.</p></div></div>
+
+      <div class="section-label">📱 Dashboard</div>
+
+      <div class="endpoint"><div class="ep-header" onclick="toggle(this)">
+        <span class="ep-method get">GET</span><span class="ep-path">/api/dashboard</span><span class="ep-desc">Full dashboard data</span>
+      </div><div class="ep-body"><p>Returns all devices and recent OTPs from all active Firebase connections.</p></div></div>
+
+      <div class="endpoint"><div class="ep-header" onclick="toggle(this)">
+        <span class="ep-method get">GET</span><span class="ep-path">/api/dashboard/devices/:id</span><span class="ep-desc">Device details</span>
+      </div><div class="ep-body"><p>Returns device info and recent messages from whichever database it belongs to.</p></div></div>
+
+      <div class="endpoint"><div class="ep-header" onclick="toggle(this)">
+        <span class="ep-method post">POST</span><span class="ep-path">/api/dashboard/devices/:id/sms</span><span class="ep-desc">Send SMS</span>
+      </div><div class="ep-body"><p><strong>Body:</strong> <code>{ to, message }</code> — Queues an SMS to be sent from the device.</p></div></div>
+
+      <div class="section-label">🏥 System</div>
+
+      <div class="endpoint"><div class="ep-header" onclick="toggle(this)">
+        <span class="ep-method get">GET</span><span class="ep-path">/api/health</span><span class="ep-desc">Health check</span>
+      </div><div class="ep-body"><p>Returns server status, version, uptime, and Node.js version.</p></div></div>
+
+      <div class="endpoint"><div class="ep-header" onclick="toggle(this)">
+        <span class="ep-method post">POST</span><span class="ep-path">/api/apk/parse</span><span class="ep-desc">Parse APK (multipart)</span>
+      </div><div class="ep-body"><p>Upload an .apk file to extract Firebase URL and API key. Use <code>file</code> field name.</p></div></div>
+    </main>
+  </div>
+  <script>
+    function toggle(el) { el.nextElementSibling.classList.toggle("open"); }
+    async function logout() { await fetch("/api/auth/logout",{method:"POST",credentials:"include"}); window.location.href="/login"; }
+    fetch("/api/auth/me",{credentials:"include"}).then(r=>{if(!r.ok)window.location.href="/login";});
+  </script>
+</body>
+</html>

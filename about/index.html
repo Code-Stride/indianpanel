@@ -1,3 +1,41 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#070b10"><title>About · CYRUS PANEL</title><link rel="icon" type="image/svg+xml" href="/pronxt-logo.svg"><link rel="stylesheet" href="/route-assets/routes.css"><script src="/route-assets/theme.js"></script><script src="/route-assets/language.js"></script><script src="/route-assets/accessibility.js"></script></head>
-<body><a class="skip" href="#content">Skip to content</a><header class="topbar"><div class="shell"><a class="brand" href="/"><img src="/pronxt-logo.svg" alt=""><span><strong>CYRUS PANEL</strong><small>About route</small></span></a><a class="home-link" href="/">Home</a></div></header><main id="content" class="shell"><span class="eyebrow">About</span><h1>About CYRUS PANEL.</h1><p class="lead">A responsive control-panel interface with independent routes, original SVG identity concepts, accessibility improvements, and configurable appearance.</p><div class="meta"><span>Standalone HTML route</span><span>Updated: August 11, 2026</span></div><section class="grid"><article class="card"><h2>Interface</h2><p>CYRUS PANEL provides a responsive browser interface designed for mobile, tablet, and desktop layouts.</p></article><article class="card"><h2>Brand identity</h2><p>The project includes original scalable SVG marks that rotate across page loads while preserving accessible fallback text.</p></article><article class="card"><h2>Accessibility</h2><p>Pages include keyboard focus states, semantic structure, touch-friendly controls, reduced-motion support, and responsive typography.</p></article><article class="card"><h2>Important boundary</h2><p>Use the deployment only for systems and information you are explicitly authorized to access. Production use requires appropriate security and legal review.</p></article></section><div class="actions"><a class="button" href="/support/">Get support</a><a class="button secondary" href="/copyright/">Copyright information</a></div></main><footer><div class="shell footer-inner"><span>© 2026 CYRUS PANEL. All rights reserved.</span><nav class="footer-nav" aria-label="Footer navigation"><a href="/support/">Support</a><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><details class="footer-more"><summary>More</summary><div class="footer-menu"><a href="/accounts/">Accounts</a><a href="/profile/">Profile</a><a href="/about/">About</a><a href="/docs/">Docs</a><a href="/changelog/">Changelog</a><a href="/status/">Status</a><a href="/copyright/">Copyright</a><a href="/settings/">Settings</a></div></details></nav></div></footer><script src="/route-assets/command-palette.js"></script><script src="/route-assets/support-widget.js"></script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About · CYRUS PANEL</title>
+  <link rel="icon" type="image/svg+xml" href="/pronxt-logo.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/app.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar"><div class="topbar-inner">
+      <a class="brand" href="/"><img src="/pronxt-logo.svg" alt=""><span><strong>CYRUS PANEL</strong><small>About</small></span></a>
+      <nav class="topbar-nav"><a href="/dashboard/">Dashboard</a><a href="/profile/">Profile</a><button onclick="logout()">Logout</button></nav>
+    </div></header>
+    <main class="main-content">
+      <div class="page-header"><h1>About</h1><p>About CYRUS PANEL</p></div>
+      
+<div class="card">
+  <div class="card-header"><div><div class="card-title">CYRUS PANEL v2.0</div><div class="card-subtitle">Unified Device Management Platform</div></div></div>
+  <p style="font-size:0.875rem;color:#888;line-height:1.7">
+    CYRUS PANEL is a full-featured IoT device management platform that connects multiple Firebase Realtime Databases
+    into a single unified pool. Administrators can add Firebase connections, and all users get access to every device
+    across all connected databases.
+  </p>
+  <div style="margin-top:1.5rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+    <div><div class="stat-label">Backend</div><div style="font-weight:600;margin-top:0.25rem">Node.js + Express</div></div>
+    <div><div class="stat-label">Database</div><div style="font-weight:600;margin-top:0.25rem">PostgreSQL / JSON</div></div>
+    <div><div class="stat-label">Auth</div><div style="font-weight:600;margin-top:0.25rem">JWT + bcrypt</div></div>
+    <div><div class="stat-label">Version</div><div style="font-weight:600;margin-top:0.25rem">2.0.0</div></div>
+  </div>
+</div>
+    </main>
+  </div>
+  <script>
+    fetch("/api/auth/me",{credentials:"include"}).then(r=>{if(!r.ok)window.location.href="/login";});
+    async function logout(){await fetch("/api/auth/logout",{method:"POST",credentials:"include"});window.location.href="/login";}
+  </script>
+</body>
+</html>
