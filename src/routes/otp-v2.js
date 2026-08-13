@@ -26,7 +26,7 @@ const OtpExtractor = require("../services/otpExtractor");
 const router = Router();
 
 let _cache = { data: null, timestamp: 0 };
-const CACHE_TTL_MS = 30000;
+const CACHE_TTL_MS = 10000;
 
 router.get("/otp", async (req, res, next) => {
   try {

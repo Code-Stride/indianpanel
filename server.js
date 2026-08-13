@@ -39,8 +39,11 @@ if (process.env.NODE_ENV !== "test") {
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// ─── Rate Limiting ────────────────────────────────────────────────────────────
-app.use("/api/", rateLimiter);
+// ─── Rate Limiting (only on auth/admin, not OTP) ─────────────────────────────
+app.use("/api/auth", rateLimiter);
+app.use("/api/admin", rateLimiter);
+app.use("/api/profile", rateLimiter);
+// OTP, Firebase, Devices, Dashboard — no rate limit (bot-friendly)
 
 // ─── API Routes ───────────────────────────────────────────────────────────────
 app.use("/api", apiRoutes);
