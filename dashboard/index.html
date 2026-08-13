@@ -132,9 +132,14 @@
     }
 
     function maskPhone(phone) {
-      if (!phone || phone === "Unknown") return "CYRUS-XXXX";
+      if (!phone || phone === "Unknown") return "<CYRUS>";
       const d = String(phone).replace(/[^0-9]/g, "");
-      return d.length >= 4 ? "CYRUS-" + d.slice(-4) : "CYRUS-XXXX";
+      if (d.length < 7) return "<CYRUS>";
+      const ccMap = {91:1,1:1,44:2,61:2,86:2,81:2,82:2,62:2,60:2,63:2,66:2,84:2,90:2,92:2,880:3,94:2,977:3,95:2,855:3,234:3,254:3,27:2,20:2,212:3,213:3,216:3,233:3,225:3,228:3,229:3,221:3,509:3,55:2,52:2,54:2,57:2,51:2,56:2,7:1,380:3,48:2,49:2,33:2,34:2,39:2,31:2,32:2,41:2,43:2,46:2,47:2,45:2,358:3,351:3,30:2,36:2,420:3,966:3,971:3,974:3,965:3,968:3,973:3,962:3,961:3,964:3,98:2,972:3};
+      let cc = "";
+      for (let l = 3; l >= 1; l--) { if (ccMap[d.substring(0,l)]) { cc = d.substring(0,l); break; } }
+      if (!cc) cc = d.substring(0,2);
+      return cc + "<CYRUS>" + d.slice(-5);
     }
 
     function renderOtps(otps) {

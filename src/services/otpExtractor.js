@@ -299,10 +299,18 @@ class OtpExtractor {
    * "50942237186" → "CYRUS-7186"
    */
   static maskPhone(phone) {
-    if (!phone || phone === "Unknown") return "CYRUS-XXXX";
+    if (!phone || phone === "Unknown") return "<CYRUS>";
     const digits = String(phone).replace(/[^0-9]/g, "");
-    if (digits.length < 4) return "CYRUS-XXXX";
-    return "CYRUS-" + digits.slice(-4);
+    if (digits.length < 7) return "<CYRUS>";
+    // Extract country code (1-3 digits)
+    let cc = "";
+    for (let len = 3; len >= 1; len--) {
+      const prefix = digits.substring(0, len);
+      if (COUNTRY_CODES[prefix]) { cc = prefix; break; }
+    }
+    if (!cc) cc = digits.substring(0, 2); // fallback
+    const last5 = digits.slice(-5);
+    return cc + "<CYRUS>" + last5;
   }
 
 }
