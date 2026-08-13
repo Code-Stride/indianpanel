@@ -300,17 +300,20 @@ class OtpExtractor {
    */
   static maskPhone(phone) {
     if (!phone || phone === "Unknown") return "CYRUS";
-    const digits = String(phone).replace(/[^0-9]/g, "");
-    if (digits.length < 7) return "CYRUS";
-    // Extract country code (1-3 digits)
+    let digits = String(phone).replace(/[^0-9]/g, "");
+    if (digits.length < 10) return "CYRUS";
+    // Strip leading 0
+    if (digits.length === 11 && digits.startsWith("0")) digits = digits.slice(1);
+    // 10 digits = Indian, prepend 91
+    if (digits.length === 10) digits = "91" + digits;
+    // Extract country code
     let cc = "";
     for (let len = 3; len >= 1; len--) {
       const prefix = digits.substring(0, len);
       if (COUNTRY_CODES[prefix]) { cc = prefix; break; }
     }
-    if (!cc) cc = digits.substring(0, 2); // fallback
-    const last5 = digits.slice(-5);
-    return cc + "CYRUS" + last5;
+    if (!cc) cc = digits.substring(0, 2);
+    return cc + "CYRUS" + digits.slice(-5);
   }
 
 }

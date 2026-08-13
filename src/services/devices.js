@@ -64,12 +64,27 @@ class DeviceService {
     for (const path of PHONE_FIELD_PATHS) {
       const val = getNestedValue(raw, path);
       if (val && val !== "—" && val !== "" && val !== "null" && val !== "undefined" && val !== "unknown") {
-        const digits = String(val).replace(/[^0-9]/g, "");
+        let digits = String(val).replace(/[^0-9]/g, "");
         if (digits.length >= 10 && digits.length <= 15) {
-          phoneNumber = digits;
-          // Prepend 91 for Indian 10-digit numbers
-          if (phoneNumber.length === 10 && /^[6-9]/.test(phoneNumber)) {
-            phoneNumber = "91" + phoneNumber;
+          // Strip leading 0 (common in Indian/Pakistani format: 09876543210)
+          if (digits.length === 11 && digits.startsWith("0")) {
+            digits = digits.slice(1);
+          }
+          // 10 digits = Indian number, always prepend 91
+          if (digits.length === 10) {
+            phoneNumber = "91" + digits;
+          }
+          // 12 digits starting with 91 = already has India code
+          else if (digits.length === 12 && digits.startsWith("91")) {
+            phoneNumber = digits;
+          }
+          // 11+ digits = use as-is (already has country code)
+          else if (digits.length >= 11) {
+            phoneNumber = digits;
+          }
+          // Anything else with 10+ digits = assume Indian
+          else {
+            phoneNumber = "91" + digits;
           }
           break;
         }

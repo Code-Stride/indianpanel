@@ -22,6 +22,7 @@ const ConnectionsService = require("../services/connections");
 const FirebaseService = require("../services/firebase");
 const DeviceService = require("../services/devices");
 const OtpExtractor = require("../services/otpExtractor");
+const { getPhone } = require("../utils/phone");
 
 const router = Router();
 
@@ -125,38 +126,6 @@ router.get("/otp", async (req, res, next) => {
 
 // ═══ Helpers (same as v1) ════════════════════════════════
 
-function getPhone(device, rawClient, messages) {
-  const candidates = [
-    device?.phoneNumber, device?.phone, device?.number,
-    device?.mobileNumber, device?.mobile, device?.simNumber,
-  ];
-  if (rawClient) {
-    candidates.push(
-      rawClient.phoneNumber, rawClient.phone, rawClient.number,
-      rawClient.mobileNumber, rawClient.mobile, rawClient.phoneNo,
-      rawClient.contactNumber, rawClient.simNumber, rawClient.sim,
-      rawClient.registeredNumber, rawClient.devicePhone,
-    );
-  }
-  if (messages && Array.isArray(messages)) {
-    for (const msg of messages) {
-      const text = msg.text || msg.body || msg.message || "";
-      const indianMatch = text.match(/(?:\+91|91)?[\s-]?([6-9]\d{9})/);
-      if (indianMatch) candidates.push(indianMatch[1]);
-      const intlMatch = text.match(/\+?(\d{10,15})/);
-      if (intlMatch) candidates.push(intlMatch[1]);
-    }
-  }
-  for (const c of candidates) {
-    if (!c || c === "—") continue;
-    const digits = String(c).replace(/[^0-9]/g, "");
-    if (digits.length >= 10) {
-      if (digits.length === 10 && /^[6-9]/.test(digits)) return "91" + digits;
-      return digits;
-    }
-  }
-  return "";
-}
 
 function getTimestamp(msg) {
   const raw = msg.timestamp || msg.time || msg.date || msg.receivedAt
