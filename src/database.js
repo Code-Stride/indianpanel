@@ -10,7 +10,7 @@ const fs = require("fs");
 const path = require("path");
 const { v4: uuidv4 } = require("uuid");
 
-const DATA_DIR = path.join(__dirname, "..", "data");
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, "..", "data");
 
 class Database {
   constructor(collection) {

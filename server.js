@@ -18,6 +18,9 @@ const apiRoutes = require("./src/routes/api");
 const app = express();
 const PORT = parseInt(process.env.PORT || "3000", 10);
 
+// Trust reverse proxies (needed for Render, Railway, Fly, nginx, etc.)
+app.set("trust proxy", 1);
+
 // ─── Security & Compression ───────────────────────────────────────────────────
 app.use(helmet({
   contentSecurityPolicy: false,
@@ -107,3 +110,7 @@ if (require.main === module) {
 }
 
 module.exports = app;
+
+// Graceful shutdown
+process.on("SIGTERM", () => { console.log("SIGTERM received, shutting down..."); process.exit(0); });
+process.on("SIGINT", () => { console.log("SIGINT received, shutting down..."); process.exit(0); });

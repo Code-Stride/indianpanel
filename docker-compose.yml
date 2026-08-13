@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  cyrus-panel:
+    build: .
+    container_name: cyrus-panel
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data          # Persistent user data
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-changeme123}
+      - SESSION_SECRET=${SESSION_SECRET:-change-this-to-a-random-string}
+      - TG_BOT_TOKEN=${TG_BOT_TOKEN:-}
+      - TG_CHAT_ID=${TG_CHAT_ID:-}

@@ -1,0 +1,7 @@
+{
+  "install": "npm install && npm run build",
+  "start": "node server.js",
+  "watch": {
+    "ignore": ["data/*", "public/*", "node_modules/*"]
+  }
+}

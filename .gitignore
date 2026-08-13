@@ -3,6 +3,7 @@ dist/
 uploads/
 public/
 data/
+logs/
 .env
 *.log
 .DS_Store

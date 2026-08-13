@@ -1,0 +1,6 @@
+{
+  "start": "npm run build && node server.js",
+  "engines": {
+    "node": "20.x"
+  }
+}
