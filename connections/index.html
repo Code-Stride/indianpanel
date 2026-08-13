@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/assets/app.css">
+<script src="/assets/icons.js"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -85,7 +86,7 @@
           `${data.activeConnections} active database(s) · ${data.cachedOtps} cached OTPs`;
         document.getElementById("connList").innerHTML = `
           <div class="alert alert-info">
-            <span>🔗</span>
+            <span><span class="icon" style="width:16px;height:16px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"></path></svg></span></span>
             <span>${data.activeConnections} Firebase database(s) are connected. All devices and OTPs from these databases are available in the dashboard and OTP API.</span>
           </div>
           <div style="margin-top:1rem">

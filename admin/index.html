@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/assets/app.css">
+<script src="/assets/icons.js"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -15,7 +16,7 @@
       <div class="topbar-inner">
         <a class="brand" href="/">
           <img src="/pronxt-logo.svg" alt="">
-          <span><strong>CYRUS PANEL</strong><small style="color:#f59e0b">⚡ Admin</small></span>
+          <span><strong>CYRUS PANEL</strong><small style="color:#f59e0b"><span class="icon" style="width:14px;height:14px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg></span> Admin</small></span>
         </a>
         <nav class="topbar-nav">
           <a href="/dashboard/">Dashboard</a>
@@ -28,7 +29,7 @@
 
     <main class="main-content">
       <div class="page-header">
-        <h1>⚡ Admin Panel</h1>
+        <h1><span class="icon" style="width:14px;height:14px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg></span> Admin Panel</h1>
         <p>Manage Firebase connections, users, and system settings</p>
       </div>
 
@@ -56,8 +57,8 @@
 
       <!-- Tabs -->
       <div class="tabs">
-        <button class="tab active" data-tab="connections">🔗 Firebase Connections</button>
-        <button class="tab" data-tab="users">👥 Users</button>
+        <button class="tab active" data-tab="connections"><span class="icon" style="width:16px;height:16px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"></path></svg></span> Firebase Connections</button>
+        <button class="tab" data-tab="users"><span class="icon" style="width:16px;height:16px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 00-3-3.87"></path><path d="M16 3.13a4 4 0 010 7.75"></path></svg></span> Users</button>
       </div>
 
       <!-- ═══ Connections Tab ═══ -->
@@ -99,7 +100,7 @@
               <div class="card-title">Connected Databases</div>
               <div class="card-subtitle" id="connCount">Loading...</div>
             </div>
-            <button class="btn btn-secondary btn-sm" onclick="loadConnections()">↻ Refresh</button>
+            <button class="btn btn-secondary btn-sm" onclick="loadConnections()"><span class="icon" style="width:14px;height:14px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"></path></svg></span> Refresh</button>
           </div>
           <div id="connList">
             <div class="empty-state"><div class="spinner" style="margin:0 auto 1rem"></div><p>Loading...</p></div>
@@ -115,7 +116,7 @@
               <div class="card-title">Registered Users</div>
               <div class="card-subtitle" id="userCount">Loading...</div>
             </div>
-            <button class="btn btn-secondary btn-sm" onclick="loadUsers()">↻ Refresh</button>
+            <button class="btn btn-secondary btn-sm" onclick="loadUsers()"><span class="icon" style="width:14px;height:14px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"></path></svg></span> Refresh</button>
           </div>
           <div id="userList">
             <div class="empty-state"><div class="spinner" style="margin:0 auto 1rem"></div><p>Loading...</p></div>
@@ -212,7 +213,7 @@
             <div style="display:flex;gap:0.25rem;flex-wrap:wrap">
               <button class="btn btn-success btn-sm" onclick="testConn('${c.id}')">Test</button>
               <button class="btn btn-secondary btn-sm" onclick="toggleConn('${c.id}',${!c.isActive})">${c.isActive ? "Disable" : "Enable"}</button>
-              <button class="btn btn-danger btn-sm" onclick="deleteConn('${c.id}','${esc(c.name)}')">✕</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteConn('${c.id}','${esc(c.name)}')"><span class="icon" style="width:14px;height:14px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></span></button>
             </div>
           </td>
         </tr>`;
@@ -291,7 +292,7 @@
         <thead><tr><th>User</th><th>Email</th><th>Role</th><th>Status</th><th>Last Login</th><th>Actions</th></tr></thead><tbody>`;
       for (const u of users) {
         const roleBadge = u.role === "admin"
-          ? '<span class="badge badge-amber">👑 Admin</span>'
+          ? '<span class="badge badge-amber"><span class="icon" style="width:16px;height:16px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 17l3-9 5 4 2-8 2 8 5-4 3 9H2z"></path><path d="M2 20h20"></path></svg></span> Admin</span>'
           : '<span class="badge badge-purple">User</span>';
         const statusBadge = u.isActive
           ? '<span class="badge badge-green">Active</span>'
@@ -308,7 +309,7 @@
               ${!isMe ? `
                 <button class="btn btn-secondary btn-sm" onclick="toggleUser('${u.id}')">${u.isActive ? "Disable" : "Enable"}</button>
                 <button class="btn btn-secondary btn-sm" onclick="toggleRole('${u.id}','${u.role === "admin" ? "user" : "admin"}')">${u.role === "admin" ? "Demote" : "Promote"}</button>
-                <button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}','${esc(u.username)}')">✕</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}','${esc(u.username)}')"><span class="icon" style="width:14px;height:14px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></span></button>
               ` : '<span style="font-size:0.7rem;color:#444">Current user</span>'}
             </div>
           </td>

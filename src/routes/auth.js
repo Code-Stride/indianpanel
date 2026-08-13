@@ -1,10 +1,5 @@
 "use strict";
 
-/**
- * Authentication routes.
- * Login, register, logout, and session management.
- */
-
 const { Router } = require("express");
 const AuthService = require("../services/auth");
 const { requireAuth } = require("../middleware/auth");
@@ -13,20 +8,18 @@ const router = Router();
 
 /**
  * POST /api/auth/register
- * Create a new account.
  */
 router.post("/register", async (req, res, next) => {
   try {
     const { username, email, password } = req.body;
     const user = await AuthService.register({ username, email, password });
 
-    // Generate token and set cookie
     const token = AuthService.generateToken(user);
     res.cookie("cyrus_token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     res.status(201).json({ success: true, user, token });
@@ -37,7 +30,6 @@ router.post("/register", async (req, res, next) => {
 
 /**
  * POST /api/auth/login
- * Login with username/email + password.
  */
 router.post("/login", async (req, res, next) => {
   try {
@@ -59,7 +51,6 @@ router.post("/login", async (req, res, next) => {
 
 /**
  * POST /api/auth/logout
- * Clear the auth cookie.
  */
 router.post("/logout", (_req, res) => {
   res.clearCookie("cyrus_token");
@@ -68,12 +59,24 @@ router.post("/logout", (_req, res) => {
 
 /**
  * GET /api/auth/me
- * Get the currently authenticated user.
+ * Returns the CURRENT user from database (fresh role, not from JWT).
  */
-router.get("/me", requireAuth, (req, res, next) => {
+router.get("/me", requireAuth, async (req, res, next) => {
   try {
-    const user = AuthService.getUserById(req.user.userId);
+    const user = await AuthService.getUserById(req.user.userId);
     if (!user) return res.status(404).json({ error: "User not found" });
+
+    // If role changed since token was issued, regenerate token
+    if (user.role !== req.user.role) {
+      const newToken = AuthService.generateToken(user);
+      res.cookie("cyrus_token", newToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+    }
+
     res.json({ success: true, user });
   } catch (err) {
     next(err);
@@ -82,7 +85,6 @@ router.get("/me", requireAuth, (req, res, next) => {
 
 /**
  * PUT /api/auth/password
- * Change password.
  */
 router.put("/password", requireAuth, async (req, res, next) => {
   try {

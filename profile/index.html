@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/assets/app.css">
+<script src="/assets/icons.js"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -112,7 +113,7 @@
           </div>
 
           <div class="alert alert-info" style="margin-top:1rem">
-            <span>⚡</span>
+            <span><span class="icon" style="width:14px;height:14px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg></span></span>
             <span>API endpoint: <strong>GET /api/otp?count=10&key=YOUR_KEY</strong></span>
           </div>
 
@@ -172,7 +173,7 @@
           const nav = document.getElementById("nav");
           const adminLink = document.createElement("a");
           adminLink.href = "/admin/";
-          adminLink.textContent = "⚡ Admin";
+          adminLink.textContent = "<span class="icon" style="width:14px;height:14px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg></span> Admin";
           nav.insertBefore(adminLink, nav.querySelector('a[href="/profile/"]'));
         }
 
