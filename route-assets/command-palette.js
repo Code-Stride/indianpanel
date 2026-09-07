@@ -1,13 +1,45 @@
 (() => {
   "use strict";
   if (document.getElementById("cyrus-command-palette")) return;
+
+  function getBase() {
+    const p = window.location.pathname;
+    if (p.includes("/indianpanel")) return "/indianpanel";
+    return "";
+  }
+  function resolve(target) {
+    const b = getBase();
+    if (!target || target === "/") return b ? b + "/" : "/";
+    const clean = target.startsWith("/") ? target : "/" + target;
+    return (b + clean).replace(/\/+/g, "/");
+  }
+  function navigate(path) { window.location.assign(resolve(path)); }
+
   const style = document.createElement("style");
   style.textContent = `
-    #cyrus-command-palette[hidden]{display:none!important}#cyrus-command-palette{position:fixed;z-index:12000;inset:0;display:grid;align-items:start;justify-items:center;padding:clamp(70px,12vh,130px) 14px 20px;background:rgba(4,3,12,.76)!important;backdrop-filter:blur(8px)}
-    .ccp-box{width:min(640px,100%);overflow:hidden;color:#f5f3ff;background:#111026!important;border:1px solid #413a72;border-radius:18px;box-shadow:0 32px 100px rgba(0,0,0,.55)!important;animation:ccp-in .22s cubic-bezier(.16,1,.3,1) both}@keyframes ccp-in{from{opacity:0;transform:translateY(-10px) scale(.97)}to{opacity:1;transform:none}}
-    .ccp-search-wrap{display:flex;align-items:center;gap:10px;padding:14px;border-bottom:1px solid #302d56}.ccp-search-wrap svg{color:#918aaf;flex:0 0 auto}.ccp-search{width:100%;min-width:0;height:44px;padding:0;color:#f5f3ff;background:transparent!important;border:0;outline:0;font:inherit;font-size:16px}.ccp-search::placeholder{color:#77728f}.ccp-shortcut{padding:4px 6px;color:#77728f;background:#1d1a3b;border:1px solid #3b3568;border-radius:6px;font-size:.62rem;white-space:nowrap}
-    .ccp-results{max-height:min(470px,60vh);padding:8px;overflow-y:auto}.ccp-item{display:grid;grid-template-columns:38px minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;min-height:54px;padding:7px 9px;color:#bdb7d7;background:transparent!important;border:1px solid transparent;border-radius:11px;text-align:left;cursor:pointer}.ccp-item:hover,.ccp-item[aria-selected="true"]{color:#fff;background:#1c1939!important;border-color:#3b3568}.ccp-icon{display:grid;width:36px;height:36px;place-items:center;color:#a994ff;background:#242046!important;border-radius:9px;font-weight:900}.ccp-copy{min-width:0}.ccp-copy strong,.ccp-copy small{display:block}.ccp-copy strong{font-size:.78rem}.ccp-copy small{margin-top:2px;color:#77728f;font-size:.62rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ccp-kind{color:#68627e;font-size:.58rem;text-transform:uppercase}.ccp-empty{padding:32px;color:#77728f;text-align:center;font-size:.78rem}.ccp-foot{display:flex;gap:14px;padding:9px 13px;color:#68627e;background:#0e0d20!important;border-top:1px solid #252244;font-size:.57rem}
-    html[data-theme="light"] .ccp-box,body[data-pronxt-effective-theme="light"] .ccp-box{color:#211d3c;background:#fff!important;border-color:#d7d1ed;box-shadow:0 32px 80px rgba(48,40,90,.22)!important}html[data-theme="light"] .ccp-search-wrap,html[data-theme="light"] .ccp-foot,body[data-pronxt-effective-theme="light"] .ccp-search-wrap,body[data-pronxt-effective-theme="light"] .ccp-foot{border-color:#ded9ef}html[data-theme="light"] .ccp-search,body[data-pronxt-effective-theme="light"] .ccp-search{color:#211d3c}html[data-theme="light"] .ccp-item,body[data-pronxt-effective-theme="light"] .ccp-item{color:#5f587e}html[data-theme="light"] .ccp-item:hover,html[data-theme="light"] .ccp-item[aria-selected="true"],body[data-pronxt-effective-theme="light"] .ccp-item:hover,body[data-pronxt-effective-theme="light"] .ccp-item[aria-selected="true"]{color:#211d3c;background:#f0edfb!important;border-color:#d7d1ed}
+    #cyrus-command-palette[hidden]{display:none!important}
+    #cyrus-command-palette{position:fixed;z-index:12000;inset:0;display:grid;align-items:start;justify-items:center;padding:clamp(70px,12vh,130px) 14px 20px;background:rgba(3,7,18,.82)!important;backdrop-filter:blur(12px)}
+    .ccp-box{width:min(640px,100%);overflow:hidden;color:#f8fafc;background:#0f172a!important;border:1px solid rgba(56,189,248,.25);border-radius:20px;box-shadow:0 32px 100px rgba(0,0,0,.7)!important;animation:ccp-in .22s cubic-bezier(.16,1,.3,1) both}
+    @keyframes ccp-in{from{opacity:0;transform:translateY(-10px) scale(.97)}to{opacity:1;transform:none}}
+    .ccp-search-wrap{display:flex;align-items:center;gap:12px;padding:16px;border-bottom:1px solid rgba(255,255,255,.08)}
+    .ccp-search-wrap svg{color:#38bdf8;flex:0 0 auto}
+    .ccp-search{width:100%;min-width:0;height:44px;padding:0;color:#f8fafc;background:transparent!important;border:0;outline:0;font:inherit;font-size:16px}
+    .ccp-search::placeholder{color:#64748b}
+    .ccp-shortcut{padding:4px 8px;color:#94a3b8;background:#1e293b;border:1px solid rgba(255,255,255,.1);border-radius:6px;font-size:.65rem;white-space:nowrap;font-family:monospace}
+    .ccp-results{max-height:min(470px,60vh);padding:8px;overflow-y:auto}
+    .ccp-item{display:grid;grid-template-columns:38px minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;min-height:54px;padding:8px 10px;color:#cbd5e1;background:transparent!important;border:1px solid transparent;border-radius:12px;text-align:left;cursor:pointer;transition:all .15s ease}
+    .ccp-item:hover,.ccp-item[aria-selected="true"]{color:#fff;background:rgba(56,189,248,.12)!important;border-color:rgba(56,189,248,.3)}
+    .ccp-icon{display:grid;width:36px;height:36px;place-items:center;color:#38bdf8;background:#1e293b!important;border-radius:10px;font-weight:900}
+    .ccp-copy{min-width:0}.ccp-copy strong,.ccp-copy small{display:block}
+    .ccp-copy strong{font-size:.82rem}.ccp-copy small{margin-top:2px;color:#64748b;font-size:.65rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .ccp-kind{color:#0284c7;background:rgba(14,165,233,.15);padding:2px 6px;border-radius:6px;font-size:.6rem;text-transform:uppercase;font-weight:700}
+    .ccp-empty{padding:32px;color:#64748b;text-align:center;font-size:.82rem}
+    .ccp-foot{display:flex;gap:14px;padding:10px 16px;color:#64748b;background:#090d16!important;border-top:1px solid rgba(255,255,255,.06);font-size:.62rem}
+    html[data-theme="light"] .ccp-box,body[data-pronxt-effective-theme="light"] .ccp-box{color:#0f172a;background:#fff!important;border-color:#cbd5e1;box-shadow:0 32px 80px rgba(0,0,0,.15)!important}
+    html[data-theme="light"] .ccp-search-wrap,html[data-theme="light"] .ccp-foot,body[data-pronxt-effective-theme="light"] .ccp-search-wrap,body[data-pronxt-effective-theme="light"] .ccp-foot{border-color:#e2e8f0}
+    html[data-theme="light"] .ccp-search,body[data-pronxt-effective-theme="light"] .ccp-search{color:#0f172a}
+    html[data-theme="light"] .ccp-item,body[data-pronxt-effective-theme="light"] .ccp-item{color:#475569}
+    html[data-theme="light"] .ccp-item:hover,html[data-theme="light"] .ccp-item[aria-selected="true"],body[data-pronxt-effective-theme="light"] .ccp-item:hover,body[data-pronxt-effective-theme="light"] .ccp-item[aria-selected="true"]{color:#0f172a;background:#f0f9ff!important;border-color:#bae6fd}
     @media(max-width:520px){#cyrus-command-palette{padding-top:20px}.ccp-results{max-height:70vh}.ccp-item{grid-template-columns:36px minmax(0,1fr)}.ccp-kind{display:none}}
   `;
   document.head.appendChild(style);
@@ -23,22 +55,23 @@
 
   function prefs() { try { return { theme: "system", privacy: false, ...JSON.parse(localStorage.getItem("pronxt_ui_preferences_v1") || "{}") }; } catch { return { theme: "system", privacy: false }; } }
   function savePrefs(value) { try { localStorage.setItem("pronxt_ui_preferences_v1", JSON.stringify(value)); } catch {} window.location.reload(); }
-  function navigate(path) { window.location.assign(path); }
+
   const commands = [
-    { title: "Go home", detail: "Open main Login page", icon: "H", kind: "Route", run: () => navigate("/") },
-    { title: "Open Settings", detail: "Theme, layout, density and privacy", icon: "S", kind: "Route", run: () => navigate("/settings/") },
-    { title: "Open Accounts", detail: "Standalone account workspace", icon: "A", kind: "Route", run: () => navigate("/accounts/") },
-    { title: "Get Account", detail: "Account-access information", icon: "G", kind: "Route", run: () => navigate("/get-accounts/") },
-    { title: "Open Profile", detail: "Profile route", icon: "P", kind: "Route", run: () => navigate("/profile/") },
-    { title: "Documentation", detail: "Guides and troubleshooting", icon: "D", kind: "Route", run: () => navigate("/docs/") },
-    { title: "Changelog", detail: "Versions and recent changes", icon: "C", kind: "Route", run: () => navigate("/changelog/") },
-    { title: "System Status", detail: "Safe browser and deployment checks", icon: "●", kind: "Route", run: () => navigate("/status/") },
-    { title: "Contact support", detail: "Open official Telegram support bot", icon: "?", kind: "Support", run: () => window.open("https://t.me/CYRUSPANEL_SUPPORTBOT", "_blank", "noopener") },
-    { title: "Toggle privacy mode", detail: "Mask or reveal sensitive-looking values", icon: "◐", kind: "Setting", run: () => { const p = prefs(); p.privacy = !p.privacy; savePrefs(p); } },
-    { title: "Cycle theme", detail: "System → Dark → Light", icon: "◒", kind: "Setting", run: () => { const p = prefs(); p.theme = p.theme === "system" ? "dark" : p.theme === "dark" ? "light" : "system"; savePrefs(p); } },
-    { title: "Language settings", detail: "English, Hindi and Bengali", icon: "文", kind: "Setting", run: () => navigate("/settings/language/") },
-    { title: "Accessibility controls", detail: "Text, contrast, motion and touch targets", icon: "Aa", kind: "Setting", run: () => navigate("/settings/accessibility/") },
-    { title: "Generate support ticket", detail: "Create a redacted troubleshooting summary", icon: "T", kind: "Support", run: () => navigate("/support/ticket/") }
+    { title: "Go Home", detail: "Open Main Login Page", icon: "🏠", kind: "Route", run: () => navigate("/") },
+    { title: "Open Settings", detail: "Theme, layout, density and privacy", icon: "⚙️", kind: "Route", run: () => navigate("/settings/") },
+    { title: "Open Accounts", detail: "Standalone account workspace", icon: "👥", kind: "Route", run: () => navigate("/accounts/") },
+    { title: "Get Account", detail: "Account-access information", icon: "🔑", kind: "Route", run: () => navigate("/get-accounts/") },
+    { title: "Open Profile", detail: "User profile route", icon: "👤", kind: "Route", run: () => navigate("/profile/") },
+    { title: "Documentation", detail: "Guides, login tutorial and troubleshooting", icon: "📚", kind: "Route", run: () => navigate("/docs/") },
+    { title: "Changelog", detail: "Version history and recent updates", icon: "📋", kind: "Route", run: () => navigate("/changelog/") },
+    { title: "System Status", detail: "Live browser diagnostics and health checks", icon: "⚡", kind: "Route", run: () => navigate("/status/") },
+    { title: "Contact Support Bot", detail: "Open official Telegram support bot", icon: "💬", kind: "Support", run: () => window.open("https://t.me/CYRUSPANEL_SUPPORTBOT", "_blank", "noopener") },
+    { title: "Official Telegram Channel", detail: "Join @cyrus_c_panel updates channel", icon: "📢", kind: "Support", run: () => window.open("https://t.me/cyrus_c_panel", "_blank", "noopener") },
+    { title: "Toggle Privacy Mode", detail: "Mask or reveal sensitive values on screen", icon: "👁️", kind: "Setting", run: () => { const p = prefs(); p.privacy = !p.privacy; savePrefs(p); } },
+    { title: "Cycle Theme", detail: "System → Dark → Light", icon: "🌓", kind: "Setting", run: () => { const p = prefs(); p.theme = p.theme === "system" ? "dark" : p.theme === "dark" ? "light" : "system"; savePrefs(p); } },
+    { title: "Language Settings", detail: "English, Hindi and Bengali", icon: "🌐", kind: "Setting", run: () => navigate("/settings/language/") },
+    { title: "Accessibility Controls", detail: "Text size, contrast, motion and touch targets", icon: "♿", kind: "Setting", run: () => navigate("/settings/accessibility/") },
+    { title: "Generate Support Ticket", detail: "Create a redacted diagnostic summary", icon: "🎫", kind: "Support", run: () => navigate("/support/ticket/") }
   ];
   function render() {
     const query = input.value.trim().toLowerCase();
