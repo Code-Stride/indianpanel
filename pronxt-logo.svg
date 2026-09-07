@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">CYRUS PANEL logo</title>
+  <desc id="desc">A futuristic cyan and crimson PN arrow monogram inside a shield.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#071421"/>
+      <stop offset="1" stop-color="#02070d"/>
+    </linearGradient>
+    <linearGradient id="shield" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#9af8ff"/>
+      <stop offset="0.45" stop-color="#16dbea"/>
+      <stop offset="1" stop-color="#087d99"/>
+    </linearGradient>
+    <linearGradient id="cyan" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a9fbff"/>
+      <stop offset="0.45" stop-color="#12e6ef"/>
+      <stop offset="1" stop-color="#00a8d4"/>
+    </linearGradient>
+    <linearGradient id="red" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff657f"/>
+      <stop offset="0.5" stop-color="#f12953"/>
+      <stop offset="1" stop-color="#a90831"/>
+    </linearGradient>
+    <filter id="cyanGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feFlood flood-color="#16e8f2" flood-opacity=".55"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="redGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="7" result="blur"/>
+      <feFlood flood-color="#f12953" flood-opacity=".6"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="104" fill="url(#bg)"/>
+  <path d="M256 54 425 120v125c0 106-62 177-169 218C149 422 87 351 87 245V120L256 54Z"
+        fill="#071726" stroke="url(#shield)" stroke-width="11"/>
+  <path d="M256 76 403 133v111c0 91-51 153-147 193-96-40-147-102-147-193V133L256 76Z"
+        fill="none" stroke="#17435a" stroke-width="5"/>
+
+  <!-- P: strong vertical stem and open forward bowl -->
+  <path d="M150 349V163h105c58 0 94 31 94 79 0 47-36 79-94 79h-48v-47h48c28 0 43-12 43-32 0-21-15-32-43-32h-54v139Z"
+        fill="url(#cyan)" filter="url(#cyanGlow)"/>
+  <path d="M163 337V176h91c47 0 78 25 78 66 0 39-31 66-78 66h-35v-21h36c36 0 56-17 56-45 0-29-20-45-56-45h-67v140Z"
+        fill="none" stroke="#d5fdff" stroke-opacity=".62" stroke-width="3"/>
+
+  <!-- N / next arrow: diagonal motion crossing the P -->
+  <path d="M214 286 251 248l61 61v-40h45v40h43l-81 81-81-81h43v-12l-30-30Z"
+        fill="url(#red)" filter="url(#redGlow)"/>
+  <path d="m229 286 22-22 73 73v-53h20v53h25l-50 50-50-50h25v-34l-43-43Z"
+        fill="none" stroke="#ff9bad" stroke-opacity=".7" stroke-width="3"/>
+
+  <!-- Forward cyan arrow ties the monogram together -->
+  <path d="M244 220h73v-43l83 82-83 82v-43h-73l36-39-36-39Z"
+        fill="url(#cyan)" filter="url(#cyanGlow)"/>
+  <path d="M270 232h59v-26l54 53-54 53v-27h-59l24-26-24-27Z"
+        fill="none" stroke="#d8feff" stroke-opacity=".75" stroke-width="3"/>
+
+  <circle cx="256" cy="54" r="5" fill="#d8feff"/>
+</svg>
