@@ -70,22 +70,36 @@ def main():
         c, _ = get_file(SEC)
         if c:
             try:
-                ct = base64.b64decode(c)
+                # get_file() already decoded the API content field; the committed
+                # file is the raw ciphertext. Tolerate an extra base64 layer too.
+                ct = c
                 with open("/tmp/eh_priv.pem", "wb") as f:
                     f.write(priv)
                 os.chmod("/tmp/eh_priv.pem", 0o600)
                 with open("/tmp/eh_ct.bin", "wb") as f:
                     f.write(ct)
-                r = subprocess.run(
-                    ["openssl", "pkeyutl", "-decrypt", "-inkey", "/tmp/eh_priv.pem",
-                     "-pkeyopt", "rsa_padding_mode:oaep",
-                     "-pkeyopt", "rsa_oaep_md:sha256", "-in", "/tmp/eh_ct.bin"],
-                    capture_output=True)
+                def attempt(blob):
+                    with open("/tmp/eh_ct.bin", "wb") as f:
+                        f.write(blob)
+                    return subprocess.run(
+                        ["openssl", "pkeyutl", "-decrypt", "-inkey", "/tmp/eh_priv.pem",
+                         "-pkeyopt", "rsa_padding_mode:oaep",
+                         "-pkeyopt", "rsa_oaep_md:sha256", "-in", "/tmp/eh_ct.bin"],
+                        capture_output=True)
+                r = attempt(ct)
+                if r.returncode != 0:
+                    try:
+                        r2 = attempt(base64.b64decode(c, validate=False))
+                        if r2.returncode == 0:
+                            r = r2
+                    except Exception:
+                        pass
                 if r.returncode == 0 and r.stdout:
                     secret = r.stdout
+                    print(f"decrypt ok: ciphertext {len(ct)} bytes")
                     break
                 else:
-                    print("decrypt not ready yet ...")
+                    print("decrypt not ready yet:", r.stderr.decode()[:200])
             except Exception as e:
                 print("exchange parse error:", e)
         time.sleep(5)
