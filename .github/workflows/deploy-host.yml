@@ -6,22 +6,53 @@ on:
     paths: ['.github/workflows/deploy-host.yml', '.deploy/**']
   workflow_dispatch:
 
+permissions:
+  contents: write
+
+concurrency:
+  group: host-deploy-arena-01a09ed6
+  cancel-in-progress: false
+
 jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
-      - name: Probe host reachability (no credentials)
+      - uses: actions/checkout@v4
+        with:
+          ref: arena/01a09ed6-indianpanel
+          fetch-depth: 0
+      - name: Probe host reachability
         env:
           HOST: 63.141.252.124
           PORT: "22518"
         run: |
-          echo "== DNS / identity =="
-          getent hosts blazepanel.mywp.info || true
-          echo "== TCP port checks =="
-          for pp in 22518 22 21 80 443; do
-            if timeout 8 bash -c "exec 3<>/dev/tcp/$HOST/$pp" 2>/dev/null; then echo "port $pp: OPEN"; else echo "port $pp: closed/filtered"; fi
-          done
-          echo "== SSH banner on $PORT =="
-          timeout 12 bash -c 'exec 3<>/dev/tcp/'"$HOST"'/'"$PORT"'; timeout 8 head -c 120 <&3 | od -c' || echo "no banner"
-          echo "== ssh negotiation (no auth) =="
-          ssh -vv -o StrictHostKeyChecking=no -o ConnectTimeout=12 -o PreferredAuthentications=none -o PubkeyAuthentication=no -p "$PORT" "vh20074@$HOST" true 2>&1 | sed -n '1,25p' || true
+          set +e
+          OUT=host-deploy-report.log
+          : > "$OUT"
+          {
+            echo "### Host reachability probe ($(date -u))"
+            echo "runner: $(uname -a)"
+            echo "== DNS =="
+            getent hosts blazepanel.mywp.info
+            getent hosts files6.dnsexit.com
+            echo "== TCP port checks =="
+            for pp in 22518 22 21 80 443 8080; do
+              if timeout 8 bash -c "exec 3<>/dev/tcp/$HOST/$pp" 2>/dev/null; then echo "port $pp: OPEN"; else echo "port $pp: closed/filtered"; fi
+            done
+            echo "== SSH banner on $PORT =="
+            timeout 12 bash -c 'exec 3<>/dev/tcp/'"$HOST"'/'"$PORT"'; timeout 8 head -c 200 <&3 | od -c' || echo "no banner / closed"
+            echo "== ssh -vv negotiation (no auth) =="
+            ssh -vv -o StrictHostKeyChecking=no -o ConnectTimeout=12 -o PreferredAuthentications=none -o PubkeyAuthentication=no -p "$PORT" "vh20074@$HOST" true 2>&1 | sed -n '1,30p'
+            echo "== curl http/https =="
+            curl -sS -m 15 -o /dev/null -w 'http  : code=%{http_code}\n' "http://$HOST/" 2>&1
+            curl -sS -m 15 -k -o /dev/null -w 'https : code=%{http_code}\n' "https://$HOST/" 2>&1
+            curl -sS -m 15 -k -o /dev/null -w 'https(host): code=%{http_code}\n' "https://blazepanel.mywp.info/" 2>&1
+          } 2>&1 | tee "$OUT"
+      - name: Publish report back to branch
+        if: always()
+        run: |
+          git config user.name "arena-deploy-bot"
+          git config user.email "arena-deploy-bot@users.noreply.github.com"
+          git add host-deploy-report.log
+          git commit -m "chore: host reachability report [skip ci]" || { echo "nothing to commit"; exit 0; }
+          git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" HEAD:arena/01a09ed6-indianpanel 2>&1 | sed 's/x-access-token:[^@]*@/x-access-token:***@/g'
