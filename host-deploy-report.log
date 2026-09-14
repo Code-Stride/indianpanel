@@ -1,0 +1,50 @@
+### Host reachability probe (Mon Sep 14 07:46:37 UTC 2026)
+runner: Linux runnervmlun5p 6.17.0-1022-azure #22-Ubuntu SMP Mon Jul 27 17:24:03 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+== DNS ==
+63.141.252.124  blazepanel.mywp.info
+63.141.252.124  hosting6.dnsexit.com files6.dnsexit.com
+== TCP port checks ==
+port 22518: OPEN
+port 22: closed/filtered
+port 21: OPEN
+port 80: OPEN
+port 443: OPEN
+port 8080: closed/filtered
+== SSH banner on 22518 ==
+0000000
+== ssh -vv negotiation (no auth) ==
+OpenSSH_9.6p1 Ubuntu-3ubuntu13.19, OpenSSL 3.0.13 30 Jan 2024
+debug1: Reading configuration data /etc/ssh/ssh_config
+debug1: /etc/ssh/ssh_config line 19: include /etc/ssh/ssh_config.d/*.conf matched no files
+debug1: /etc/ssh/ssh_config line 21: Applying options for *
+debug2: resolve_canonicalize: hostname 63.141.252.124 is address
+debug1: Connecting to 63.141.252.124 [63.141.252.124] port 22518.
+debug2: fd 3 setting O_NONBLOCK
+debug1: fd 3 clearing O_NONBLOCK
+debug1: Connection established.
+debug1: identity file /home/runner/.ssh/id_rsa type -1
+debug1: identity file /home/runner/.ssh/id_rsa-cert type -1
+debug1: identity file /home/runner/.ssh/id_ecdsa type -1
+debug1: identity file /home/runner/.ssh/id_ecdsa-cert type -1
+debug1: identity file /home/runner/.ssh/id_ecdsa_sk type -1
+debug1: identity file /home/runner/.ssh/id_ecdsa_sk-cert type -1
+debug1: identity file /home/runner/.ssh/id_ed25519 type -1
+debug1: identity file /home/runner/.ssh/id_ed25519-cert type -1
+debug1: identity file /home/runner/.ssh/id_ed25519_sk type -1
+debug1: identity file /home/runner/.ssh/id_ed25519_sk-cert type -1
+debug1: identity file /home/runner/.ssh/id_xmss type -1
+debug1: identity file /home/runner/.ssh/id_xmss-cert type -1
+debug1: identity file /home/runner/.ssh/id_dsa type -1
+debug1: identity file /home/runner/.ssh/id_dsa-cert type -1
+debug1: Local version string SSH-2.0-OpenSSH_9.6p1 Ubuntu-3ubuntu13.19
+debug1: Remote protocol version 2.0, remote software version OpenSSH_8.0
+debug1: compat_banner: match: OpenSSH_8.0 pat OpenSSH* compat 0x04000000
+debug2: fd 3 setting O_NONBLOCK
+debug1: Authenticating to 63.141.252.124:22518 as 'vh20074'
+debug1: load_hostkeys: fopen /home/runner/.ssh/known_hosts: No such file or directory
+debug1: load_hostkeys: fopen /home/runner/.ssh/known_hosts2: No such file or directory
+== curl http/https ==
+http(hostIP)      code=403
+https(hostIP)     code=403
+https(vhost)     code=200
+== DONE ==
