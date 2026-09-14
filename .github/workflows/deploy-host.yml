@@ -1,0 +1,27 @@
+name: Deploy panel to shared host
+
+on:
+  push:
+    branches: [arena/01a09ed6-indianpanel]
+    paths: ['.github/workflows/deploy-host.yml', '.deploy/**']
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe host reachability (no credentials)
+        env:
+          HOST: 63.141.252.124
+          PORT: "22518"
+        run: |
+          echo "== DNS / identity =="
+          getent hosts blazepanel.mywp.info || true
+          echo "== TCP port checks =="
+          for pp in 22518 22 21 80 443; do
+            if timeout 8 bash -c "exec 3<>/dev/tcp/$HOST/$pp" 2>/dev/null; then echo "port $pp: OPEN"; else echo "port $pp: closed/filtered"; fi
+          done
+          echo "== SSH banner on $PORT =="
+          timeout 12 bash -c 'exec 3<>/dev/tcp/'"$HOST"'/'"$PORT"'; timeout 8 head -c 120 <&3 | od -c' || echo "no banner"
+          echo "== ssh negotiation (no auth) =="
+          ssh -vv -o StrictHostKeyChecking=no -o ConnectTimeout=12 -o PreferredAuthentications=none -o PubkeyAuthentication=no -p "$PORT" "vh20074@$HOST" true 2>&1 | sed -n '1,25p' || true
