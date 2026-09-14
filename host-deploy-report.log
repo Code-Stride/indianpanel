@@ -1,16 +1,10 @@
-### Canary handoff (Mon Sep 14 07:50:54 UTC 2026)
-BASE=https://8000-iawi09fd5qnq7eyr8gem5.e2b.app
---- GET /health ---
-{"sandboxId":"iawi09fd5qnq7eyr8gem5","message":"Sandbox is secured with traffic access token. Token header 'e2b-traffic-access-token' is missing","code":403}
-[http 403]
---- GET /start ---
-{"sandboxId":"iawi09fd5qnq7eyr8gem5","message":"Sandbox is secured with traffic access token. Token header 'e2b-traffic-access-token' is missing","code":403}
-403
-parsed sid length: 157
---- GET /verify (proves workflow GITHUB_TOKEN) ---
-{"sandboxId":"iawi09fd5qnq7eyr8gem5","message":"Sandbox is secured with traffic access token. Token header 'e2b-traffic-access-token' is missing","code":403}
-[http 403]
-
---- GET /fetch (one-shot marker) ---
-curl: (2) no URL specified
-curl: try 'curl --help' or 'curl --manual' for more information
+Traceback (most recent call last):
+  File "/home/runner/work/indianpanel/indianpanel/.deploy/host_actions.py", line 252, in <module>
+    main()
+  File "/home/runner/work/indianpanel/indianpanel/.deploy/host_actions.py", line 196, in main
+    t = connect(cfg, pw)
+        ^^^^^^^^^^^^^^^^
+  File "/home/runner/work/indianpanel/indianpanel/.deploy/host_actions.py", line 94, in connect
+    raise RuntimeError(f"authentication failed: {last!r}")
+RuntimeError: authentication failed: BadAuthenticationType('Bad authentication type', ['publickey', 'gssapi-keyex', 'gssapi-with-mic', 'password'])
+action_rc=1
