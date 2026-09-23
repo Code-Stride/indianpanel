@@ -1,16 +1,17 @@
+Oops, unhandled type 3 ('unimplemented')
 [ssh] server advertises auth methods: ['publickey', 'gssapi-keyex', 'gssapi-with-mic', 'password']
 [ssh] unavailable: ssh authentication rejected (password:AuthenticationException)
 [fallback] trying FTP on port 21 ...
 [ftp] login ok as 'vh20074' (cwd=/)
 === probing webroots over FTP ===
-CANDIDATE /blazepanel.mywp.info entries=43
+CANDIDATE /blazepanel.mywp.info entries=47
 CANDIDATE / entries=5
 === webroot detection (ftp) ===
 DOCROOT_CANDIDATE /blazepanel.mywp.info
 DOCROOT_CANDIDATE /
 DETECT_DONE
 using webroot: /blazepanel.mywp.info
-(pre-existing entries in webroot: 43)
+(pre-existing entries in webroot: 47)
 --- remote .htaccess (first 700b) ---
 AcceptPathInfo Off
 ErrorDocument 404 /404.php
@@ -24,16 +25,20 @@ Require all denied
 <?php
 require __DIR__.'/config.php'; require_member();
 try { setup_auth(); $saved=[]; $q=pdo()->prepare('SELECT id,url,secret_key,display_date FROM bp_web_accounts WHERE user_id=? ORDER BY created_at'); $q->execute([(int)$_SESSION['member_id']]); foreach($q as
-[ftp] cannot enter/create status: 'FTP' object has no attribute 'mkdir'
-Traceback (most recent call last):
-  File "/home/runner/work/indianpanel/indianpanel/.deploy/host_actions.py", line 541, in <module>
-    main()
-  File "/home/runner/work/indianpanel/indianpanel/.deploy/host_actions.py", line 532, in main
-    ftp_deploy(f, cfg, a.dist)
-  File "/home/runner/work/indianpanel/indianpanel/.deploy/host_actions.py", line 436, in ftp_deploy
-    n = ftp_upload(f, dist, webroot)
-        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/runner/work/indianpanel/indianpanel/.deploy/host_actions.py", line 383, in ftp_upload
-    raise RuntimeError(f"cannot prepare remote dir {rdir}")
-RuntimeError: cannot prepare remote dir /blazepanel.mywp.info/status
-action_rc=1
+  uploaded 10 files ...
+  uploaded 20 files ...
+  uploaded 30 files ...
+  uploaded 40 files ...
+uploaded 41 files to /blazepanel.mywp.info
+patched .htaccess DirectoryIndex -> 'index.html index.php' (backup: .htaccess.prepanel-20260923-151131)
+  remote check index.html: OK
+  remote check TEAM_ABHI_Pannel_1786263630516.html: OK
+  remote index.html head: MARKER OK
+DEPLOY_DONE
+action_rc=0
+=== HTTP verification ===
+https://blazepanel.mywp.info/ -> HTTP 200 (970094 bytes)
+  homepage marker CYRUS PANEL: PRESENT
+https://blazepanel.mywp.info/dashboard/ -> HTTP 200 (2147 bytes)
+https://blazepanel.mywp.info/route-assets/theme.js -> HTTP 200 (749 bytes)
+https://blazepanel.mywp.info/TEAM_ABHI_Pannel_1786263630516.html -> HTTP 200 (970094 bytes)
