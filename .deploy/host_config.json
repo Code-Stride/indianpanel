@@ -1,9 +1,0 @@
-{
-  "host": "63.141.252.124",
-  "port": 22518,
-  "user": "vh20074",
-  "domain": "blazepanel.mywp.info",
-  "mode": "deploy",
-  "webroot": "/blazepanel.mywp.info",
-  "ftp_port": 21
-}
