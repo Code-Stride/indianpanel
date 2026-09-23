@@ -264,30 +264,80 @@ def ftp_walk_candidates(f, base, depth=2):
     return [c for c in cands if not (c in seen or seen.add(c))]
 
 
+def ftp_ls(f, path):
+    """LIST lines at absolute path (or [] if unreachable)."""
+    cur = f.pwd()
+    try:
+        f.cwd(path)
+        lines = []
+        f.dir(lambda l: lines.append(l))
+        return lines
+    except Exception:
+        return []
+    finally:
+        try:
+            f.cwd(cur)
+        except Exception:
+            pass
+
+
+def ftp_probe_candidates(f, cfg):
+    """Probed, definitely-existing webroot candidates (absolute, cwd-relative)."""
+    user = cfg["user"]
+    dom = cfg.get("domain") or ""
+    base = f.pwd() or "/"
+    probes = []
+    seen = set()
+
+    def add(p):
+        p = posixpath.normpath(p)
+        if p not in seen:
+            seen.add(p)
+            probes.append(p)
+
+    rels = ("public_html", "httpdocs", "htdocs", "www", "web", "webroot",
+            f"domains/{dom}/public_html", f"domains/{dom}/httpdocs",
+            f"domains/{dom.replace('.mywp.info','')}/public_html",
+            f"domains/{dom}", "domains", "")
+    extra_bases = [base, "/"]
+    for b in ("/home/" + user, "/home/" + user):
+        extra_bases.append(b)
+        for sub in ("public_html", "httpdocs", f"domains/{dom}/public_html", f"domains/{dom}/httpdocs", f"domains/{dom}", ""):
+            add(posixpath.join(b, sub) if sub else b)
+    for b in extra_bases:
+        for rel in rels:
+            add(posixpath.join(b, rel) if rel else b)
+    cands = []
+    for p in probes:
+        lines = ftp_ls(f, p)
+        if lines is None:
+            continue
+        entries = [l for l in lines if True]
+        if not entries and p not in ("/",):
+            continue
+        name = p.rstrip("/").split("/")[-1]
+        weblike = name in DOCROOT_NAMES or any(
+            (l.split(None, 8)[8] if len(l.split(None, 8)) == 9 else "") in
+            ("index.html", "index.php", "index.htm", ".htaccess", "default.html")
+            for l in entries)
+        if weblike or (p in ("/", base) and entries):
+            cands.append((p, len(entries)))
+    out = []
+    for p, n in cands:
+        print(f"CANDIDATE {p} entries={n}")
+        out.append(p)
+    return out
+
+
 def ftp_recon(f, cfg):
     base = f.pwd()
-    print(f"=== FTP recon (jail root: {base}) ===")
-    lines = []
-    try:
-        f.dir(lambda l: lines.append(l))
-    except Exception as e:
-        print("LIST failed:", e)
-    print("=== home listing ===")
-    print("\n".join(lines[:80]))
-    cands = ftp_walk_candidates(f, base, 2)
-    print("=== docroot candidates ===")
-    for c in cands:
-        print(c)
-    for c in cands[:3]:
-        try:
-            f.cwd(c)
-            sub = []
-            f.dir(lambda l: sub.append(l))
-            print(f"--- {c}: {len(sub)} entries ---")
-            print("\n".join(sub[:40]))
-        except Exception as e:
-            print(f"--- {c}: cannot list: {e}")
-    f.cwd(base)
+    print(f"=== FTP recon (login cwd: {base}) ===")
+    for probe in (base, "/", "/home", "/home/" + cfg["user"], "/var/www"):
+        lines = ftp_ls(f, probe)
+        print(f"--- LIST {probe} ({len(lines)} entries) ---")
+        print("\n".join(lines[:60]))
+    print("=== candidate probes ===")
+    ftp_probe_candidates(f, cfg)
     print("=== RECON_DONE ===")
 
 
@@ -330,8 +380,8 @@ def ftp_upload(f, local_dir, webroot):
 
 
 def ftp_deploy(f, cfg, dist):
-    base = f.pwd()
-    cands = ftp_walk_candidates(f, base, 2)
+    print("=== probing webroots over FTP ===")
+    cands = ftp_probe_candidates(f, cfg)
     det = "\n".join(f"DOCROOT_CANDIDATE {c}" for c in cands) + "\nDETECT_DONE"
     print("=== webroot detection (ftp) ===")
     print(det)
