@@ -296,9 +296,14 @@ def ftp_probe_candidates(f, cfg):
             probes.append(p)
 
     rels = ("public_html", "httpdocs", "htdocs", "www", "web", "webroot",
-            f"domains/{dom}/public_html", f"domains/{dom}/httpdocs",
-            f"domains/{dom.replace('.mywp.info','')}/public_html",
+            "public_shtml", f"domains/{dom}/public_html", f"domains/{dom}/httpdocs",
             f"domains/{dom}", "domains", "")
+    for l in ftp_ls(f, "/"):
+        parts = l.split(None, 8)
+        if len(parts) == 9 and parts[0].startswith("d") and parts[8] not in (".", "..", "tmp", "MyFiles"):
+            add("/" + parts[8])
+            for rel in ("public_html", "httpdocs", "htdocs"):
+                add(posixpath.join("/" + parts[8], rel))
     extra_bases = [base, "/"]
     for b in ("/home/" + user, "/home/" + user):
         extra_bases.append(b)
@@ -331,8 +336,20 @@ def ftp_probe_candidates(f, cfg):
 
 def ftp_recon(f, cfg):
     base = f.pwd()
+    dom = cfg.get("domain") or ""
     print(f"=== FTP recon (login cwd: {base}) ===")
-    for probe in (base, "/", "/home", "/home/" + cfg["user"], "/var/www"):
+    probes = [base, "/", "/home", "/home/" + cfg["user"], "/var/www"]
+    # DNSExit-style virtualhost layout: /<domain>/... — walk one level in
+    for l in ftp_ls(f, "/"):
+        parts = l.split(None, 8)
+        if len(parts) == 9 and parts[0].startswith("d") and parts[8] not in (".", "..", "tmp", "MyFiles"):
+            d = parts[8]
+            probes.append(posixpath.join("/", d))
+            for l2 in ftp_ls(f, posixpath.join("/", d)):
+                p2 = l2.split(None, 8)
+                if len(p2) == 9 and p2[0].startswith("d") and p2[8] not in (".", ".."):
+                    probes.append(posixpath.join("/", d, p2[8]))
+    for probe in probes:
         lines = ftp_ls(f, probe)
         print(f"--- LIST {probe} ({len(lines)} entries) ---")
         print("\n".join(lines[:60]))
