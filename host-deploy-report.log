@@ -1,10 +1,9 @@
-Traceback (most recent call last):
-  File "/home/runner/work/indianpanel/indianpanel/.deploy/host_actions.py", line 252, in <module>
-    main()
-  File "/home/runner/work/indianpanel/indianpanel/.deploy/host_actions.py", line 196, in main
-    t = connect(cfg, pw)
-        ^^^^^^^^^^^^^^^^
-  File "/home/runner/work/indianpanel/indianpanel/.deploy/host_actions.py", line 94, in connect
-    raise RuntimeError(f"authentication failed: {last!r}")
-RuntimeError: authentication failed: BadAuthenticationType('Bad authentication type', ['publickey', 'gssapi-keyex', 'gssapi-with-mic', 'password'])
-action_rc=1
+[ssh] server advertises auth methods: ['publickey', 'gssapi-keyex', 'gssapi-with-mic', 'password']
+[ssh] unavailable: ssh authentication rejected (password:AuthenticationException)
+[fallback] trying FTP on port 21 ...
+[ftp] login ok as 'vh20074' (cwd=/)
+=== webroot detection (ftp) ===
+
+DETECT_DONE
+ERROR: could not determine document root over FTP
+action_rc=4
