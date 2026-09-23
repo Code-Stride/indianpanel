@@ -2,8 +2,26 @@
 [ssh] unavailable: ssh authentication rejected (password:AuthenticationException)
 [fallback] trying FTP on port 21 ...
 [ftp] login ok as 'vh20074' (cwd=/)
-=== webroot detection (ftp) ===
+=== FTP recon (login cwd: /) ===
+--- LIST / (5 entries) ---
+drwxr-xr-x    5 20074      apache           4096 Sep 14 03:45 .
+drwxr-xr-x    5 20074      apache           4096 Sep 14 03:45 ..
+drwxr-x---    2 20074      apache           4096 Sep 14 03:19 MyFiles
+drwxr-x---    8 20074      apache           4096 Sep 14 07:42 blazepanel.mywp.info
+drwxr-xr-x    2 20074      apache        1916928 Sep 23 11:00 tmp
+--- LIST / (5 entries) ---
+drwxr-xr-x    5 20074      apache           4096 Sep 14 03:45 .
+drwxr-xr-x    5 20074      apache           4096 Sep 14 03:45 ..
+drwxr-x---    2 20074      apache           4096 Sep 14 03:19 MyFiles
+drwxr-x---    8 20074      apache           4096 Sep 14 07:42 blazepanel.mywp.info
+drwxr-xr-x    2 20074      apache        1916928 Sep 23 11:00 tmp
+--- LIST /home (0 entries) ---
 
-DETECT_DONE
-ERROR: could not determine document root over FTP
-action_rc=4
+--- LIST /home/vh20074 (0 entries) ---
+
+--- LIST /var/www (0 entries) ---
+
+=== candidate probes ===
+CANDIDATE / entries=5
+=== RECON_DONE ===
+action_rc=0
