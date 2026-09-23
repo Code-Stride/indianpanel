@@ -10,7 +10,7 @@ falls back to plain FTP (ftplib, passive mode) which shared hosts such as
 DNSExit/DirectAdmin normally allow with the same panel credentials.
 The password is read from a 0600 file and never printed.
 """
-import argparse, ftplib, json, os, posixpath, socket, sys, time
+import argparse, ftplib, io, json, os, posixpath, re, socket, sys, time
 
 try:
     import paramiko
@@ -366,7 +366,7 @@ def ftp_mkdir_p(f, path):
             f.cwd(p)
         except ftplib.error_perm:
             try:
-                f.mkdir(p)
+                f.mkd(p)
                 f.cwd(p)
             except Exception as e:
                 print(f"[ftp] cannot enter/create {p}: {e}")
@@ -383,7 +383,7 @@ def ftp_upload(f, local_dir, webroot):
             raise RuntimeError(f"cannot prepare remote dir {rdir}")
         for d in dirs:
             try:
-                f.mkdir(posixpath.join(rdir, d))
+                f.mkd(posixpath.join(rdir, d))
             except Exception:
                 pass
         for fn in files:
@@ -435,6 +435,28 @@ def ftp_deploy(f, cfg, dist):
 
     n = ftp_upload(f, dist, webroot)
     print(f"uploaded {n} files to {webroot}")
+
+    # ensure the freshly uploaded index.html wins over a legacy index.php
+    try:
+        f.cwd(webroot)
+        buf = []
+        try:
+            f.retrbinary("RETR .htaccess", lambda b: buf.append(b))
+            hta = b"".join(buf).decode("utf-8", "replace")
+        except Exception:
+            hta = ""
+        if hta and "DirectoryIndex" in hta:
+            line = [l for l in hta.splitlines() if l.strip().startswith("DirectoryIndex")][0]
+            if "index.html" not in line:
+                new_hta = re.sub(r"(?m)^DirectoryIndex .*$", "DirectoryIndex index.html index.php", hta)
+                ts = time.strftime("%Y%m%d-%H%M%S")
+                f.storbinary(f"STOR .htaccess.prepanel-{ts}", io.BytesIO(hta.encode()))
+                f.storbinary("STOR .htaccess", io.BytesIO(new_hta.encode()))
+                print(f"patched .htaccess DirectoryIndex -> 'index.html index.php' (backup: .htaccess.prepanel-{ts})")
+            else:
+                print(".htaccess already prefers index.html")
+    except Exception as e:
+        print("htaccess adjust skipped:", e)
     try:
         f.cwd(webroot)
         names = f.nlst()
