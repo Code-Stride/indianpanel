@@ -4,5 +4,6 @@
   "user": "vh20074",
   "domain": "blazepanel.mywp.info",
   "mode": "deploy",
-  "webroot": ""
+  "webroot": "",
+  "ftp_port": 21
 }

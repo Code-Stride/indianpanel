@@ -209,7 +209,7 @@ def ftp_login(cfg, pw):
     f = ftplib.FTP(timeout=40)
     for u in users:
         try:
-            f.connect(cfg["host"], 21, timeout=30)
+            f.connect(cfg["host"], int(cfg.get("ftp_port", 21)), timeout=30)
             f.login(u, pw)
             f.set_pasv(True)
             f.sendcmd("TYPE I")
