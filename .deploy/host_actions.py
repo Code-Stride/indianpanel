@@ -1,17 +1,24 @@
 #!/usr/bin/env python3
 """Executed on a GitHub Actions runner (open internet) against the shared host.
-Supports:
-  --mode recon   : non-destructive inspection, finds document root
-  --mode deploy  : back up current docroot, then SFTP-upload the static site
 
-The SSH password is read from a 0600 file and never printed."""
-import argparse, json, os, posixpath, socket, stat, sys, time
+Modes:
+  --mode recon   : non-destructive inspection, finds the document root
+  --mode deploy  : upload the static site (tar-backup first when on SSH)
+
+Transport: tries SSH/SFTP (paramiko) first; if SSH authentication is refused,
+falls back to plain FTP (ftplib, passive mode) which shared hosts such as
+DNSExit/DirectAdmin normally allow with the same panel credentials.
+The password is read from a 0600 file and never printed.
+"""
+import argparse, ftplib, json, os, posixpath, socket, sys, time
 
 try:
     import paramiko
 except ImportError:
     print("paramiko missing; install it before running this", file=sys.stderr)
     raise
+
+DOCROOT_NAMES = {"public_html", "httpdocs", "htdocs", "www", "web", "webroot"}
 
 RECON_SH = r'''
 set +e
@@ -69,6 +76,7 @@ echo DETECT_DONE
 '''
 
 
+# ---------------------------------------------------------------- SSH transport
 def connect(cfg, pw):
     sock = socket.create_connection((cfg["host"], cfg["port"]), timeout=30)
     t = paramiko.Transport(sock)
@@ -76,22 +84,33 @@ def connect(cfg, pw):
     t.start_client(timeout=30)
     user = cfg["user"]
 
+    methods = []
+    try:
+        t.auth_none(user)
+    except paramiko.BadAuthenticationType as e:
+        methods = list(e.allowed_types or [])
+    except Exception:
+        pass
+    print(f"[ssh] server advertises auth methods: {methods or 'unknown'}")
+
     def kbd(title, instructions, prompt_list):
         return [pw for _ in prompt_list]
 
-    last = None
+    reasons = []
     if not t.is_authenticated():
         try:
             t.auth_password(user, pw)
-        except Exception as e:  # noqa
-            last = e
-    if not t.is_authenticated():
+            print("[ssh] auth_password ok")
+        except Exception as e:
+            reasons.append(f"password:{type(e).__name__}")
+    if not t.is_authenticated() and "keyboard-interactive" in methods:
         try:
             t.auth_interactive(user, kbd)
-        except Exception as e:  # noqa
-            last = e
+            print("[ssh] auth_interactive ok")
+        except Exception as e:
+            reasons.append(f"kbd:{type(e).__name__}")
     if not t.is_authenticated():
-        raise RuntimeError(f"authentication failed: {last!r}")
+        raise RuntimeError("ssh authentication rejected (" + ", ".join(reasons) + ")")
     print(f"authenticated as {user} on {cfg['host']}:{cfg['port']}")
     return t
 
@@ -127,16 +146,14 @@ def choose_webroot(cfg, detect_out):
                 cands.append(p)
     domain = (cfg.get("domain") or "").lower()
     label = domain.split(".")[0] if domain else ""
-    # prefer paths that mention the domain / its label
     for p in cands:
-        low = p.lower()
-        if domain and domain in low:
+        if domain and domain in p.lower():
             return p
     for p in cands:
         if label and label in p.lower():
             return p
     for p in cands:
-        if p.endswith(("public_html", "httpdocs", "htdocs", "www", "web", "webroot")):
+        if p.rstrip("/").split("/")[-1] in DOCROOT_NAMES:
             return p
     if cands:
         return cands[0]
@@ -182,6 +199,172 @@ def upload_tree(t, local_dir, webroot):
     return nfiles
 
 
+# ---------------------------------------------------------------- FTP fallback
+def ftp_login(cfg, pw):
+    dom = cfg.get("domain") or ""
+    users = [cfg["user"]]
+    if dom:
+        users += [f"{cfg['user']}@{dom}", f"{cfg['user']}%{dom}"]
+    fails = []
+    f = ftplib.FTP(timeout=40)
+    for u in users:
+        try:
+            f.connect(cfg["host"], 21, timeout=30)
+            f.login(u, pw)
+            f.set_pasv(True)
+            f.sendcmd("TYPE I")
+            print(f"[ftp] login ok as {u!r} (cwd={f.pwd()})")
+            return f
+        except Exception as e:
+            fails.append(f"{u}: {type(e).__name__}: {str(e)[:120]}")
+            print("[ftp] attempt failed:", fails[-1])
+            try:
+                f.close()
+            except Exception:
+                pass
+            f = ftplib.FTP(timeout=40)
+    raise RuntimeError("ftp authentication rejected (" + " | ".join(fails) + ")")
+
+
+def ftp_dirs(f, base):
+    """Names of subdirectories directly inside absolute path `base`."""
+    out = []
+    try:
+        f.cwd(base)
+    except Exception:
+        return out
+    lines = []
+    try:
+        f.dir(lambda l: lines.append(l))
+    except Exception:
+        return out
+    for l in lines:
+        parts = l.split(None, 8)
+        if len(parts) == 9 and parts[0].startswith("d"):
+            out.append(parts[8])
+    return out
+
+
+def ftp_walk_candidates(f, base, depth=2):
+    cands = []
+    for d in ftp_dirs(f, base):
+        p = posixpath.join(base, d)
+        if d in DOCROOT_NAMES:
+            cands.append(p)
+        elif depth > 0 and d in ("domains", "subdomains", "sites"):
+            for sub in ftp_dirs(f, p):
+                sp = posixpath.join(p, sub)
+                for dd in ftp_dirs(f, sp):
+                    if dd in DOCROOT_NAMES:
+                        cands.append(posixpath.join(sp, dd))
+                    elif d in ("domains", "subdomains") and dd in ("public_html",):
+                        cands.append(posixpath.join(sp, dd))
+    # dedupe, keep order
+    seen = set()
+    return [c for c in cands if not (c in seen or seen.add(c))]
+
+
+def ftp_recon(f, cfg):
+    base = f.pwd()
+    print(f"=== FTP recon (jail root: {base}) ===")
+    lines = []
+    try:
+        f.dir(lambda l: lines.append(l))
+    except Exception as e:
+        print("LIST failed:", e)
+    print("=== home listing ===")
+    print("\n".join(lines[:80]))
+    cands = ftp_walk_candidates(f, base, 2)
+    print("=== docroot candidates ===")
+    for c in cands:
+        print(c)
+    for c in cands[:3]:
+        try:
+            f.cwd(c)
+            sub = []
+            f.dir(lambda l: sub.append(l))
+            print(f"--- {c}: {len(sub)} entries ---")
+            print("\n".join(sub[:40]))
+        except Exception as e:
+            print(f"--- {c}: cannot list: {e}")
+    f.cwd(base)
+    print("=== RECON_DONE ===")
+
+
+def ftp_mkdir_p(f, path):
+    parts = path.strip("/").split("/")
+    f.cwd("/")
+    for p in parts:
+        try:
+            f.cwd(p)
+        except ftplib.error_perm:
+            try:
+                f.mkdir(p)
+                f.cwd(p)
+            except Exception as e:
+                print(f"[ftp] cannot enter/create {p}: {e}")
+                return False
+    return True
+
+
+def ftp_upload(f, local_dir, webroot):
+    nfiles = 0
+    for root, dirs, files in os.walk(local_dir):
+        rel = os.path.relpath(root, local_dir)
+        rdir = webroot if rel == "." else posixpath.join(webroot, rel.replace(os.sep, "/"))
+        if not ftp_mkdir_p(f, rdir):
+            raise RuntimeError(f"cannot prepare remote dir {rdir}")
+        for d in dirs:
+            try:
+                f.mkdir(posixpath.join(rdir, d))
+            except Exception:
+                pass
+        for fn in files:
+            lp = os.path.join(root, fn)
+            with open(lp, "rb") as fh:
+                f.storbinary(f"STOR {posixpath.basename(fn)}", fh)
+            nfiles += 1
+            if nfiles % 10 == 0:
+                print(f"  uploaded {nfiles} files ...")
+    return nfiles
+
+
+def ftp_deploy(f, cfg, dist):
+    base = f.pwd()
+    cands = ftp_walk_candidates(f, base, 2)
+    det = "\n".join(f"DOCROOT_CANDIDATE {c}" for c in cands) + "\nDETECT_DONE"
+    print("=== webroot detection (ftp) ===")
+    print(det)
+    webroot = choose_webroot(cfg, det)
+    if not webroot:
+        print("ERROR: could not determine document root over FTP")
+        sys.exit(4)
+    if not os.path.isdir(dist):
+        print(f"ERROR: local dist dir not found: {dist}")
+        sys.exit(5)
+    print(f"using webroot: {webroot}")
+    if not ftp_mkdir_p(f, webroot):
+        print("ERROR: cannot enter/create webroot over FTP")
+        sys.exit(6)
+    existing = []
+    try:
+        f.dir(lambda l: existing.append(l))
+    except Exception:
+        pass
+    print(f"(pre-existing entries in webroot: {len(existing)})")
+    n = ftp_upload(f, dist, webroot)
+    print(f"uploaded {n} files to {webroot}")
+    try:
+        f.cwd(webroot)
+        names = f.nlst()
+        need = ["index.html", "TEAM_ABHI_Pannel_1786263630516.html"]
+        for x in need:
+            print(f"  remote check {x}: {'OK' if x in names else 'MISSING'}")
+    except Exception as e:
+        print("post-check failed:", e)
+    print("DEPLOY_DONE")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--mode", required=True, choices=["recon", "deploy"])
@@ -193,59 +376,79 @@ def main():
     cfg = json.load(open(a.config))
     pw = open(a.pw_file, "rb").read().decode().strip()
 
-    t = connect(cfg, pw)
+    t = None
+    try:
+        t = connect(cfg, pw)
+    except Exception as e:
+        print(f"[ssh] unavailable: {e}")
+        print("[fallback] trying FTP on port 21 ...")
+
+    if t is not None:
+        try:
+            if a.mode == "recon":
+                rc, out, err = run(t, RECON_SH)
+                print(out)
+                if err.strip():
+                    print("[stderr]\n" + err)
+                print(f"[recon exit {rc}]")
+                return
+
+            rc, det, err = run(t, DETECT_SH)
+            print("=== webroot detection ===")
+            print(det)
+            webroot = choose_webroot(cfg, det)
+            if not webroot:
+                print("ERROR: could not determine document root; run recon first")
+                sys.exit(4)
+            if not os.path.isdir(a.dist):
+                print(f"ERROR: local dist dir not found: {a.dist}")
+                sys.exit(5)
+            print(f"using webroot: {webroot}")
+
+            # backup existing docroot (non-destructive)
+            ts = time.strftime("%Y%m%d-%H%M%S")
+            backup = f"$HOME/.site-backups/{ts}"
+            backup_sh = (
+                f'mkdir -p {backup}; '
+                f'if [ -d "{webroot}" ] && [ -n "$(ls -A "{webroot}" 2>/dev/null)" ]; then '
+                f'(cd "{webroot}" && tar cf - . 2>/dev/null | (cd {backup} && tar xf - 2>/dev/null)) && '
+                f'echo "BACKUP_AT {backup}" || echo "BACKUP_SKIPPED"; '
+                f'else echo "BACKUP_EMPTY"; fi; '
+                f'mkdir -p "{webroot}"; echo READY'
+            )
+            rc, out, err = run(t, backup_sh, timeout=300)
+            print(out.strip())
+            if err.strip():
+                print("[backup stderr] " + err.strip())
+            if "READY" not in out:
+                print("ERROR preparing webroot/backup")
+                sys.exit(6)
+
+            n = upload_tree(t, a.dist, webroot)
+            print(f"uploaded {n} files to {webroot}")
+
+            rc, ls, err = run(t, f'echo "=== post listing ==="; ls -la "{webroot}" | head -40; '
+                                 f'echo "=== index head ==="; head -c 200 "{webroot}/index.html"; echo; '
+                                 f'echo "DEPLOY_DONE"')
+            print(ls)
+            if err.strip():
+                print("[post stderr] " + err.strip())
+        finally:
+            t.close()
+        return
+
+    # ---- FTP path ----
+    f = ftp_login(cfg, pw)
     try:
         if a.mode == "recon":
-            rc, out, err = run(t, RECON_SH)
-            print(out)
-            if err.strip():
-                print("[stderr]\n" + err)
-            print(f"[recon exit {rc}]")
-            return
-
-        # deploy
-        rc, det, err = run(t, DETECT_SH)
-        print("=== webroot detection ===")
-        print(det)
-        webroot = choose_webroot(cfg, det)
-        if not webroot:
-            print("ERROR: could not determine document root; run recon first")
-            sys.exit(4)
-        if not os.path.isdir(a.dist):
-            print(f"ERROR: local dist dir not found: {a.dist}")
-            sys.exit(5)
-        print(f"using webroot: {webroot}")
-
-        # backup existing docroot (non-destructive)
-        ts = time.strftime("%Y%m%d-%H%M%S")
-        backup = f"$HOME/.site-backups/{ts}"
-        backup_sh = (
-            f'mkdir -p {backup}; '
-            f'if [ -d "{webroot}" ] && [ -n "$(ls -A "{webroot}" 2>/dev/null)" ]; then '
-            f'(cd "{webroot}" && tar cf - . 2>/dev/null | (cd {backup} && tar xf - 2>/dev/null)) && '
-            f'echo "BACKUP_AT {backup}" || echo "BACKUP_SKIPPED"; '
-            f'else echo "BACKUP_EMPTY"; fi; '
-            f'mkdir -p "{webroot}"; echo READY'
-        )
-        rc, out, err = run(t, backup_sh, timeout=300)
-        print(out.strip())
-        if err.strip():
-            print("[backup stderr] " + err.strip())
-        if "READY" not in out:
-            print("ERROR preparing webroot/backup")
-            sys.exit(6)
-
-        n = upload_tree(t, a.dist, webroot)
-        print(f"uploaded {n} files to {webroot}")
-
-        rc, ls, err = run(t, f'echo "=== post listing ==="; ls -la "{webroot}" | head -40; '
-                             f'echo "=== index head ==="; head -c 200 "{webroot}/index.html"; echo; '
-                             f'echo "DEPLOY_DONE"')
-        print(ls)
-        if err.strip():
-            print("[post stderr] " + err.strip())
+            ftp_recon(f, cfg)
+        else:
+            ftp_deploy(f, cfg, a.dist)
     finally:
-        t.close()
+        try:
+            f.quit()
+        except Exception:
+            pass
 
 
 if __name__ == "__main__":

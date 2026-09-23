@@ -3,6 +3,6 @@
   "port": 22518,
   "user": "vh20074",
   "domain": "blazepanel.mywp.info",
-  "mode": "recon",
+  "mode": "deploy",
   "webroot": ""
 }
