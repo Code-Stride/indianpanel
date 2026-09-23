@@ -419,6 +419,20 @@ def ftp_deploy(f, cfg, dist):
     except Exception:
         pass
     print(f"(pre-existing entries in webroot: {len(existing)})")
+
+    def peek(name, limit=700):
+        try:
+            buf = []
+            f.retrbinary(f"RETR {name}", lambda b: buf.append(b))
+            data = b"".join(buf)[:limit]
+            print(f"--- remote {name} (first {limit}b) ---")
+            print(data.decode("utf-8", "replace"))
+        except Exception as e:
+            print(f"(no remote {name}: {e})")
+
+    peek(".htaccess")
+    peek("index.php", 260)
+
     n = ftp_upload(f, dist, webroot)
     print(f"uploaded {n} files to {webroot}")
     try:
@@ -427,6 +441,11 @@ def ftp_deploy(f, cfg, dist):
         need = ["index.html", "TEAM_ABHI_Pannel_1786263630516.html"]
         for x in need:
             print(f"  remote check {x}: {'OK' if x in names else 'MISSING'}")
+        if "index.html" in names:
+            buf = []
+            f.retrbinary("RETR index.html", lambda b: buf.append(b if sum(map(len, buf)) < 400 else b""))
+            head = b"".join(buf)[:400].decode("utf-8", "replace")
+            print("  remote index.html head:", "CYRUS" in head and "MARKER OK" or head[:120])
     except Exception as e:
         print("post-check failed:", e)
     print("DEPLOY_DONE")

@@ -3,7 +3,7 @@
   "port": 22518,
   "user": "vh20074",
   "domain": "blazepanel.mywp.info",
-  "mode": "recon",
-  "webroot": "",
+  "mode": "deploy",
+  "webroot": "/blazepanel.mywp.info",
   "ftp_port": 21
 }
